@@ -2,24 +2,54 @@
 set -euo pipefail
 
 ROOT_DIR="${SKYRL_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-DATA_PATH="${SKYRL_DATA_PATH:?Set SKYRL_DATA_PATH to the SWE-Gym parquet directory}"
-CKPT_PATH="${SKYRL_CKPT_PATH:-$ROOT_DIR/checkpoints/cloud_smoke}"
-MODEL_PATH="${SKYRL_MODEL_PATH:-Qwen/Qwen2.5-Coder-7B-Instruct}"
+cd "$ROOT_DIR"
+
+PYTHON_BIN="${PYTHON:-python3}"
+command -v "$PYTHON_BIN" >/dev/null || {
+  echo "Missing Python. Run scripts/setup_cloud.sh first." >&2
+  exit 1
+}
+
+eval "$("$PYTHON_BIN" scripts/cloud_deploy.py env --shell)"
+
 GPU_COUNT="${SKYRL_GPUS_PER_NODE:-4}"
 MAX_PARALLEL_AGENTS="${SKYRL_MAX_PARALLEL_AGENTS:-$GPU_COUNT}"
+CKPT_PATH="${SKYRL_CKPT_PATH:-$OUTPUT_DIR/checkpoints/cloud_smoke}"
+MODEL_PATH="${SKYRL_MODEL_PATH:-$SKYRL_MODEL_LOCAL_DIR}"
+DATA_PATH="${SKYRL_DATA_PATH}"
 
-cd "$ROOT_DIR"
-mkdir -p outputs logs "$CKPT_PATH"
+if [[ "$MODEL_PATH" == "Qwen/Qwen2.5-Coder-7B-Instruct" ]]; then
+  MODEL_PATH="$SKYRL_MODEL_LOCAL_DIR"
+fi
+
+mkdir -p "$OUTPUT_DIR" "$CKPT_PATH"
 
 export SKYRL_REQUIRE_ROLLOUT_WEIGHT_SYNC=1
 export SKYRL_REQUIRE_ROLLOUT_WEIGHT_CHANGE_AFTER_FIRST_SYNC=1
 
-echo "model=$MODEL_PATH"
-echo "data=$DATA_PATH"
-echo "checkpoint=$CKPT_PATH"
-echo "rollout_weight_sync_required=true"
+echo "Running cloud smoke preflight."
+uv run --isolated --directory "$ROOT_DIR" --frozen python scripts/cloud_deploy.py preflight-run
 
-PYTHONUNBUFFERED=1 uv run --isolated --directory . --frozen --env-file .env -m verl.trainer.main_ppo \
+COMMIT_SHA="$(git rev-parse HEAD)"
+echo "commit=$COMMIT_SHA"
+echo "model path=$MODEL_PATH"
+echo "dataset path=$DATA_PATH"
+echo "output path=$OUTPUT_DIR"
+echo "checkpoint=$CKPT_PATH"
+echo "training_mode=lora"
+echo "reward_manager=swebench_test_informed"
+echo "GPU count=$GPU_COUNT"
+echo "train batch=$GPU_COUNT"
+echo "ppo mini batch=$GPU_COUNT"
+echo "n_trajectories=2"
+echo "max prompt=8192"
+echo "max response=1024"
+echo "max starting message=12000"
+echo "rollout_weight_sync_required=true"
+echo "rollout_weight_change_after_first_sync_required=true"
+
+PYTHONUNBUFFERED=1 uv run --isolated --directory "$ROOT_DIR" --frozen --env-file .env \
+  -m verl.trainer.main_ppo \
   algorithm.adv_estimator=grpo \
   data.train_files="[\"$DATA_PATH/train.parquet\"]" \
   data.val_files="[\"$DATA_PATH/validation.parquet\"]" \
