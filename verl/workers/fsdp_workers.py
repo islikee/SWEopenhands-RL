@@ -159,6 +159,11 @@ class ActorRolloutRefWorker(Worker):
         from transformers import AutoModelForCausalLM, AutoConfig, AutoModelForVision2Seq
         from torch.distributed.fsdp import FullyShardedDataParallel as FSDP, ShardingStrategy, MixedPrecision, CPUOffload
         from torch import optim
+        from verl.workers.lora_utils import (
+            configure_lora_training,
+            get_trainable_parameter_stats,
+            iter_trainable_parameters,
+        )
 
         assert role in ['actor', 'ref']
 
@@ -222,6 +227,16 @@ class ActorRolloutRefWorker(Worker):
 
             if enable_gradient_checkpointing:
                 actor_module.gradient_checkpointing_enable(gradient_checkpointing_kwargs={'use_reentrant': False})
+
+            training_mode = self.config.model.get('training_mode', 'full')
+            use_lora_training = role == 'actor' and optim_config is not None and training_mode == 'lora'
+            if use_lora_training:
+                actor_module = configure_lora_training(actor_module, self.config.model)
+                if self.rank == 0:
+                    stats = get_trainable_parameter_stats(actor_module)
+                    print(
+                        f"LoRA training enabled: trainable={stats['trainable']} total={stats['total']}"
+                    )
         torch.distributed.barrier()
 
         if self.rank == 0:
@@ -258,11 +273,16 @@ class ActorRolloutRefWorker(Worker):
         # We force reference policy to use CPUOffload to save memory.
         # We force turn off CPUOffload for actor because it causes incorrect results when using grad accumulation
         cpu_offload = None if role == 'actor' else CPUOffload(offload_params=True)
+        use_orig_params = (
+            role == 'actor'
+            and optim_config is not None
+            and self.config.model.get('training_mode', 'full') == 'lora'
+        )
         actor_module_fsdp = FSDP(
             actor_module,
             cpu_offload=cpu_offload,
             param_init_fn=init_fn,
-            use_orig_params=False,
+            use_orig_params=use_orig_params,
             auto_wrap_policy=auto_wrap_policy,
             device_id=torch.cuda.current_device(),
             sharding_strategy=sharding_strategy,  # zero3
@@ -276,7 +296,12 @@ class ActorRolloutRefWorker(Worker):
         # TODO: add more optimizer args into config
         if role == 'actor' and optim_config is not None:
             from verl.utils.torch_functional import get_constant_schedule_with_warmup
-            actor_optimizer = optim.AdamW(actor_module_fsdp.parameters(),
+            optimizer_parameters = (
+                list(iter_trainable_parameters(actor_module_fsdp))
+                if self.config.model.get('training_mode', 'full') == 'lora'
+                else actor_module_fsdp.parameters()
+            )
+            actor_optimizer = optim.AdamW(optimizer_parameters,
                                           lr=optim_config.lr,
                                           betas=optim_config.get('betas', (0.9, 0.999)),
                                           weight_decay=optim_config.get('weight_decay', 1e-2))

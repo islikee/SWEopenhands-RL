@@ -17,6 +17,11 @@ from verl import DataProto
 from verl.utils.debug import log_gpu_memory_usage
 from verl.utils.torch_functional import (broadcast_dict_tensor, allgather_dict_tensors, all_gather_dict_non_tensors,
                                          broadcast_dict_non_tensor)
+from verl.workers.lora_utils import (
+    build_effective_rollout_weight_payload,
+    has_lora_adapters,
+    sync_rollout_weight_payload,
+)
 from ..sharding_manager.base import BaseShardingManager
 
 logger = logging.getLogger(__file__)
@@ -112,7 +117,11 @@ class FSDPSGLShardingManager(BaseShardingManager):
         if "actor" in self.role:
             start = time.time()
             log_gpu_memory_usage('Before state_dict() in sharding manager memory', logger=logger)
-            st = self.module.state_dict()
+            if has_lora_adapters(self.module):
+                st = self.module.state_dict()
+                st = dict(build_effective_rollout_weight_payload(self.module, state_dict=st))
+            else:
+                st = self.module.state_dict()
             k, v = next(iter(st.items()))
             device = v.device
             print(f"state_dict dtype, device of {k}: {v.dtype=} {device=}")
@@ -177,7 +186,7 @@ class FSDPSGLShardingManager(BaseShardingManager):
             if self.role == "actor_rollout":
                 if local_rank == 0:
                     print("Using `update_weights_from_tensor`")
-                    self.inference_engine.update_weights_from_tensor(gpu_tensor_list)
+                    sync_rollout_weight_payload(self.inference_engine, gpu_tensor_list)
                     del gpu_tensor_list
             else:
                 if self.role == "actor":
@@ -208,7 +217,7 @@ class FSDPSGLShardingManager(BaseShardingManager):
                             v = torch.empty(shape, dtype=dtype, device='cuda')
                             torch.distributed.broadcast(v, group_src=0, group=self.update_weight_pg)
                             tensor_list.append((k, v))
-                        self.inference_engine.update_weights_from_tensor(tensor_list)
+                        sync_rollout_weight_payload(self.inference_engine, tensor_list)
                         lst = [None]
                         torch.distributed.object_list(lst, group_src=0, group=self.update_weight_pg)
                         assert lst[0] is not None

@@ -35,6 +35,11 @@ from torch.distributed.device_mesh import DeviceMesh
 from verl import DataProto
 from verl.utils.torch_functional import (broadcast_dict_tensor, allgather_dict_tensors)
 from verl.utils.debug import log_gpu_memory_usage
+from verl.workers.lora_utils import (
+    build_effective_rollout_weight_payload,
+    has_lora_adapters,
+    sync_rollout_weight_payload,
+)
 from sglang.srt.entrypoints.verl_engine import VerlEngine
 from .base import BaseShardingManager
 from verl.third_party.sglang import parallel_state as sglang_ps
@@ -82,13 +87,17 @@ class FSDPSGLangShardingManager(BaseShardingManager):
     def __enter__(self):
         torch.cuda.empty_cache()
         log_gpu_memory_usage('Before state_dict() in sharding manager memory', logger=logger)
-        params = self.module.state_dict()
+        if has_lora_adapters(self.module):
+            params = self.module.state_dict()
+            params = dict(build_effective_rollout_weight_payload(self.module, state_dict=params))
+        else:
+            params = self.module.state_dict()
         log_gpu_memory_usage('After state_dict() in sharding manager memory', logger=logger)
         # Copy, not share memory
         load_format = None if self.full_params else 'dtensor'
         self.inference_engine.resume_memory_occupation()
 
-        self.inference_engine.update_weights_from_tensor([(k, v) for k, v in params.items()], load_format=None)
+        sync_rollout_weight_payload(self.inference_engine, [(k, v) for k, v in params.items()], load_format=None)
         log_gpu_memory_usage('After sync model weights in sharding manager', logger=logger)
 
         del params

@@ -1,0 +1,64 @@
+# Thin cloud smoke overrides. Real CUDA/SGLang/FSDP behavior is validated here.
+data:
+  train_batch_size: 4
+  max_prompt_length: 8192
+  max_response_length: 1024
+  dataloader_num_workers: 0
+
+actor_rollout_ref:
+  model:
+    path: ${oc.env:SKYRL_MODEL_PATH,Qwen/Qwen2.5-Coder-7B-Instruct}
+    training_mode: lora
+    lora_rank: 16
+    lora_alpha: 32
+    lora_dropout: 0.0
+    lora_target_modules: null
+  actor:
+    ppo_mini_batch_size: 4
+    ppo_micro_batch_size_per_gpu: 1
+    masking: true
+    fsdp_config:
+      param_offload: true
+      optimizer_offload: true
+  ref:
+    log_prob_micro_batch_size_per_gpu: 1
+    fsdp_config:
+      param_offload: true
+  rollout:
+    task_type: swegym
+    name: async
+    n_trajectories: 2
+    max_iterations: 3
+    max_parallel_agents: 4
+    max_eval_parallel_agents: 4
+    max_starting_message_length: 12000
+    tensor_model_parallel_size: 1
+    enable_memory_saver: true
+    log_prob_micro_batch_size_per_gpu: 1
+    max_model_len: 8192
+    gpu_memory_utilization: 0.55
+
+algorithm:
+  adv_estimator: grpo
+  use_kl_in_reward: false
+
+reward_model:
+  reward_manager: swebench_test_informed
+  test_informed:
+    target_weight: 0.8
+    regression_weight: 0.2
+
+trainer:
+  nnodes: 1
+  n_gpus_per_node: 4
+  total_training_steps: 2
+  save_freq: 1
+  test_freq: -1
+  logger: ["console"]
+
+smoke:
+  rollout_weight_sync_required: true
+  rollout_weight_change_after_first_sync_required: true
+  require_nonzero_lora_delta: true
+  require_base_unchanged: true
+  require_nonzero_advantage: true

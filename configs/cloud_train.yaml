@@ -1,0 +1,47 @@
+# Production training overrides. Enable only after cloud_smoke passes.
+data:
+  train_batch_size: ${oc.env:SKYRL_TRAIN_BATCH_SIZE,4}
+  max_prompt_length: ${oc.env:SKYRL_MAX_PROMPT_LENGTH,8192}
+  max_response_length: ${oc.env:SKYRL_MAX_RESPONSE_LENGTH,1024}
+  dataloader_num_workers: ${oc.env:SKYRL_DATALOADER_WORKERS,0}
+
+actor_rollout_ref:
+  model:
+    path: ${oc.env:SKYRL_MODEL_PATH,Qwen/Qwen2.5-Coder-7B-Instruct}
+    training_mode: lora
+    lora_rank: ${oc.env:SKYRL_LORA_RANK,16}
+    lora_alpha: ${oc.env:SKYRL_LORA_ALPHA,32}
+    lora_dropout: ${oc.env:SKYRL_LORA_DROPOUT,0.0}
+    lora_target_modules: null
+  actor:
+    ppo_mini_batch_size: ${oc.env:SKYRL_PPO_MINI_BATCH_SIZE,4}
+    ppo_micro_batch_size_per_gpu: 1
+    masking: true
+  ref:
+    log_prob_micro_batch_size_per_gpu: 1
+  rollout:
+    task_type: swegym
+    n_trajectories: ${oc.env:SKYRL_TRAJECTORIES_PER_TASK,2}
+    max_iterations: ${oc.env:SKYRL_MAX_ITERATIONS,5}
+    max_parallel_agents: ${oc.env:SKYRL_MAX_PARALLEL_AGENTS,4}
+    max_eval_parallel_agents: ${oc.env:SKYRL_MAX_EVAL_PARALLEL_AGENTS,4}
+    max_starting_message_length: ${oc.env:SKYRL_MAX_STARTING_MESSAGE_LENGTH,12000}
+    enable_memory_saver: true
+    log_prob_micro_batch_size_per_gpu: 1
+
+algorithm:
+  adv_estimator: grpo
+
+reward_model:
+  reward_manager: ${oc.env:SKYRL_REWARD_MANAGER,swebench_test_informed}
+  test_informed:
+    target_weight: ${oc.env:SKYRL_TARGET_WEIGHT,0.8}
+    regression_weight: ${oc.env:SKYRL_REGRESSION_WEIGHT,0.2}
+
+trainer:
+  nnodes: ${oc.env:SKYRL_NNODES,1}
+  n_gpus_per_node: ${oc.env:SKYRL_GPUS_PER_NODE,4}
+  logger: ["console", "wandb"]
+
+smoke:
+  rollout_weight_sync_required: true

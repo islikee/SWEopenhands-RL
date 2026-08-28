@@ -7,6 +7,7 @@ import tempfile
 from time import sleep
 
 from openhands.utils.shutdown_listener import sleep_if_should_continue
+from .runtime_payload import runtime_instance_record
 from openhands.core.logger import openhands_logger as logger
 from openhands.events.action import CmdRunAction, MessageAction
 from openhands.events.observation import CmdOutputObservation, ErrorObservation
@@ -173,11 +174,8 @@ def initialize_runtime(
             temp_file_path = os.path.join(temp_dir, swe_instance_json_name)
             # Write to the file with the desired name within the temporary directory
             with open(temp_file_path, 'w') as f:
-                if not isinstance(instance, dict):
-                    serializable_instance = ensure_serializable(instance.to_dict())
-                    json.dump([serializable_instance], f)
-                else:
-                    json.dump([instance], f)
+                serializable_instance = ensure_serializable(runtime_instance_record(instance))
+                json.dump([serializable_instance], f)
 
             # Copy the file to the desired location
             runtime.copy_to(temp_file_path, '/swe_util/eval_data/instances/')

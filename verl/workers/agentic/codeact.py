@@ -64,6 +64,8 @@ from swegym.harness.grading import get_eval_report
 from openhands.events.action import CmdRunAction
 from openhands.events.observation import CmdOutputObservation
 from .utils import process_git_patch
+from .result_normalization import fill_empty_trajectory_messages
+from verl.workers.reward_manager.swebench_report import trajectory_reward_fields
 
 DOCKER_IMAGE_PREFIX = os.environ.get('EVAL_DOCKER_IMAGE_PREFIX', 'docker.io/xingyaoww/')
 logger.info(f'Using docker image prefix: {DOCKER_IMAGE_PREFIX}')
@@ -634,6 +636,19 @@ class CodeActAgentGroup:
         error_list = []
         resolved_list = []
         has_finish_action_list = []
+        target_tests_total_list = []
+        target_tests_passed_list = []
+        target_tests_failed_list = []
+        regression_tests_total_list = []
+        regression_tests_passed_list = []
+        regression_tests_failed_list = []
+        evaluation_error_list = []
+        evaluation_timeout_list = []
+        outcome_primary_list = []
+        failure_flags_list = []
+        binary_reward_list = []
+        test_informed_reward_list = []
+        selected_training_reward_list = []
         
         # Create a mapping of instance_id -> list of trajectories
         instance_trajectories = {}
@@ -664,32 +679,9 @@ class CodeActAgentGroup:
                 results_by_instance[instance_id] = []
             results_by_instance[instance_id].append((i, result))
         
-        # Handle empty messages by copying from another trajectory of the same instance
+        # Keep failed trajectory outcomes independent when filling tokenizer input.
         for instance_id, results in results_by_instance.items():
-            # Find a valid messages list to use as fallback
-            valid_messages = None
-            valid_patch = None
-            for _, result in results:
-                messages = result.get('messages', [])
-                if messages and len(messages) > 0:
-                    valid_messages = messages
-                    valid_patch = result.get('git_patch', None)
-                    valid_resolved = result.get('resolved', False)
-                    valid_finish = result.get('finish', False)
-                    valid_error = result.get('error', None)
-                    break
-            
-            # If we found valid messages, use them for trajectories with empty messages
-            if valid_messages:
-                for idx, result in results:
-                    if not result.get('messages') or len(result.get('messages', [])) == 0:
-                        print(f"Got empty messages for instance_id {instance_id}, trajectory {idx}. Copying messages array from a valid trajectory. ")
-                        # Copy messages from the valid trajectory
-                        matched_results[idx]['messages'] = valid_messages.copy()
-                        matched_results[idx]['git_patch'] = valid_patch
-                        matched_results[idx]['resolved'] = valid_resolved
-                        matched_results[idx]['error'] = valid_error
-                        matched_results[idx]['finish'] = valid_finish
+            fill_empty_trajectory_messages([result for _, result in results])
         
         # Get batch of messages
         all_messages = []
@@ -714,11 +706,29 @@ class CodeActAgentGroup:
             all_responses.append(response)
 
             # Also add non-tensor data
+            reward_fields = trajectory_reward_fields(
+                result,
+                evaluation_report=result.get('evaluation_report', None),
+                evaluation_error=result.get('evaluation_error', result.get('eval_error', None)),
+            )
             git_patch_list.append(result.get('git_patch', None))
             success_list.append(result.get('success', False))
             error_list.append(result.get('error', None))
-            resolved_list.append(result.get('resolved', False))
+            resolved_list.append(reward_fields['resolved'])
             has_finish_action_list.append(result.get('finish', False))
+            target_tests_total_list.append(reward_fields['target_tests_total'])
+            target_tests_passed_list.append(reward_fields['target_tests_passed'])
+            target_tests_failed_list.append(reward_fields['target_tests_failed'])
+            regression_tests_total_list.append(reward_fields['regression_tests_total'])
+            regression_tests_passed_list.append(reward_fields['regression_tests_passed'])
+            regression_tests_failed_list.append(reward_fields['regression_tests_failed'])
+            evaluation_error_list.append(reward_fields['evaluation_error'])
+            evaluation_timeout_list.append(reward_fields['evaluation_timeout'])
+            outcome_primary_list.append(reward_fields['outcome_primary'])
+            failure_flags_list.append(reward_fields['failure_flags'])
+            binary_reward_list.append(reward_fields['binary_reward'])
+            test_informed_reward_list.append(reward_fields['test_informed_reward'])
+            selected_training_reward_list.append(reward_fields['selected_training_reward'])
 
 
         # Encode messages, get assitant mask and position ids
@@ -771,6 +781,19 @@ class CodeActAgentGroup:
             'instance': instance_list,
             'resolved': resolved_list,
             'finish': has_finish_action_list,
+            'target_tests_total': target_tests_total_list,
+            'target_tests_passed': target_tests_passed_list,
+            'target_tests_failed': target_tests_failed_list,
+            'regression_tests_total': regression_tests_total_list,
+            'regression_tests_passed': regression_tests_passed_list,
+            'regression_tests_failed': regression_tests_failed_list,
+            'evaluation_error': evaluation_error_list,
+            'evaluation_timeout': evaluation_timeout_list,
+            'outcome_primary': outcome_primary_list,
+            'failure_flags': failure_flags_list,
+            'binary_reward': binary_reward_list,
+            'test_informed_reward': test_informed_reward_list,
+            'selected_training_reward': selected_training_reward_list,
         }
         
         # Create and return DataProto
@@ -1093,14 +1116,28 @@ class CodeActAgentGroup:
                             logger.info(
                                 f"[{instance_id}, {trajectory_id}] report: {report}\nResult for [{instance_id}, {trajectory_id}]: resolved: {report['resolved']}"
                             )
+                            self.results[instance_id][trajectory_id]['evaluation_report'] = report
                             self.results[instance_id][trajectory_id]['resolved'] = report[
                                 'resolved'
                             ]
+                            self.results[instance_id][trajectory_id].update(
+                                trajectory_reward_fields(
+                                    self.results[instance_id][trajectory_id],
+                                    evaluation_report=report,
+                                )
+                            )
                         except Exception as e:
                             logger.error(
                                 f'[{instance_id}, {trajectory_id}] Error when getting eval report: {e}'
                             )
                             self.results[instance_id][trajectory_id]['resolved'] = False
+                            self.results[instance_id][trajectory_id]['evaluation_error'] = str(e)
+                            self.results[instance_id][trajectory_id].update(
+                                trajectory_reward_fields(
+                                    self.results[instance_id][trajectory_id],
+                                    evaluation_error=str(e),
+                                )
+                            )
             else:
                 raise Exception(f'[{instance_id}, {trajectory_id}] Error when starting eval:\n{obs.content}')
         else:
@@ -1155,6 +1192,13 @@ class CodeActAgentGroup:
             logger.error(f"Failed to evaluate traj {trajectory_id} for instance {instance_id}: {str(e)}")
             self.results[instance_id][trajectory_id]['resolved'] = False
             self.results[instance_id][trajectory_id]['eval_error'] = str(e)
+            self.results[instance_id][trajectory_id]['evaluation_error'] = str(e)
+            self.results[instance_id][trajectory_id].update(
+                trajectory_reward_fields(
+                    self.results[instance_id][trajectory_id],
+                    evaluation_error=str(e),
+                )
+            )
         finally:
             if 'runtime' in locals() and runtime:
                 runtime.event_stream.close()

@@ -16,3 +16,4 @@ from .naive import NaiveRewardManager
 from .prime import PrimeRewardManager
 from .dapo import DAPORewardManager
 from .swebench import SWEBenchRewardManager
+from .swebench_test_informed import TestInformedSWEBenchRewardManager

@@ -28,6 +28,11 @@ actor_rollout_ref:
     override_config: { }
     enable_gradient_checkpointing: True
     use_remove_padding: False
+    training_mode: full
+    lora_rank: 16
+    lora_alpha: 32
+    lora_dropout: 0.0
+    lora_target_modules: null
   actor:
     masking: False
     strategy: fsdp  # This is for backward-compatibility
