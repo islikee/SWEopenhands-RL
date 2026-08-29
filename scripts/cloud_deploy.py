@@ -13,6 +13,9 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
+from urllib.request import Request, urlopen
 
 try:
     import tomllib
@@ -216,6 +219,92 @@ def command_exists(name: str) -> bool:
     return shutil.which(name) is not None
 
 
+def remote_runtime_env_errors(env: dict[str, str] | None = None) -> list[str]:
+    if env is None:
+        env = os.environ
+    value = env.get("SANDBOX_REMOTE_RUNTIME_API_URL", "").strip().strip("\"'")
+    if not value:
+        return ["SANDBOX_REMOTE_RUNTIME_API_URL is required for OpenHands cloud smoke."]
+    if value == "<insert_remote_sandbox_url>":
+        return [
+            "SANDBOX_REMOTE_RUNTIME_API_URL still contains the placeholder '<insert_remote_sandbox_url>'."
+        ]
+
+    parsed = urlparse(value)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return [
+            f"SANDBOX_REMOTE_RUNTIME_API_URL must be an http(s) URL, got {value!r}."
+        ]
+    return []
+
+
+def remote_runtime_auth_errors(
+    env: dict[str, str] | None = None,
+    urlopen_func=urlopen,
+) -> list[str]:
+    if env is None:
+        env = os.environ
+    env_errors = remote_runtime_env_errors(env)
+    if env_errors:
+        return env_errors
+
+    api_key = env.get("ALLHANDS_API_KEY", "").strip().strip("\"'")
+    if not api_key:
+        return ["ALLHANDS_API_KEY is required for OpenHands remote runtime auth."]
+
+    base_url = env["SANDBOX_REMOTE_RUNTIME_API_URL"].strip().strip("\"'").rstrip("/")
+    probe_url = f"{base_url}/sessions/skyrl-preflight-auth"
+    request = Request(probe_url, headers={"X-API-Key": api_key})
+    try:
+        with urlopen_func(request, timeout=10) as response:
+            status = response.getcode()
+    except HTTPError as exc:
+        if exc.code == 404:
+            return []
+        if exc.code == 401:
+            return [
+                "ALLHANDS_API_KEY was rejected by SANDBOX_REMOTE_RUNTIME_API_URL (HTTP 401)."
+            ]
+        return [
+            f"Remote runtime auth probe returned HTTP {exc.code} for SANDBOX_REMOTE_RUNTIME_API_URL."
+        ]
+    except URLError as exc:
+        return [f"Remote runtime auth probe failed: {exc.reason}."]
+    except Exception as exc:
+        return [f"Remote runtime auth probe failed: {exc}."]
+
+    if status in {200, 404}:
+        return []
+    return [
+        f"Remote runtime auth probe returned HTTP {status} for SANDBOX_REMOTE_RUNTIME_API_URL."
+    ]
+
+
+def openhands_runtime_preflight_errors(
+    env: dict[str, str] | None = None,
+) -> list[str]:
+    """Validate only the credentials required by the selected OpenHands runtime."""
+    if env is None:
+        env = os.environ
+
+    runtime = env.get(
+        "SKYRL_OPENHANDS_RUNTIME",
+        env.get("RUNTIME", "remote"),
+    ).strip().lower()
+
+    if runtime == "docker":
+        return []
+
+    if runtime != "remote":
+        return [f"Unsupported SKYRL_OPENHANDS_RUNTIME: {runtime!r}. Expected 'remote' or 'docker'."]
+
+    errors = remote_runtime_env_errors(env)
+    if errors:
+        return errors
+
+    return remote_runtime_auth_errors(env)
+
+
 def gpu_count() -> int:
     if not command_exists("nvidia-smi"):
         return 0
@@ -312,6 +401,7 @@ def preflight_run(repo_root: Path, paths: dict[str, Path]) -> None:
     errors: list[str] = []
     if sys.platform != "linux":
         errors.append("Linux is required for cloud smoke.")
+    errors.extend(openhands_runtime_preflight_errors())
     if gpu_count() < int(os.environ.get("SKYRL_GPUS_PER_NODE", "4")):
         errors.append("Not enough visible GPUs for SKYRL_GPUS_PER_NODE.")
     for command in ["git", "docker", "uv"]:

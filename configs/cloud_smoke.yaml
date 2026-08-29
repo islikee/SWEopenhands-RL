@@ -1,11 +1,13 @@
 # Thin cloud smoke overrides. Real CUDA/SGLang/FSDP behavior is validated here.
 data:
+  prompt_key: problem_statement
   train_batch_size: 4
   max_prompt_length: 8192
   max_response_length: 1024
   dataloader_num_workers: 0
 
 actor_rollout_ref:
+  exchange_size: 500000000
   model:
     path: ${oc.env:SKYRL_MODEL_PATH,Qwen/Qwen2.5-Coder-7B-Instruct}
     training_mode: lora
@@ -32,10 +34,13 @@ actor_rollout_ref:
     max_parallel_agents: 4
     max_eval_parallel_agents: 4
     max_starting_message_length: 12000
-    tensor_model_parallel_size: 1
+    tensor_model_parallel_size: 2
     enable_memory_saver: true
     log_prob_micro_batch_size_per_gpu: 1
     max_model_len: 8192
+    max_total_tokens: 32768
+    max_prefill_tokens: 18432
+    disable_cuda_graph: true
     gpu_memory_utilization: 0.55
 
 algorithm:

@@ -1,5 +1,7 @@
 import importlib.util
+from io import BytesIO
 from pathlib import Path
+from urllib.error import HTTPError
 
 import pytest
 
@@ -275,6 +277,93 @@ def test_uv_lock_version_parser_reports_frozen_cloud_versions():
     assert versions["huggingface-hub"] == "0.30.2"
     assert versions["swegym"].endswith("SWE-Bench-Package.git#16dd480cce9b27bf111a362d280881c6def5d2a7")
     assert versions["swebench"].endswith("SWE-Bench-Fork.git#242429c188fcfd06aad13fce9a54d450470bf0ac")
+
+
+def test_remote_runtime_env_rejects_missing_placeholder_and_malformed_values():
+    cloud_deploy = load_cloud_deploy()
+
+    assert cloud_deploy.remote_runtime_env_errors({}) == [
+        "SANDBOX_REMOTE_RUNTIME_API_URL is required for OpenHands cloud smoke."
+    ]
+    assert cloud_deploy.remote_runtime_env_errors(
+        {"SANDBOX_REMOTE_RUNTIME_API_URL": "<insert_remote_sandbox_url>"}
+    ) == [
+        "SANDBOX_REMOTE_RUNTIME_API_URL still contains the placeholder '<insert_remote_sandbox_url>'."
+    ]
+    assert cloud_deploy.remote_runtime_env_errors(
+        {"SANDBOX_REMOTE_RUNTIME_API_URL": "runtime.eval.all-hands.dev"}
+    ) == [
+        "SANDBOX_REMOTE_RUNTIME_API_URL must be an http(s) URL, got 'runtime.eval.all-hands.dev'."
+    ]
+
+
+def test_remote_runtime_env_accepts_http_urls():
+    cloud_deploy = load_cloud_deploy()
+
+    assert (
+        cloud_deploy.remote_runtime_env_errors(
+            {"SANDBOX_REMOTE_RUNTIME_API_URL": "https://runtime.eval.all-hands.dev"}
+        )
+        == []
+    )
+
+
+def test_cloud_runtime_preflight_does_not_require_remote_credentials_for_docker():
+    cloud_deploy = load_cloud_deploy()
+
+    assert (
+        cloud_deploy.openhands_runtime_preflight_errors(
+            {"SKYRL_OPENHANDS_RUNTIME": "docker"}
+        )
+        == []
+    )
+
+
+def test_remote_runtime_auth_probe_accepts_authenticated_404():
+    cloud_deploy = load_cloud_deploy()
+    calls = []
+
+    def fake_urlopen(request, timeout):
+        calls.append((request.full_url, request.headers, timeout))
+        raise HTTPError(request.full_url, 404, "missing session", {}, BytesIO())
+
+    errors = cloud_deploy.remote_runtime_auth_errors(
+        {
+            "SANDBOX_REMOTE_RUNTIME_API_URL": "https://runtime.eval.all-hands.dev",
+            "ALLHANDS_API_KEY": "valid-key",
+        },
+        urlopen_func=fake_urlopen,
+    )
+
+    assert errors == []
+    assert calls == [
+        (
+            "https://runtime.eval.all-hands.dev/sessions/skyrl-preflight-auth",
+            {"X-api-key": "valid-key"},
+            10,
+        )
+    ]
+
+
+def test_remote_runtime_auth_probe_rejects_missing_key_and_401():
+    cloud_deploy = load_cloud_deploy()
+
+    assert cloud_deploy.remote_runtime_auth_errors(
+        {"SANDBOX_REMOTE_RUNTIME_API_URL": "https://runtime.eval.all-hands.dev"}
+    ) == ["ALLHANDS_API_KEY is required for OpenHands remote runtime auth."]
+
+    def fake_urlopen(request, timeout):
+        raise HTTPError(request.full_url, 401, "unauthorized", {}, BytesIO())
+
+    assert cloud_deploy.remote_runtime_auth_errors(
+        {
+            "SANDBOX_REMOTE_RUNTIME_API_URL": "https://runtime.eval.all-hands.dev",
+            "ALLHANDS_API_KEY": "bad-key",
+        },
+        urlopen_func=fake_urlopen,
+    ) == [
+        "ALLHANDS_API_KEY was rejected by SANDBOX_REMOTE_RUNTIME_API_URL (HTTP 401)."
+    ]
 
 
 def test_cloud_setup_doc_and_scripts_share_public_env_names():

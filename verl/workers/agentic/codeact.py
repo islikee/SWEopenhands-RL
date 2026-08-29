@@ -65,6 +65,7 @@ from openhands.events.action import CmdRunAction
 from openhands.events.observation import CmdOutputObservation
 from .utils import process_git_patch
 from .result_normalization import fill_empty_trajectory_messages
+from .runtime_backend import openhands_runtime_backend, prepare_sandbox_for_runtime
 from verl.workers.reward_manager.swebench_report import trajectory_reward_fields
 
 DOCKER_IMAGE_PREFIX = os.environ.get('EVAL_DOCKER_IMAGE_PREFIX', 'docker.io/xingyaoww/')
@@ -869,12 +870,14 @@ class CodeActAgentGroup:
             sandbox_config.enable_auto_lint = True
             sandbox_config.use_host_network = False
             sandbox_config.platform = 'linux/amd64'
+            runtime_backend = openhands_runtime_backend()
+            prepare_sandbox_for_runtime(sandbox_config, runtime_backend)
             
             app_config = AppConfig(
                 default_agent='OnlineCodeActAgent',
                 run_as_openhands=False,
                 max_iterations=self.max_iterations,
-                runtime='remote',
+                runtime=runtime_backend,
                 sandbox=sandbox_config,
                 workspace_base=None,
                 workspace_mount_path=None,
@@ -1163,9 +1166,11 @@ class CodeActAgentGroup:
             sandbox_config = get_default_sandbox_config_for_eval()
             sandbox_config.base_container_image = base_container_image
             sandbox_config.remote_runtime_resource_factor = 1
+            runtime_backend = openhands_runtime_backend()
+            prepare_sandbox_for_runtime(sandbox_config, runtime_backend)
             config = AppConfig(
                 run_as_openhands=False,
-                runtime="remote",
+                runtime=runtime_backend,
                 sandbox=sandbox_config,
                 # do not mount workspace
                 workspace_base=None,

@@ -18,8 +18,8 @@ from verl.utils.debug import log_gpu_memory_usage
 from verl.utils.torch_functional import (broadcast_dict_tensor, allgather_dict_tensors, all_gather_dict_non_tensors,
                                          broadcast_dict_non_tensor)
 from verl.workers.lora_utils import (
-    build_effective_rollout_weight_payload,
     has_lora_adapters,
+    iter_effective_rollout_weight_payload,
     sync_rollout_weight_payload,
 )
 from ..sharding_manager.base import BaseShardingManager
@@ -114,31 +114,43 @@ class FSDPSGLShardingManager(BaseShardingManager):
 
     def __enter__(self):
         local_rank = self.device_mesh.get_local_rank(1)
+        tensor_list = []
         if "actor" in self.role:
             start = time.time()
             log_gpu_memory_usage('Before state_dict() in sharding manager memory', logger=logger)
-            if has_lora_adapters(self.module):
-                st = self.module.state_dict()
-                st = dict(build_effective_rollout_weight_payload(self.module, state_dict=st))
-            else:
-                st = self.module.state_dict()
+            st = self.module.state_dict()
             k, v = next(iter(st.items()))
             device = v.device
             print(f"state_dict dtype, device of {k}: {v.dtype=} {device=}")
             log_gpu_memory_usage('After state_dict() in sharding manager memory', logger=logger)
             # print(f'Weight keys: {st.keys()}')
             target_device = torch.device("cpu") if self.exchange_size else device
-            tensor_list = []
-            for k, v in tqdm(st.items()):
-                if isinstance(v, DTensor):
-                    v = v.full_tensor()
+            if has_lora_adapters(self.module):
+                payload_iter = iter_effective_rollout_weight_payload(
+                    self.module,
+                    state_dict=st,
+                    target_device=target_device,
+                    target_dtype=torch.bfloat16,
+                    emit_payload=local_rank == 0,
+                )
                 if local_rank == 0:
-                    v_bf16 = v.to(dtype=torch.bfloat16)
-                    v_target = v_bf16.to(device=target_device)
-                    tensor_list.append((k, v_target))
-                    del v_bf16
+                    for k, v in tqdm(payload_iter):
+                        tensor_list.append((k, v))
                 else:
-                    del v
+                    for _ in payload_iter:
+                        pass
+            else:
+                st_items = tqdm(st.items()) if local_rank == 0 else st.items()
+                for k, v in st_items:
+                    if isinstance(v, DTensor):
+                        v = v.full_tensor()
+                    if local_rank == 0:
+                        v_bf16 = v.to(dtype=torch.bfloat16)
+                        v_target = v_bf16.to(device=target_device)
+                        tensor_list.append((k, v_target))
+                        del v_bf16
+                    else:
+                        del v
             del st
             torch.cuda.empty_cache()
             log_gpu_memory_usage('After del state_dict and empty_cache in sharding manager', logger=logger)
@@ -185,6 +197,9 @@ class FSDPSGLShardingManager(BaseShardingManager):
 
             if self.role == "actor_rollout":
                 if local_rank == 0:
+                    if not gpu_tensor_list:
+                        assert done
+                        break
                     print("Using `update_weights_from_tensor`")
                     sync_rollout_weight_payload(self.inference_engine, gpu_tensor_list)
                     del gpu_tensor_list

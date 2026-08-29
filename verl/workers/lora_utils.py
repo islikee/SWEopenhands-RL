@@ -85,10 +85,20 @@ def load_lora_checkpoint(model, path: str | Path) -> None:
     set_peft_model_state_dict(model, state_dict, adapter_name="default")
 
 
-def _materialize_tensor(tensor: torch.Tensor) -> torch.Tensor:
+def _materialize_tensor(
+    tensor: torch.Tensor,
+    *,
+    target_device: torch.device | str | None = None,
+    clone: bool = True,
+) -> torch.Tensor:
     if hasattr(tensor, "full_tensor"):
         tensor = tensor.full_tensor()
-    return tensor.detach().clone()
+    tensor = tensor.detach()
+    if target_device is not None:
+        tensor = tensor.to(device=target_device)
+    if clone:
+        tensor = tensor.clone()
+    return tensor
 
 
 def _normalize_peft_key(name: str) -> str:
@@ -107,15 +117,35 @@ def _active_adapters(module) -> list[str]:
     return ["default"]
 
 
-def _delta_from_state_dict(prefix: str, module, state_dict: dict[str, torch.Tensor]) -> torch.Tensor | None:
+def _delta_from_state_dict(
+    prefix: str,
+    module,
+    state_dict: dict[str, torch.Tensor],
+    *,
+    target_device: torch.device | str | None = None,
+    emit_payload: bool = True,
+) -> torch.Tensor | None:
     deltas = []
     for adapter in _active_adapters(module):
         a_key = f"{prefix}.lora_A.{adapter}.weight"
         b_key = f"{prefix}.lora_B.{adapter}.weight"
         if a_key not in state_dict or b_key not in state_dict:
             continue
-        a = _materialize_tensor(state_dict[a_key]).float()
-        b = _materialize_tensor(state_dict[b_key]).float()
+        a = _materialize_tensor(
+            state_dict[a_key],
+            target_device=target_device if emit_payload else None,
+            clone=emit_payload,
+        )
+        b = _materialize_tensor(
+            state_dict[b_key],
+            target_device=target_device if emit_payload else None,
+            clone=emit_payload,
+        )
+        if not emit_payload:
+            del a, b
+            continue
+        a = a.float()
+        b = b.float()
         delta = b @ a
         if getattr(module, "fan_in_fan_out", False):
             delta = delta.T
@@ -130,27 +160,52 @@ def build_effective_rollout_weight_payload(
     model,
     state_dict: dict[str, torch.Tensor] | None = None,
 ) -> list[tuple[str, torch.Tensor]]:
+    return list(iter_effective_rollout_weight_payload(model, state_dict=state_dict))
+
+
+def iter_effective_rollout_weight_payload(
+    model,
+    state_dict: dict[str, torch.Tensor] | None = None,
+    *,
+    target_device: torch.device | str | None = None,
+    target_dtype: torch.dtype | None = None,
+    emit_payload: bool = True,
+):
     unwrapped = _unwrap_module(model)
     state_dict = state_dict or unwrapped.state_dict()
     modules = dict(unwrapped.named_modules())
     has_lora = any(".lora_A." in name or ".lora_B." in name for name in state_dict)
-    payload: list[tuple[str, torch.Tensor]] = []
 
     for name, tensor in state_dict.items():
         if ".lora_" in name or ".lora_embedding_" in name:
             continue
-        materialized = _materialize_tensor(tensor)
+        materialized = _materialize_tensor(
+            tensor,
+            target_device=target_device if emit_payload else None,
+            clone=emit_payload,
+        )
         if has_lora and name.endswith(".base_layer.weight"):
             prefix = name[: -len(".base_layer.weight")]
             module = modules.get(prefix)
             if module is not None:
-                delta = _delta_from_state_dict(prefix, module, state_dict)
+                delta = _delta_from_state_dict(
+                    prefix,
+                    module,
+                    state_dict,
+                    target_device=target_device,
+                    emit_payload=emit_payload,
+                )
                 if delta is not None:
                     materialized = materialized.float() + delta.to(materialized.device)
                     materialized = materialized.to(dtype=tensor.dtype)
-        payload.append((_normalize_peft_key(name), materialized))
-
-    return payload
+        if not emit_payload:
+            del materialized
+            continue
+        if target_dtype is not None:
+            materialized = materialized.to(dtype=target_dtype)
+        if target_device is not None:
+            materialized = materialized.to(device=target_device)
+        yield (_normalize_peft_key(name), materialized)
 
 
 def has_lora_adapters(model) -> bool:

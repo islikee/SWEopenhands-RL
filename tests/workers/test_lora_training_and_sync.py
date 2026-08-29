@@ -8,6 +8,7 @@ from verl.workers.lora_utils import (
     build_effective_rollout_weight_payload,
     configure_lora_training,
     get_trainable_parameter_stats,
+    iter_effective_rollout_weight_payload,
     iter_trainable_parameters,
     save_lora_checkpoint,
     load_lora_checkpoint,
@@ -173,6 +174,58 @@ def test_effective_rollout_payload_matches_base_names_shapes_and_changes_after_l
         for name in payload_after
         if name in payload_before
     )
+
+
+def test_iter_effective_rollout_payload_matches_eager_payload_and_can_stage_to_cpu_bf16():
+    pytest.importorskip("peft")
+    torch.manual_seed(6)
+    model = configure_lora_training(_tiny_gpt2(), _lora_cfg())
+
+    eager_payload = build_effective_rollout_weight_payload(model)
+    iter_payload = list(
+        iter_effective_rollout_weight_payload(
+            model,
+            target_device=torch.device("cpu"),
+            target_dtype=torch.bfloat16,
+        )
+    )
+
+    assert [name for name, _ in iter_payload] == [name for name, _ in eager_payload]
+    assert all(tensor.device.type == "cpu" for _, tensor in iter_payload)
+    assert all(tensor.dtype == torch.bfloat16 for _, tensor in iter_payload)
+    assert torch.allclose(
+        dict(iter_payload)["transformer.h.0.attn.c_attn.weight"].float(),
+        dict(eager_payload)["transformer.h.0.attn.c_attn.weight"].float(),
+        atol=1e-2,
+        rtol=1e-2,
+    )
+
+
+def test_iter_effective_rollout_payload_can_drain_collectives_without_emitting_payload():
+    class FakeDTensor:
+        def __init__(self, tensor):
+            self.tensor = tensor
+            self.full_tensor_calls = 0
+
+        def full_tensor(self):
+            self.full_tensor_calls += 1
+            return self.tensor
+
+    class FakeModel:
+        def named_modules(self):
+            return []
+
+    fake_weight = FakeDTensor(torch.ones(2, 2))
+    payload = list(
+        iter_effective_rollout_weight_payload(
+            FakeModel(),
+            state_dict={"base_model.model.layers.0.weight": fake_weight},
+            emit_payload=False,
+        )
+    )
+
+    assert payload == []
+    assert fake_weight.full_tensor_calls == 1
 
 
 def test_effective_rollout_payload_matches_peft_forward_for_qwen2_target_modules():

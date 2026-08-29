@@ -38,6 +38,29 @@ def test_cloud_smoke_enables_sglang_memory_saver_for_hybrid_fsdp_rollout():
     ).read_text()
 
 
+def test_cloud_smoke_uses_explicit_a800_rollout_token_pool_and_tp_overrides():
+    cloud = yaml.safe_load(Path("configs/cloud_smoke.yaml").read_text())
+    rollout = cloud["actor_rollout_ref"]["rollout"]
+    script = Path("scripts/run_cloud_smoke.sh").read_text()
+
+    assert cloud["actor_rollout_ref"]["exchange_size"] == 500000000
+    assert rollout["tensor_model_parallel_size"] == 2
+    assert rollout["max_total_tokens"] == 32768
+    assert rollout["max_prefill_tokens"] == 18432
+    assert rollout["disable_cuda_graph"] is True
+    assert "actor_rollout_ref.exchange_size=500000000" in script
+    assert "actor_rollout_ref.rollout.tensor_model_parallel_size=2" in script
+    assert "actor_rollout_ref.rollout.max_total_tokens=32768" in script
+    assert "actor_rollout_ref.rollout.max_prefill_tokens=18432" in script
+    assert "actor_rollout_ref.rollout.disable_cuda_graph=True" in script
+
+
+def test_cloud_smoke_disables_sglang_tp_memory_balance_guard_for_colocated_a800():
+    script = Path("scripts/run_cloud_smoke.sh").read_text()
+
+    assert "SGL_DISABLE_TP_MEMORY_INBALANCE_CHECK=1" in script
+
+
 def test_cloud_smoke_declares_async_rollout_starting_message_limit():
     cloud = yaml.safe_load(Path("configs/cloud_smoke.yaml").read_text())
 
@@ -51,9 +74,14 @@ def test_cloud_smoke_sets_frozen_trainer_batch_and_microbatch_requirements():
     script = Path("scripts/run_cloud_smoke.sh").read_text()
 
     assert 'GPU_COUNT="${SKYRL_GPUS_PER_NODE:-4}"' in script
+    assert 'PYTHON_BIN="${PYTHON:-$ROOT_DIR/.venv/bin/python}"' in script
+    assert "uv run --isolated" not in script
+    assert "SKYRL_OPENHANDS_RUNTIME=docker" in script
+    assert "data.prompt_key=problem_statement" in script
+    assert "data.dataloader_num_workers=0" in script
     assert 'data.train_batch_size="$GPU_COUNT"' in script
     assert 'trainer.n_gpus_per_node="$GPU_COUNT"' in script
-    assert "actor_rollout_ref.rollout.tensor_model_parallel_size=1" in script
+    assert "actor_rollout_ref.rollout.tensor_model_parallel_size=2" in script
     assert "actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=1" in script
     assert "actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=1" in script
 

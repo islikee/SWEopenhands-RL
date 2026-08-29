@@ -18,6 +18,7 @@ from tensordict import TensorDict
 from verl import DataProto
 from verl.workers.rollout.base import BaseRollout
 from verl.workers.agentic.codeact import CodeActAgentGroup
+from verl.workers.agentic.rollout_limits import resolve_sglang_token_pool_limits
 
 logger = logging.getLogger(__file__)
 logger.setLevel(os.getenv('VERL_PPO_LOGGING_LEVEL', 'INFO'))
@@ -49,6 +50,7 @@ class AsyncRollout(BaseRollout):
             f"nodedup in async rollout {os.environ['CUDA_VISIBLE_DEVICES']=} @ {torch.distributed.get_rank()=} {self.tp_rank=}"
         )
         self.total_len = config.prompt_length + config.response_length
+        token_pool_limits = resolve_sglang_token_pool_limits(config)
         print(f"async rollout {config.gpu_memory_utilization=}")
         torch.distributed.barrier()
         # print(f"nodedup in async rollout {os.environ['CUDA_VISIBLE_DEVICES']=} @ {torch.distributed.get_rank()=} {self.tp_rank=}")
@@ -57,8 +59,9 @@ class AsyncRollout(BaseRollout):
                 model_path=model_path,
                 port=40000,
                 dtype=config.dtype,
-                max_total_tokens=60*self.total_len,
-                max_prefill_tokens=2*self.total_len,
+                max_total_tokens=token_pool_limits.max_total_tokens,
+                max_prefill_tokens=token_pool_limits.max_prefill_tokens,
+                disable_cuda_graph=config.get("disable_cuda_graph", False),
                 enable_memory_saver=config.enable_memory_saver,
                 mem_fraction_static=config.gpu_memory_utilization,
                 tp_size=device_mesh.size(1),

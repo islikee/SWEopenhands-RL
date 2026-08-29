@@ -29,6 +29,11 @@ from openhands.events.action import CmdRunAction
 from openhands.events.observation import CmdOutputObservation
 from openhands.utils.async_utils import call_async_from_sync
 
+from verl.workers.agentic.runtime_backend import (
+    openhands_runtime_backend,
+    prepare_sandbox_for_runtime,
+)
+
 
 from swebench.harness.constants import (
     SWEbenchInstance,
@@ -187,7 +192,9 @@ def get_config(data_source, instance_id) -> AppConfig:
         f'Please make sure this image exists. '
         f'Submit an issue on https://github.com/All-Hands-AI/OpenHands if you run into any issues.'
     )
+    runtime = openhands_runtime_backend()
     sandbox_config = get_default_sandbox_config_for_eval()
+    prepare_sandbox_for_runtime(sandbox_config, runtime)
     sandbox_config.base_container_image = base_container_image
     sandbox_config.remote_runtime_resource_factor = get_instance_resource_factor(
         dataset_name=data_source,
@@ -195,7 +202,7 @@ def get_config(data_source, instance_id) -> AppConfig:
     )
     config = AppConfig(
         run_as_openhands=False,
-        runtime="remote",
+        runtime=runtime,
         sandbox=sandbox_config,
         # do not mount workspace
         workspace_base=None,
