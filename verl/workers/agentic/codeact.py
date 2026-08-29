@@ -1,3 +1,4 @@
+import numpy as np
 import json
 import asyncio
 import uuid
@@ -773,7 +774,10 @@ class CodeActAgentGroup:
             'position_ids': position_ids,
             'loss_mask': response_assistant_mask,
         }
+        failure_flags_array = np.empty(len(failure_flags_list), dtype=object)
+        failure_flags_array[:] = failure_flags_list
 
+        assert failure_flags_array.ndim == 1
         # Create non-tensor dictionary
         non_tensor_dict = {
             'git_patch': git_patch_list,
@@ -791,7 +795,7 @@ class CodeActAgentGroup:
             'evaluation_error': evaluation_error_list,
             'evaluation_timeout': evaluation_timeout_list,
             'outcome_primary': outcome_primary_list,
-            'failure_flags': failure_flags_list,
+            'failure_flags': failure_flags_array,
             'binary_reward': binary_reward_list,
             'test_informed_reward': test_informed_reward_list,
             'selected_training_reward': selected_training_reward_list,
