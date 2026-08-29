@@ -103,6 +103,45 @@ def test_dataset_preflight_reads_first_instance_and_derives_smoke_image(tmp_path
     )
 
 
+def test_docker_preflight_images_match_all_cloud_smoke_instances(tmp_path):
+    pd = pytest.importorskip("pandas")
+    cloud_deploy = load_cloud_deploy()
+    dataset_dir = tmp_path / "swegym-smoke"
+    dataset_dir.mkdir()
+    rows = [
+        {"instance_id": "getmoto__moto-7365"},
+        {"instance_id": "getmoto__moto-6920"},
+        {"instance_id": "getmoto__moto-5876"},
+        {"instance_id": "getmoto__moto-5085"},
+    ]
+    pd.DataFrame(rows).to_parquet(dataset_dir / "train.parquet")
+    pd.DataFrame(rows).to_parquet(dataset_dir / "validation.parquet")
+
+    status = cloud_deploy.dataset_status(dataset_dir)
+    images = cloud_deploy.dataset_docker_images(dataset_dir)
+
+    assert status.instance_ids == [row["instance_id"] for row in rows]
+    assert images == [
+        "docker.io/xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365",
+        "docker.io/xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6920",
+        "docker.io/xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5876",
+        "docker.io/xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5085",
+    ]
+
+
+def test_cloud_paths_separate_smoke_dataset_from_training_dataset(tmp_path):
+    cloud_deploy = load_cloud_deploy()
+
+    paths = cloud_deploy.resolve_cloud_paths(
+        env={"SKYRL_DATA_ROOT": str(tmp_path / "root")},
+        fallback_home=tmp_path,
+    )
+
+    assert paths["SKYRL_SMOKE_DATA_PATH"] == paths["DATASET_DIR"] / "swegym-smoke"
+    assert paths["SKYRL_DATA_PATH"] == paths["DATASET_DIR"] / "swegym"
+    assert paths["SKYRL_SMOKE_DATA_PATH"] != paths["SKYRL_DATA_PATH"]
+
+
 def test_dataset_preflight_rejects_empty_train_parquet(tmp_path):
     pd = pytest.importorskip("pandas")
     cloud_deploy = load_cloud_deploy()
@@ -156,6 +195,76 @@ def test_prepare_dataset_reuses_train_when_hf_dataset_has_no_validation_split(tm
     assert calls == [{"split": "train", "streaming": True}]
 
 
+def test_prepare_smoke_dataset_uses_fixed_instance_ids_in_order(tmp_path, monkeypatch):
+    pd = pytest.importorskip("pandas")
+    cloud_deploy = load_cloud_deploy()
+    dataset_dir = tmp_path / "swegym-smoke"
+
+    rows = [
+        {"instance_id": "not-used"},
+        {"instance_id": "getmoto__moto-6920"},
+        {"instance_id": "getmoto__moto-7365"},
+        {"instance_id": "getmoto__moto-5085"},
+        {"instance_id": "getmoto__moto-5876"},
+    ]
+
+    def fake_load_dataset(_name, **kwargs):
+        assert kwargs == {"split": "train", "streaming": True}
+        return iter(rows)
+
+    monkeypatch.setitem(__import__("sys").modules, "datasets", type("D", (), {"load_dataset": fake_load_dataset}))
+
+    cloud_deploy.prepare_dataset(
+        dataset_dir,
+        rows=4,
+        instance_ids=[
+            "getmoto__moto-7365",
+            "getmoto__moto-6920",
+            "getmoto__moto-5876",
+            "getmoto__moto-5085",
+        ],
+    )
+
+    train = pd.read_parquet(dataset_dir / "train.parquet")
+    assert train["instance_id"].tolist() == [
+        "getmoto__moto-7365",
+        "getmoto__moto-6920",
+        "getmoto__moto-5876",
+        "getmoto__moto-5085",
+    ]
+
+
+def test_prepare_smoke_dataset_replaces_existing_non_matching_smoke_set(tmp_path, monkeypatch):
+    pd = pytest.importorskip("pandas")
+    cloud_deploy = load_cloud_deploy()
+    dataset_dir = tmp_path / "swegym-smoke"
+    dataset_dir.mkdir()
+    pd.DataFrame([{"instance_id": "old__random-1"}]).to_parquet(dataset_dir / "train.parquet")
+    pd.DataFrame([{"instance_id": "old__random-1"}]).to_parquet(dataset_dir / "validation.parquet")
+
+    rows = [
+        {"instance_id": "getmoto__moto-7365"},
+        {"instance_id": "getmoto__moto-6920"},
+    ]
+
+    def fake_load_dataset(_name, **kwargs):
+        assert kwargs == {"split": "train", "streaming": True}
+        return iter(rows)
+
+    monkeypatch.setitem(__import__("sys").modules, "datasets", type("D", (), {"load_dataset": fake_load_dataset}))
+
+    cloud_deploy.prepare_dataset(
+        dataset_dir,
+        rows=2,
+        instance_ids=["getmoto__moto-7365", "getmoto__moto-6920"],
+    )
+
+    assert pd.read_parquet(dataset_dir / "train.parquet")["instance_id"].tolist() == [
+        "getmoto__moto-7365",
+        "getmoto__moto-6920",
+    ]
+
+
 def test_uv_lock_version_parser_reports_frozen_cloud_versions():
     cloud_deploy = load_cloud_deploy()
     versions = cloud_deploy.parse_uv_lock_versions(ROOT / "uv.lock")
@@ -190,6 +299,7 @@ def test_cloud_setup_doc_and_scripts_share_public_env_names():
         "DATASET_DIR",
         "OUTPUT_DIR",
         "SKYRL_MODEL_LOCAL_DIR",
+        "SKYRL_SMOKE_DATA_PATH",
         "SKYRL_DATA_PATH",
     ]:
         assert name in doc

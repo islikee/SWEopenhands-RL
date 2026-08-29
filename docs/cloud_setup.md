@@ -81,6 +81,7 @@ MODEL_DIR              $SKYRL_DATA_ROOT/models
 DATASET_DIR            $SKYRL_DATA_ROOT/datasets
 OUTPUT_DIR             $SKYRL_DATA_ROOT/outputs
 SKYRL_MODEL_LOCAL_DIR  $MODEL_DIR/Qwen/Qwen2.5-Coder-7B-Instruct
+SKYRL_SMOKE_DATA_PATH  $DATASET_DIR/swegym-smoke
 SKYRL_DATA_PATH        $DATASET_DIR/swegym
 ```
 
@@ -126,22 +127,33 @@ The scripts also set `HF_XET_HIGH_PERFORMANCE=1` unless you set it yourself.
 
 ## Dataset
 
-Cloud smoke reads:
+Cloud smoke reads only the dedicated smoke dataset:
 
 ```text
-$SKYRL_DATA_PATH/train.parquet
-$SKYRL_DATA_PATH/validation.parquet
+$SKYRL_SMOKE_DATA_PATH/train.parquet
+$SKYRL_SMOKE_DATA_PATH/validation.parquet
 ```
 
 `setup_cloud.sh` prepares these from the Hugging Face dataset
 `SWE-Gym/SWE-Gym` using the frozen project environment. By default it writes a
-small smoke slice under `$DATASET_DIR/swegym`. Set `SKYRL_SMOKE_DATASET_ROWS`
-to change the row count. Set `SKYRL_SKIP_DATASET_DOWNLOAD=1` if you will place
-the parquet files yourself.
+fixed four-instance smoke set under `$DATASET_DIR/swegym-smoke`:
+
+```text
+getmoto__moto-7365
+getmoto__moto-6920
+getmoto__moto-5876
+getmoto__moto-5085
+```
+
+That count matches the default 4-GPU cloud smoke trainer configuration. Override
+it with `SKYRL_SMOKE_INSTANCE_IDS` only when deliberately changing the smoke
+workload. Set `SKYRL_SKIP_DATASET_DOWNLOAD=1` if you will place the smoke parquet
+files yourself.
 
 Full training should use the same parquet schema, usually under a separate
-directory such as `$DATASET_DIR/swegym-full`, and run with
-`SKYRL_DATA_PATH` pointed there.
+directory such as `$DATASET_DIR/swegym-full`, and run with `SKYRL_DATA_PATH`
+pointed there. The smoke dataset is for infrastructure and end-to-end training
+chain validation only; do not use it as a formal experiment dataset.
 
 ## Docker
 
@@ -155,10 +167,12 @@ Image local: yes/no
 Disk usage: docker system df
 ```
 
-The smoke image name follows the frozen OpenHands/SWE-Bench logic in
+The smoke image names are read from every `instance_id` in
+`$SKYRL_SMOKE_DATA_PATH/train.parquet` and follow the frozen OpenHands/SWE-Bench logic in
 `codeact.py`: `sweb.eval.x86_64.` plus the instance id with `__` replaced by
 `_s_`, using `EVAL_DOCKER_IMAGE_PREFIX` or `docker.io/xingyaoww/`. The script
-pulls only the first smoke task image when it is missing. Set
+checks every image that cloud smoke will actually use and pulls only missing
+smoke images. Set
 `SKYRL_PULL_SMOKE_IMAGE=0` to check without pulling.
 
 ## Cloud Smoke Gates
@@ -170,9 +184,9 @@ repo commit and submodule status
 Linux GPU host with SKYRL_GPUS_PER_NODE visible GPUs
 frozen dependency versions
 SKYRL_MODEL_LOCAL_DIR model files
-SKYRL_DATA_PATH train/validation parquet files
+SKYRL_SMOKE_DATA_PATH train/validation parquet files
 Docker daemon
-first smoke task Docker image
+all smoke task Docker images
 writable OUTPUT_DIR
 cloud_smoke/cloud_train config parse
 ```

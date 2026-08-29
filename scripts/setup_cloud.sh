@@ -64,7 +64,7 @@ echo "Verifying frozen dependency versions."
 uv run --isolated --directory "$ROOT_DIR" --frozen python scripts/cloud_deploy.py check-deps
 
 if [[ "${SKYRL_SKIP_DATASET_DOWNLOAD:-0}" != "1" ]]; then
-  echo "Preparing smoke parquet data under SKYRL_DATA_PATH."
+  echo "Preparing smoke parquet data under SKYRL_SMOKE_DATA_PATH."
   uv run --isolated --directory "$ROOT_DIR" --frozen python scripts/cloud_deploy.py prepare-dataset
 else
   echo "Skipping dataset download because SKYRL_SKIP_DATASET_DOWNLOAD=1."

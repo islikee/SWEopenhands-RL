@@ -31,21 +31,24 @@ else
   exit 1
 fi
 
-if SMOKE_IMAGE="$("$PYTHON_BIN" scripts/cloud_deploy.py docker-image)"; then
-  echo "Smoke image: $SMOKE_IMAGE"
-  if docker image inspect "$SMOKE_IMAGE" >/dev/null 2>&1; then
-    echo "Image local: yes"
-  else
-    echo "Image local: no"
-    if [[ "${SKYRL_PULL_SMOKE_IMAGE:-1}" == "1" ]]; then
-      docker pull "$SMOKE_IMAGE"
+if SMOKE_IMAGES="$("$PYTHON_BIN" scripts/cloud_deploy.py docker-images)"; then
+  while IFS= read -r SMOKE_IMAGE; do
+    [[ -n "$SMOKE_IMAGE" ]] || continue
+    echo "Smoke image: $SMOKE_IMAGE"
+    if docker image inspect "$SMOKE_IMAGE" >/dev/null 2>&1; then
+      echo "Image local: yes"
     else
-      echo "Skipping smoke image pull because SKYRL_PULL_SMOKE_IMAGE=0."
+      echo "Image local: no"
+      if [[ "${SKYRL_PULL_SMOKE_IMAGE:-1}" == "1" ]]; then
+        docker pull "$SMOKE_IMAGE"
+      else
+        echo "Skipping smoke image pull because SKYRL_PULL_SMOKE_IMAGE=0."
+      fi
     fi
-  fi
+  done <<< "$SMOKE_IMAGES"
 else
   echo "Smoke image: unavailable until dataset exists"
-  echo "Run scripts/setup_cloud.sh or provide SKYRL_DATA_PATH with train.parquet." >&2
+  echo "Run scripts/setup_cloud.sh or provide SKYRL_SMOKE_DATA_PATH with train.parquet." >&2
   exit 1
 fi
 

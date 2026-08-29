@@ -16,7 +16,7 @@ GPU_COUNT="${SKYRL_GPUS_PER_NODE:-4}"
 MAX_PARALLEL_AGENTS="${SKYRL_MAX_PARALLEL_AGENTS:-$GPU_COUNT}"
 CKPT_PATH="${SKYRL_CKPT_PATH:-$OUTPUT_DIR/checkpoints/cloud_smoke}"
 MODEL_PATH="${SKYRL_MODEL_PATH:-$SKYRL_MODEL_LOCAL_DIR}"
-DATA_PATH="${SKYRL_DATA_PATH}"
+DATA_PATH="${SKYRL_SMOKE_DATA_PATH}"
 
 if [[ "$MODEL_PATH" == "Qwen/Qwen2.5-Coder-7B-Instruct" ]]; then
   MODEL_PATH="$SKYRL_MODEL_LOCAL_DIR"
@@ -33,7 +33,7 @@ uv run --isolated --directory "$ROOT_DIR" --frozen python scripts/cloud_deploy.p
 COMMIT_SHA="$(git rev-parse HEAD)"
 echo "commit=$COMMIT_SHA"
 echo "model path=$MODEL_PATH"
-echo "dataset path=$DATA_PATH"
+echo "smoke dataset path=$DATA_PATH"
 echo "output path=$OUTPUT_DIR"
 echo "checkpoint=$CKPT_PATH"
 echo "training_mode=lora"

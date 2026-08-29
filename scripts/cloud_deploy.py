@@ -23,6 +23,12 @@ except ModuleNotFoundError:
 MODEL_REPO = "Qwen/Qwen2.5-Coder-7B-Instruct"
 DATASET_REPO = "SWE-Gym/SWE-Gym"
 DEFAULT_DOCKER_IMAGE_PREFIX = "docker.io/xingyaoww/"
+DEFAULT_SMOKE_INSTANCE_IDS = (
+    "getmoto__moto-7365",
+    "getmoto__moto-6920",
+    "getmoto__moto-5876",
+    "getmoto__moto-5085",
+)
 EXPECTED_VERSIONS = {
     "peft": "0.15.1",
     "transformers": "4.51.1",
@@ -32,9 +38,10 @@ EXPECTED_VERSIONS = {
 
 
 class DatasetStatus:
-    def __init__(self, missing_files: list[str], first_instance_id: str | None):
+    def __init__(self, missing_files: list[str], instance_ids: list[str]):
         self.missing_files = missing_files
-        self.first_instance_id = first_instance_id
+        self.instance_ids = instance_ids
+        self.first_instance_id = instance_ids[0] if instance_ids else None
 
 
 def repo_root_from_script() -> Path:
@@ -83,6 +90,9 @@ def resolve_cloud_paths(
         "SKYRL_MODEL_LOCAL_DIR": _as_path(
             env.get("SKYRL_MODEL_LOCAL_DIR", model_dir / MODEL_REPO)
         ),
+        "SKYRL_SMOKE_DATA_PATH": _as_path(
+            env.get("SKYRL_SMOKE_DATA_PATH", dataset_dir / "swegym-smoke")
+        ),
         "SKYRL_DATA_PATH": _as_path(env.get("SKYRL_DATA_PATH", dataset_dir / "swegym")),
     }
 
@@ -117,25 +127,45 @@ def missing_model_files(model_dir: Path) -> list[str]:
 def dataset_status(dataset_dir: Path) -> DatasetStatus:
     required = ["train.parquet", "validation.parquet"]
     missing = [name for name in required if not (dataset_dir / name).exists()]
-    first_instance_id = None
+    instance_ids: list[str] = []
     if not missing:
         try:
             import pandas as pd
 
             frame = pd.read_parquet(dataset_dir / "train.parquet", columns=["instance_id"])
             if not frame.empty:
-                first_instance_id = str(frame.iloc[0]["instance_id"])
+                instance_ids = [str(value) for value in frame["instance_id"].tolist()]
             else:
                 missing.append("train.parquet has no rows")
         except Exception as exc:
             missing.append(f"cannot read train.parquet instance_id: {exc}")
-    return DatasetStatus(missing, first_instance_id)
+    return DatasetStatus(missing, instance_ids)
 
 
 def instance_docker_image(instance_id: str, prefix: str | None = None) -> str:
     image_name = "sweb.eval.x86_64." + instance_id
     image_name = image_name.replace("__", "_s_")
     return ((prefix or os.environ.get("EVAL_DOCKER_IMAGE_PREFIX", DEFAULT_DOCKER_IMAGE_PREFIX)).rstrip("/") + "/" + image_name).lower()
+
+
+def dataset_docker_images(dataset_dir: Path) -> list[str]:
+    status = dataset_status(dataset_dir)
+    if status.missing_files:
+        return []
+    return [instance_docker_image(instance_id) for instance_id in status.instance_ids]
+
+
+def smoke_instance_ids(env: dict[str, str] | None = None) -> list[str]:
+    env = env or os.environ
+    value = env.get("SKYRL_SMOKE_INSTANCE_IDS")
+    if value is None:
+        return list(DEFAULT_SMOKE_INSTANCE_IDS)
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def smoke_dataset_matches(dataset_dir: Path, instance_ids: list[str]) -> bool:
+    status = dataset_status(dataset_dir)
+    return not status.missing_files and status.instance_ids == list(instance_ids)
 
 
 def parse_uv_lock_versions(lock_path: Path) -> dict[str, str]:
@@ -193,8 +223,11 @@ def gpu_count() -> int:
     return len([line for line in result.stdout.splitlines() if line.strip().startswith("GPU ")])
 
 
-def prepare_dataset(dataset_dir: Path, rows: int) -> None:
-    if not dataset_status(dataset_dir).missing_files:
+def prepare_dataset(dataset_dir: Path, rows: int, instance_ids: list[str] | None = None) -> None:
+    if instance_ids and smoke_dataset_matches(dataset_dir, instance_ids):
+        print(f"Dataset already prepared: {dataset_dir}")
+        return
+    if not instance_ids and not dataset_status(dataset_dir).missing_files:
         print(f"Dataset already prepared: {dataset_dir}")
         return
 
@@ -202,6 +235,25 @@ def prepare_dataset(dataset_dir: Path, rows: int) -> None:
     import pandas as pd
 
     dataset_dir.mkdir(parents=True, exist_ok=True)
+    if instance_ids:
+        found: dict[str, dict] = {}
+        wanted = list(instance_ids)
+        wanted_set = set(wanted)
+        for row in load_dataset(DATASET_REPO, split="train", streaming=True):
+            instance_id = str(row.get("instance_id", ""))
+            if instance_id in wanted_set:
+                found[instance_id] = dict(row)
+                if len(found) == len(wanted_set):
+                    break
+        missing = [instance_id for instance_id in wanted if instance_id not in found]
+        if missing:
+            raise SystemExit(f"Missing fixed smoke instances in {DATASET_REPO}: {', '.join(missing)}")
+        smoke_rows = [found[instance_id] for instance_id in wanted]
+        pd.DataFrame(smoke_rows).to_parquet(dataset_dir / "train.parquet")
+        pd.DataFrame(smoke_rows).to_parquet(dataset_dir / "validation.parquet")
+        print(f"Dataset prepared: {dataset_dir}")
+        return
+
     if rows > 0:
         train_rows = list(itertools.islice(load_dataset(DATASET_REPO, split="train", streaming=True), rows))
         if not train_rows:
@@ -250,6 +302,7 @@ def print_summary(paths: dict[str, Path]) -> None:
         "DATASET_DIR",
         "OUTPUT_DIR",
         "SKYRL_MODEL_LOCAL_DIR",
+        "SKYRL_SMOKE_DATA_PATH",
         "SKYRL_DATA_PATH",
     ]:
         print(f"{key}={paths[key]}")
@@ -272,15 +325,20 @@ def preflight_run(repo_root: Path, paths: dict[str, Path]) -> None:
         errors.append(
             f"Model path incomplete: {paths['SKYRL_MODEL_LOCAL_DIR']} missing {', '.join(model_missing)}"
         )
-    status = dataset_status(paths["SKYRL_DATA_PATH"])
+    status = dataset_status(paths["SKYRL_SMOKE_DATA_PATH"])
     if status.missing_files:
         errors.append(
-            f"Dataset path incomplete: {paths['SKYRL_DATA_PATH']} missing {', '.join(status.missing_files)}"
+            f"Smoke dataset path incomplete: {paths['SKYRL_SMOKE_DATA_PATH']} missing {', '.join(status.missing_files)}"
         )
-    elif status.first_instance_id:
-        image = instance_docker_image(status.first_instance_id)
-        if command_exists("docker") and run(["docker", "image", "inspect", image], check=False).returncode != 0:
-            errors.append(f"Smoke task Docker image missing locally: {image}")
+    else:
+        expected_tasks = int(os.environ.get("SKYRL_GPUS_PER_NODE", "4"))
+        if len(status.instance_ids) < expected_tasks:
+            errors.append(
+                f"Smoke dataset has {len(status.instance_ids)} instances, expected at least {expected_tasks}"
+            )
+        for image in dataset_docker_images(paths["SKYRL_SMOKE_DATA_PATH"]):
+            if command_exists("docker") and run(["docker", "image", "inspect", image], check=False).returncode != 0:
+                errors.append(f"Smoke task Docker image missing locally: {image}")
     try:
         paths["OUTPUT_DIR"].mkdir(parents=True, exist_ok=True)
         probe = paths["OUTPUT_DIR"] / ".skyrl_write_probe"
@@ -319,6 +377,7 @@ def main(argv: list[str] | None = None) -> int:
     dataset_parser.add_argument("--rows", type=int, default=int(os.environ.get("SKYRL_SMOKE_DATASET_ROWS", "4")))
     sub.add_parser("dataset-status")
     sub.add_parser("docker-image")
+    sub.add_parser("docker-images")
     sub.add_parser("preflight-run")
     args = parser.parse_args(argv)
 
@@ -350,18 +409,25 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "download-model":
         download_model(paths["SKYRL_MODEL_LOCAL_DIR"])
     elif args.command == "prepare-dataset":
-        prepare_dataset(paths["SKYRL_DATA_PATH"], args.rows)
+        prepare_dataset(paths["SKYRL_SMOKE_DATA_PATH"], args.rows, smoke_instance_ids())
     elif args.command == "dataset-status":
-        status = dataset_status(paths["SKYRL_DATA_PATH"])
-        print(f"dataset={paths['SKYRL_DATA_PATH']}")
+        status = dataset_status(paths["SKYRL_SMOKE_DATA_PATH"])
+        print(f"dataset={paths['SKYRL_SMOKE_DATA_PATH']}")
         print(f"missing={','.join(status.missing_files) if status.missing_files else 'none'}")
+        print(f"instance_ids={','.join(status.instance_ids)}")
         print(f"first_instance_id={status.first_instance_id or ''}")
     elif args.command == "docker-image":
-        status = dataset_status(paths["SKYRL_DATA_PATH"])
+        status = dataset_status(paths["SKYRL_SMOKE_DATA_PATH"])
         if status.missing_files or not status.first_instance_id:
             print("Smoke image: unavailable until dataset exists")
             return 1
         print(instance_docker_image(status.first_instance_id))
+    elif args.command == "docker-images":
+        images = dataset_docker_images(paths["SKYRL_SMOKE_DATA_PATH"])
+        if not images:
+            print("Smoke images: unavailable until dataset exists")
+            return 1
+        print("\n".join(images))
     elif args.command == "preflight-run":
         preflight_run(repo_root_from_script(), paths)
         print("Cloud smoke preflight: OK")
