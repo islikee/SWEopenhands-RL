@@ -1,0 +1,961 @@
+nohup: ignoring input
+Running realistic training pilot preflight.
+Cloud smoke preflight: OK
+commit=bd593e98263b04e3fa307c2f559bc20aab7518af
+model path=/data/skyrl/models/Qwen/Qwen2.5-Coder-7B-Instruct
+smoke dataset path=/data/skyrl/datasets/swegym-smoke
+output path=/data/skyrl/outputs
+checkpoint=/data/skyrl/outputs/checkpoints/real_pilot_20260830_112955
+training_mode=lora
+reward_manager=swebench_test_informed
+GPU count=4
+train batch=4
+ppo mini batch=4
+entropy_coeff=0.0
+actor param offload=true
+actor optimizer offload=true
+ref param offload=true
+prompt_key=problem_statement
+dataloader_num_workers=0
+n_trajectories=8
+max_iterations=25
+max prompt=8192
+max response=1024
+max starting message=12000
+rollout tensor parallel size=2
+rollout max total tokens=32768
+rollout max prefill tokens=18432
+rollout disable cuda graph=true
+rollout weight exchange size=500000000
+sglang disable tp memory imbalance check=true
+rollout_weight_sync_required=true
+rollout_weight_change_after_first_sync_required=true
+force_nonzero_advantage_if_all_zero=false
+2026-08-30 11:30:04,630	INFO worker.py:1841 -- Started a local Ray instance.
+[36m(TaskRunner pid=248165)[0m {'actor_rollout_ref': {'actor': {'checkpoint': {'contents': ['model',
+[36m(TaskRunner pid=248165)[0m                                                              'optimizer',
+[36m(TaskRunner pid=248165)[0m                                                              'extra']},
+[36m(TaskRunner pid=248165)[0m                                  'clip_ratio': 0.2,
+[36m(TaskRunner pid=248165)[0m                                  'clip_ratio_c': 3.0,
+[36m(TaskRunner pid=248165)[0m                                  'clip_ratio_high': 0.2,
+[36m(TaskRunner pid=248165)[0m                                  'clip_ratio_low': 0.2,
+[36m(TaskRunner pid=248165)[0m                                  'entropy_coeff': 0.0,
+[36m(TaskRunner pid=248165)[0m                                  'fsdp_config': {'fsdp_size': -1,
+[36m(TaskRunner pid=248165)[0m                                                  'optimizer_offload': True,
+[36m(TaskRunner pid=248165)[0m                                                  'param_offload': True,
+[36m(TaskRunner pid=248165)[0m                                                  'wrap_policy': {'min_num_params': 0}},
+[36m(TaskRunner pid=248165)[0m                                  'grad_clip': 1.0,
+[36m(TaskRunner pid=248165)[0m                                  'kl_loss_coef': 0.001,
+[36m(TaskRunner pid=248165)[0m                                  'kl_loss_type': 'low_var_kl',
+[36m(TaskRunner pid=248165)[0m                                  'loss_agg_mode': 'token-mean',
+[36m(TaskRunner pid=248165)[0m                                  'masking': True,
+[36m(TaskRunner pid=248165)[0m                                  'optim': {'lr': 1e-06,
+[36m(TaskRunner pid=248165)[0m                                            'lr_warmup_steps': -1,
+[36m(TaskRunner pid=248165)[0m                                            'lr_warmup_steps_ratio': 0.0,
+[36m(TaskRunner pid=248165)[0m                                            'min_lr_ratio': None,
+[36m(TaskRunner pid=248165)[0m                                            'total_training_steps': -1,
+[36m(TaskRunner pid=248165)[0m                                            'warmup_style': 'constant',
+[36m(TaskRunner pid=248165)[0m                                            'weight_decay': 0.01},
+[36m(TaskRunner pid=248165)[0m                                  'ppo_epochs': 1,
+[36m(TaskRunner pid=248165)[0m                                  'ppo_max_token_len_per_gpu': 16384,
+[36m(TaskRunner pid=248165)[0m                                  'ppo_micro_batch_size': None,
+[36m(TaskRunner pid=248165)[0m                                  'ppo_micro_batch_size_per_gpu': 1,
+[36m(TaskRunner pid=248165)[0m                                  'ppo_mini_batch_size': 4,
+[36m(TaskRunner pid=248165)[0m                                  'shuffle': False,
+[36m(TaskRunner pid=248165)[0m                                  'strategy': 'fsdp',
+[36m(TaskRunner pid=248165)[0m                                  'ulysses_sequence_parallel_size': 1,
+[36m(TaskRunner pid=248165)[0m                                  'use_dynamic_bsz': False,
+[36m(TaskRunner pid=248165)[0m                                  'use_kl_loss': False,
+[36m(TaskRunner pid=248165)[0m                                  'use_torch_compile': True},
+[36m(TaskRunner pid=248165)[0m                        'exchange_size': 500000000,
+[36m(TaskRunner pid=248165)[0m                        'hybrid_engine': True,
+[36m(TaskRunner pid=248165)[0m                        'model': {'enable_gradient_checkpointing': True,
+[36m(TaskRunner pid=248165)[0m                                  'external_lib': None,
+[36m(TaskRunner pid=248165)[0m                                  'lora_alpha': 32,
+[36m(TaskRunner pid=248165)[0m                                  'lora_dropout': 0.0,
+[36m(TaskRunner pid=248165)[0m                                  'lora_rank': 16,
+[36m(TaskRunner pid=248165)[0m                                  'lora_target_modules': None,
+[36m(TaskRunner pid=248165)[0m                                  'override_config': {},
+[36m(TaskRunner pid=248165)[0m                                  'path': '/data/skyrl/models/Qwen/Qwen2.5-Coder-7B-Instruct',
+[36m(TaskRunner pid=248165)[0m                                  'training_mode': 'lora',
+[36m(TaskRunner pid=248165)[0m                                  'use_remove_padding': False},
+[36m(TaskRunner pid=248165)[0m                        'ref': {'fsdp_config': {'param_offload': True,
+[36m(TaskRunner pid=248165)[0m                                                'wrap_policy': {'min_num_params': 0}},
+[36m(TaskRunner pid=248165)[0m                                'log_prob_max_token_len_per_gpu': 16384,
+[36m(TaskRunner pid=248165)[0m                                'log_prob_micro_batch_size': None,
+[36m(TaskRunner pid=248165)[0m                                'log_prob_micro_batch_size_per_gpu': 1,
+[36m(TaskRunner pid=248165)[0m                                'log_prob_use_dynamic_bsz': False,
+[36m(TaskRunner pid=248165)[0m                                'ulysses_sequence_parallel_size': 1},
+[36m(TaskRunner pid=248165)[0m                        'rollout': {'disable_cuda_graph': True,
+[36m(TaskRunner pid=248165)[0m                                    'disable_log_stats': True,
+[36m(TaskRunner pid=248165)[0m                                    'do_sample': True,
+[36m(TaskRunner pid=248165)[0m                                    'dtype': 'bfloat16',
+[36m(TaskRunner pid=248165)[0m                                    'enable_chunked_prefill': True,
+[36m(TaskRunner pid=248165)[0m                                    'enable_memory_saver': True,
+[36m(TaskRunner pid=248165)[0m                                    'enforce_eager': True,
+[36m(TaskRunner pid=248165)[0m                                    'free_cache_engine': True,
+[36m(TaskRunner pid=248165)[0m                                    'gpu_memory_utilization': 0.5,
+[36m(TaskRunner pid=248165)[0m                                    'ignore_eos': False,
+[36m(TaskRunner pid=248165)[0m                                    'load_format': 'dummy_dtensor',
+[36m(TaskRunner pid=248165)[0m                                    'log_messages_dir': None,
+[36m(TaskRunner pid=248165)[0m                                    'log_prob_max_token_len_per_gpu': 16384,
+[36m(TaskRunner pid=248165)[0m                                    'log_prob_micro_batch_size': None,
+[36m(TaskRunner pid=248165)[0m                                    'log_prob_micro_batch_size_per_gpu': 1,
+[36m(TaskRunner pid=248165)[0m                                    'log_prob_use_dynamic_bsz': False,
+[36m(TaskRunner pid=248165)[0m                                    'max_eval_parallel_agents': 4,
+[36m(TaskRunner pid=248165)[0m                                    'max_iterations': 25,
+[36m(TaskRunner pid=248165)[0m                                    'max_model_len': None,
+[36m(TaskRunner pid=248165)[0m                                    'max_num_batched_tokens': 8192,
+[36m(TaskRunner pid=248165)[0m                                    'max_num_seqs': 1024,
+[36m(TaskRunner pid=248165)[0m                                    'max_parallel_agents': 4,
+[36m(TaskRunner pid=248165)[0m                                    'max_prefill_tokens': 18432,
+[36m(TaskRunner pid=248165)[0m                                    'max_starting_message_length': 12000,
+[36m(TaskRunner pid=248165)[0m                                    'max_total_tokens': 32768,
+[36m(TaskRunner pid=248165)[0m                                    'n': 1,
+[36m(TaskRunner pid=248165)[0m                                    'n_trajectories': 8,
+[36m(TaskRunner pid=248165)[0m                                    'name': 'async',
+[36m(TaskRunner pid=248165)[0m                                    'prompt_length': 8192,
+[36m(TaskRunner pid=248165)[0m                                    'qwen3_enable_thinking': True,
+[36m(TaskRunner pid=248165)[0m                                    'remove_think_tokens': False,
+[36m(TaskRunner pid=248165)[0m                                    'response_length': 1024,
+[36m(TaskRunner pid=248165)[0m                                    'sampling_params': {'max_new_tokens': 1024,
+[36m(TaskRunner pid=248165)[0m                                                        'min_p': 0,
+[36m(TaskRunner pid=248165)[0m                                                        'repetition_penalty': 1,
+[36m(TaskRunner pid=248165)[0m                                                        'temperature': 1.0,
+[36m(TaskRunner pid=248165)[0m                                                        'top_k': -1,
+[36m(TaskRunner pid=248165)[0m                                                        'top_p': 0.95},
+[36m(TaskRunner pid=248165)[0m                                    'task_type': 'swegym',
+[36m(TaskRunner pid=248165)[0m                                    'temperature': 1.0,
+[36m(TaskRunner pid=248165)[0m                                    'tensor_model_parallel_size': 2,
+[36m(TaskRunner pid=248165)[0m                                    'top_k': -1,
+[36m(TaskRunner pid=248165)[0m                                    'top_p': 1,
+[36m(TaskRunner pid=248165)[0m                                    'use_fire_sampling': False,
+[36m(TaskRunner pid=248165)[0m                                    'val_kwargs': {'do_sample': False,
+[36m(TaskRunner pid=248165)[0m                                                   'n': 1,
+[36m(TaskRunner pid=248165)[0m                                                   'temperature': 0,
+[36m(TaskRunner pid=248165)[0m                                                   'top_k': -1,
+[36m(TaskRunner pid=248165)[0m                                                   'top_p': 1.0}}},
+[36m(TaskRunner pid=248165)[0m  'algorithm': {'adv_estimator': 'grpo',
+[36m(TaskRunner pid=248165)[0m                'gamma': 1.0,
+[36m(TaskRunner pid=248165)[0m                'kl_ctrl': {'horizon': 10000,
+[36m(TaskRunner pid=248165)[0m                            'kl_coef': 0.001,
+[36m(TaskRunner pid=248165)[0m                            'target_kl': 0.1,
+[36m(TaskRunner pid=248165)[0m                            'type': 'fixed'},
+[36m(TaskRunner pid=248165)[0m                'kl_penalty': 'kl',
+[36m(TaskRunner pid=248165)[0m                'lam': 1.0,
+[36m(TaskRunner pid=248165)[0m                'use_kl_in_reward': False},
+[36m(TaskRunner pid=248165)[0m  'critic': {'checkpoint': {'contents': ['model', 'optimizer', 'extra']},
+[36m(TaskRunner pid=248165)[0m             'cliprange_value': 0.5,
+[36m(TaskRunner pid=248165)[0m             'forward_max_token_len_per_gpu': 32768,
+[36m(TaskRunner pid=248165)[0m             'forward_micro_batch_size': None,
+[36m(TaskRunner pid=248165)[0m             'forward_micro_batch_size_per_gpu': None,
+[36m(TaskRunner pid=248165)[0m             'grad_clip': 1.0,
+[36m(TaskRunner pid=248165)[0m             'model': {'enable_gradient_checkpointing': True,
+[36m(TaskRunner pid=248165)[0m                       'external_lib': None,
+[36m(TaskRunner pid=248165)[0m                       'fsdp_config': {'fsdp_size': -1,
+[36m(TaskRunner pid=248165)[0m                                       'optimizer_offload': False,
+[36m(TaskRunner pid=248165)[0m                                       'param_offload': False,
+[36m(TaskRunner pid=248165)[0m                                       'wrap_policy': {'min_num_params': 0}},
+[36m(TaskRunner pid=248165)[0m                       'override_config': {},
+[36m(TaskRunner pid=248165)[0m                       'path': '~/models/deepseek-llm-7b-chat',
+[36m(TaskRunner pid=248165)[0m                       'tokenizer_path': '/data/skyrl/models/Qwen/Qwen2.5-Coder-7B-Instruct',
+[36m(TaskRunner pid=248165)[0m                       'use_remove_padding': False},
+[36m(TaskRunner pid=248165)[0m             'optim': {'lr': 1e-05,
+[36m(TaskRunner pid=248165)[0m                       'lr_warmup_steps_ratio': 0.0,
+[36m(TaskRunner pid=248165)[0m                       'min_lr_ratio': None,
+[36m(TaskRunner pid=248165)[0m                       'total_training_steps': -1,
+[36m(TaskRunner pid=248165)[0m                       'warmup_style': 'constant',
+[36m(TaskRunner pid=248165)[0m                       'weight_decay': 0.01},
+[36m(TaskRunner pid=248165)[0m             'ppo_epochs': 1,
+[36m(TaskRunner pid=248165)[0m             'ppo_max_token_len_per_gpu': 32768,
+[36m(TaskRunner pid=248165)[0m             'ppo_micro_batch_size': None,
+[36m(TaskRunner pid=248165)[0m             'ppo_micro_batch_size_per_gpu': None,
+[36m(TaskRunner pid=248165)[0m             'ppo_mini_batch_size': 4,
+[36m(TaskRunner pid=248165)[0m             'rollout_n': 1,
+[36m(TaskRunner pid=248165)[0m             'shuffle': False,
+[36m(TaskRunner pid=248165)[0m             'strategy': 'fsdp',
+[36m(TaskRunner pid=248165)[0m             'ulysses_sequence_parallel_size': 1,
+[36m(TaskRunner pid=248165)[0m             'use_dynamic_bsz': False},
+[36m(TaskRunner pid=248165)[0m  'custom_reward_function': {'name': 'compute_score', 'path': None},
+[36m(TaskRunner pid=248165)[0m  'data': {'dataloader_num_workers': 0,
+[36m(TaskRunner pid=248165)[0m           'filter_overlong_prompts': False,
+[36m(TaskRunner pid=248165)[0m           'filter_overlong_prompts_workers': 1,
+[36m(TaskRunner pid=248165)[0m           'image_key': 'images',
+[36m(TaskRunner pid=248165)[0m           'max_prompt_length': 8192,
+[36m(TaskRunner pid=248165)[0m           'max_response_length': 1024,
+[36m(TaskRunner pid=248165)[0m           'prompt_key': 'problem_statement',
+[36m(TaskRunner pid=248165)[0m           'return_raw_chat': False,
+[36m(TaskRunner pid=248165)[0m           'return_raw_input_ids': False,
+[36m(TaskRunner pid=248165)[0m           'reward_fn_key': 'data_source',
+[36m(TaskRunner pid=248165)[0m           'shuffle': True,
+[36m(TaskRunner pid=248165)[0m           'tokenizer': None,
+[36m(TaskRunner pid=248165)[0m           'train_batch_size': 4,
+[36m(TaskRunner pid=248165)[0m           'train_files': ['/data/skyrl/datasets/swegym-smoke/train.parquet'],
+[36m(TaskRunner pid=248165)[0m           'truncation': 'error',
+[36m(TaskRunner pid=248165)[0m           'val_batch_size': None,
+[36m(TaskRunner pid=248165)[0m           'val_files': ['/data/skyrl/datasets/swegym-smoke/validation.parquet']},
+[36m(TaskRunner pid=248165)[0m  'reward_model': {'enable': False,
+[36m(TaskRunner pid=248165)[0m                   'forward_max_token_len_per_gpu': 32768,
+[36m(TaskRunner pid=248165)[0m                   'max_length': None,
+[36m(TaskRunner pid=248165)[0m                   'micro_batch_size': None,
+[36m(TaskRunner pid=248165)[0m                   'micro_batch_size_per_gpu': None,
+[36m(TaskRunner pid=248165)[0m                   'model': {'external_lib': None,
+[36m(TaskRunner pid=248165)[0m                             'fsdp_config': {'fsdp_size': -1,
+[36m(TaskRunner pid=248165)[0m                                             'param_offload': False,
+[36m(TaskRunner pid=248165)[0m                                             'wrap_policy': {'min_num_params': 0}},
+[36m(TaskRunner pid=248165)[0m                             'input_tokenizer': '/data/skyrl/models/Qwen/Qwen2.5-Coder-7B-Instruct',
+[36m(TaskRunner pid=248165)[0m                             'path': '~/models/FsfairX-LLaMA3-RM-v0.1',
+[36m(TaskRunner pid=248165)[0m                             'use_remove_padding': False},
+[36m(TaskRunner pid=248165)[0m                   'num_processes': 128,
+[36m(TaskRunner pid=248165)[0m                   'reward_manager': 'swebench_test_informed',
+[36m(TaskRunner pid=248165)[0m                   'score_timeout': 300,
+[36m(TaskRunner pid=248165)[0m                   'strategy': 'fsdp',
+[36m(TaskRunner pid=248165)[0m                   'ulysses_sequence_parallel_size': 1,
+[36m(TaskRunner pid=248165)[0m                   'use_dynamic_bsz': False},
+[36m(TaskRunner pid=248165)[0m  'smoke': {'force_nonzero_advantage_if_all_zero': False,
+[36m(TaskRunner pid=248165)[0m            'require_base_unchanged': True,
+[36m(TaskRunner pid=248165)[0m            'require_nonzero_lora_delta': False},
+[36m(TaskRunner pid=248165)[0m  'trainer': {'balance_batch': True,
+[36m(TaskRunner pid=248165)[0m              'critic_warmup': 0,
+[36m(TaskRunner pid=248165)[0m              'default_hdfs_dir': None,
+[36m(TaskRunner pid=248165)[0m              'default_local_dir': '/data/skyrl/outputs/checkpoints/real_pilot_20260830_112955',
+[36m(TaskRunner pid=248165)[0m              'del_local_ckpt_after_load': False,
+[36m(TaskRunner pid=248165)[0m              'experiment_name': 'gsm8k',
+[36m(TaskRunner pid=248165)[0m              'log_val_generations': 0,
+[36m(TaskRunner pid=248165)[0m              'logger': ['console'],
+[36m(TaskRunner pid=248165)[0m              'max_actor_ckpt_to_keep': None,
+[36m(TaskRunner pid=248165)[0m              'max_critic_ckpt_to_keep': None,
+[36m(TaskRunner pid=248165)[0m              'n_gpus_per_node': 4,
+[36m(TaskRunner pid=248165)[0m              'nnodes': 1,
+[36m(TaskRunner pid=248165)[0m              'project_name': 'verl_examples',
+[36m(TaskRunner pid=248165)[0m              'resume_from_path': None,
+[36m(TaskRunner pid=248165)[0m              'resume_mode': 'auto',
+[36m(TaskRunner pid=248165)[0m              'save_freq': -1,
+[36m(TaskRunner pid=248165)[0m              'test_freq': -1,
+[36m(TaskRunner pid=248165)[0m              'total_epochs': 30,
+[36m(TaskRunner pid=248165)[0m              'total_training_steps': 1,
+[36m(TaskRunner pid=248165)[0m              'val_before_train': False},
+[36m(TaskRunner pid=248165)[0m  'verifier': {'reward_coef': 1}}
+[36m(TaskRunner pid=248165)[0m [validate_config] All configuration checks passed successfully!
+[36m(TaskRunner pid=248165)[0m dataset len: 4
+[36m(TaskRunner pid=248165)[0m DeprecationWarning: `ray.state.available_resources_per_node` is a private attribute and access will be removed in a future Ray version.
+[36m(TaskRunner pid=248165)[0m dataset len: 4
+[36m(TaskRunner pid=248165)[0m Size of train dataloader: 1
+[36m(TaskRunner pid=248165)[0m Total training steps: 1
+[36m(WorkerDict pid=248532)[0m nodedup INIT ActorRolloutRefWorker: role='actor_rollout' torch.distributed.get_rank()=2 world_size=4 self.device_mesh=DeviceMesh('cuda', [0, 1, 2, 3], mesh_dim_names=('fsdp',)) os.environ['CUDA_VISIBLE_DEVICES']='2'
+[36m(WorkerDict pid=248532)[0m Flash Attention 2.0 only supports torch.float16 and torch.bfloat16 dtypes, but the current dype in Qwen2ForCausalLM is torch.float32. You should run training or inference using Automatic Mixed-Precision via the `with torch.autocast(device_type='torch_device'):` decorator, or load the model with the `torch_dtype` argument. Example: `model = AutoModel.from_pretrained("openai/whisper-tiny", attn_implementation="flash_attention_2", torch_dtype=torch.float16)`
+[36m(WorkerDict pid=248532)[0m You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.
+[36m(WorkerDict pid=248532)[0m Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]
+[36m(WorkerDict pid=248391)[0m Model config after override: Qwen2Config {
+[36m(WorkerDict pid=248391)[0m   "architectures": [
+[36m(WorkerDict pid=248391)[0m     "Qwen2ForCausalLM"
+[36m(WorkerDict pid=248391)[0m   ],
+[36m(WorkerDict pid=248391)[0m   "attention_dropout": 0.0,
+[36m(WorkerDict pid=248391)[0m   "eos_token_id": 151645,
+[36m(WorkerDict pid=248391)[0m   "hidden_act": "silu",
+[36m(WorkerDict pid=248391)[0m   "hidden_size": 3584,
+[36m(WorkerDict pid=248391)[0m   "initializer_range": 0.02,
+[36m(WorkerDict pid=248391)[0m   "intermediate_size": 18944,
+[36m(WorkerDict pid=248391)[0m   "max_position_embeddings": 32768,
+[36m(WorkerDict pid=248391)[0m   "max_window_layers": 28,
+[36m(WorkerDict pid=248391)[0m   "model_type": "qwen2",
+[36m(WorkerDict pid=248391)[0m   "num_attention_heads": 28,
+[36m(WorkerDict pid=248391)[0m   "num_hidden_layers": 28,
+[36m(WorkerDict pid=248391)[0m   "num_key_value_heads": 4,
+[36m(WorkerDict pid=248391)[0m   "pad_token_id": 151643,
+[36m(WorkerDict pid=248391)[0m   "rms_norm_eps": 1e-06,
+[36m(WorkerDict pid=248391)[0m   "rope_scaling": null,
+[36m(WorkerDict pid=248391)[0m   "rope_theta": 1000000.0,
+[36m(WorkerDict pid=248391)[0m   "sliding_window": 131072,
+[36m(WorkerDict pid=248391)[0m   "tie_word_embeddings": false,
+[36m(WorkerDict pid=248391)[0m   "torch_dtype": "bfloat16",
+[36m(WorkerDict pid=248391)[0m   "transformers_version": "4.51.1",
+[36m(WorkerDict pid=248391)[0m   "use_cache": true,
+[36m(WorkerDict pid=248391)[0m   "use_sliding_window": false,
+[36m(WorkerDict pid=248391)[0m   "vocab_size": 152064
+[36m(WorkerDict pid=248391)[0m }
+[36m(WorkerDict pid=248391)[0m 
+[36m(WorkerDict pid=248391)[0m Loading checkpoint shards:  25%|██▌       | 1/4 [00:05<00:16,  5.53s/it]
+[36m(WorkerDict pid=248533)[0m Flash Attention 2.0 only supports torch.float16 and torch.bfloat16 dtypes, but the current dype in Qwen2ForCausalLM is torch.float32. You should run training or inference using Automatic Mixed-Precision via the `with torch.autocast(device_type='torch_device'):` decorator, or load the model with the `torch_dtype` argument. Example: `model = AutoModel.from_pretrained("openai/whisper-tiny", attn_implementation="flash_attention_2", torch_dtype=torch.float16)`[32m [repeated 3x across cluster] (Ray deduplicates logs by default. Set RAY_DEDUP_LOGS=0 to disable log deduplication, or see https://docs.ray.io/en/master/ray-observability/user-guides/configure-logging.html#log-deduplication for more options.)[0m
+[36m(WorkerDict pid=248533)[0m You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248533)[0m Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m Loading checkpoint shards:  50%|█████     | 2/4 [00:11<00:11,  5.71s/it][32m [repeated 4x across cluster][0m
+[36m(WorkerDict pid=248532)[0m Loading checkpoint shards:  75%|███████▌  | 3/4 [00:16<00:05,  5.49s/it][32m [repeated 5x across cluster][0m
+[36m(WorkerDict pid=248391)[0m Loading checkpoint shards: 100%|██████████| 4/4 [00:17<00:00,  3.74s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:17<00:00,  4.40s/it]
+[36m(WorkerDict pid=248532)[0m [rank2]:[W830 11:30:57.751777111 ProcessGroupNCCL.cpp:4561] [PG ID 0 PG GUID 0 Rank 2]  using GPU 0 to perform barrier as devices used by this process are currently unknown. This can potentially cause a hang if this rank to GPU mapping is incorrect. Specify device_ids in barrier() to force use of a particular device, or call init_process_group() with a device_id.
+[36m(WorkerDict pid=248391)[0m LoRA training enabled: trainable=40370176 total=7655986688
+[36m(WorkerDict pid=248391)[0m nodedup INIT ActorRolloutRefWorker: role='actor_rollout' torch.distributed.get_rank()=0 world_size=4 self.device_mesh=DeviceMesh('cuda', [0, 1, 2, 3], mesh_dim_names=('fsdp',)) os.environ['CUDA_VISIBLE_DEVICES']='0'[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m NCCL version 2.21.5+cuda12.4
+[36m(WorkerDict pid=248391)[0m PeftModelForCausalLM contains 7.66B parameters
+[36m(WorkerDict pid=248391)[0m actor module Mixed precision: MixedPrecision(param_dtype=torch.bfloat16, reduce_dtype=torch.float32, buffer_dtype=torch.bfloat16, keep_low_precision_grads=False, cast_forward_inputs=False, cast_root_forward_inputs=True, _module_classes_to_ignore=(<class 'torch.nn.modules.batchnorm._BatchNorm'>,))
+[36m(WorkerDict pid=248532)[0m Total steps: 1, num_warmup_steps: 0
+[36m(WorkerDict pid=248532)[0m Actor use_remove_padding=False
+[36m(WorkerDict pid=248533)[0m actor module Mixed precision: MixedPrecision(param_dtype=torch.bfloat16, reduce_dtype=torch.float32, buffer_dtype=torch.bfloat16, keep_low_precision_grads=False, cast_forward_inputs=False, cast_root_forward_inputs=True, _module_classes_to_ignore=(<class 'torch.nn.modules.batchnorm._BatchNorm'>,))[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248531)[0m [92m11:31:10 - openhands:INFO[0m: codeact.py:73 - Using docker image prefix: docker.io/xingyaoww/
+[36m(WorkerDict pid=248533)[0m Loading checkpoint shards:  75%|███████▌  | 3/4 [00:17<00:05,  5.75s/it][32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248531)[0m Loading checkpoint shards: 100%|██████████| 4/4 [00:18<00:00,  4.00s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:18<00:00,  4.70s/it][32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248533)[0m [rank3]:[W830 11:30:58.818084408 ProcessGroupNCCL.cpp:4561] [PG ID 0 PG GUID 0 Rank 3]  using GPU 0 to perform barrier as devices used by this process are currently unknown. This can potentially cause a hang if this rank to GPU mapping is incorrect. Specify device_ids in barrier() to force use of a particular device, or call init_process_group() with a device_id.[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248532)[0m NCCL version 2.21.5+cuda12.4
+[36m(WorkerDict pid=248391)[0m nodedup in async rollout os.environ['CUDA_VISIBLE_DEVICES']='0,1' @ torch.distributed.get_rank()=0 self.tp_rank=0
+[36m(WorkerDict pid=248391)[0m async rollout config.gpu_memory_utilization=0.5
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:19 TP1] Attention backend not set. Use flashinfer backend by default.
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:19 TP1] Init torch distributed begin.
+[36m(WorkerDict pid=248533)[0m [92m11:31:11 - openhands:INFO[0m: codeact.py:73 - Using docker image prefix: docker.io/xingyaoww/[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:19 TP0] Attention backend not set. Use flashinfer backend by default.
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:19 TP0] Init torch distributed begin.
+[36m(WorkerDict pid=248532)[0m NCCL version 2.21.5+cuda12.4
+[36m(WorkerDict pid=248391)[0m Total steps: 1, num_warmup_steps: 0[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m Actor use_remove_padding=False[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248533)[0m nodedup in async rollout os.environ['CUDA_VISIBLE_DEVICES']='2,3' @ torch.distributed.get_rank()=3 self.tp_rank=1[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248533)[0m async rollout config.gpu_memory_utilization=0.5[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:31:19 TP0] sglang is using nccl==2.21.5
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:31:19 TP1] sglang is using nccl==2.21.5
+[36m(WorkerDict pid=248391)[0m NCCL version 2.21.5+cuda12.4
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:31:20 TP1] Setup Custom allreduce failed with CUDART error: peer access is not supported between these two devices. To silence this warning, specify --disable-custom-all-reduce explicitly.
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:31:20 TP0] Setup Custom allreduce failed with CUDART error: peer access is not supported between these two devices. To silence this warning, specify --disable-custom-all-reduce explicitly.
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:31:20 TP1] Init torch distributed ends. mem usage=0.22 GB
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:31:20 TP0] Init torch distributed ends. mem usage=0.22 GB
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:31:20 TP1] Load weight begin. avail mem=18.96 GB
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:31:20 TP0] Load weight begin. avail mem=18.96 GB
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:20 TP1] The memory capacity is unbalanced. Some GPUs may be occupied by other processes. min_per_gpu_memory=16.335693359375, local_gpu_memory=18.964599609375, local_gpu_memory * 0.9=17.0681396484375
+[36m(WorkerDict pid=248532)[0m /usr/bin/ld: skipping incompatible /lib/i386-linux-gnu/libcuda.so when searching for -lcuda
+[36m(WorkerDict pid=248532)[0m /usr/bin/ld: skipping incompatible /lib/i386-linux-gnu/libcuda.so when searching for -lcuda
+[36m(WorkerDict pid=248532)[0m Loading safetensors checkpoint shards:   0% Completed | 0/4 [00:00<?, ?it/s]
+[36m(WorkerDict pid=248391)[0m Loading safetensors checkpoint shards:  25% Completed | 1/4 [00:01<00:03,  1.01s/it]
+[36m(WorkerDict pid=248391)[0m 
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:24 TP0] Load weight end. type=Qwen2ForCausalLM, dtype=torch.bfloat16, avail mem=9.11 GB, mem usage=7.22 GB.
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:31:19 TP1] Attention backend not set. Use flashinfer backend by default.[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:31:19 TP1] Init torch distributed begin.[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:24 TP1] Load weight end. type=Qwen2ForCausalLM, dtype=torch.bfloat16, avail mem=11.74 GB, mem usage=7.22 GB.
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:24 TP1] KV Cache is allocated. #tokens: 32768, K size: 0.44 GB, V size: 0.44 GB
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:24 TP0] KV Cache is allocated. #tokens: 32768, K size: 0.44 GB, V size: 0.44 GB
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:24 TP1] Memory pool end. avail mem=10.50 GB
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:24 TP0] Memory pool end. avail mem=7.87 GB
+[36m(WorkerDict pid=248391)[0m 2026-08-30 11:31:24,357 - INFO - flashinfer.jit: Prebuilt kernels not found, using JIT backend
+[36m(WorkerDict pid=248391)[0m 2026-08-30 11:31:24,364 - INFO - flashinfer.jit: Prebuilt kernels not found, using JIT backend
+[36m(WorkerDict pid=248532)[0m 
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:19 TP1] sglang is using nccl==2.21.5[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:24 TP1] max_total_num_tokens=32768, chunked_prefill_size=8192, max_prefill_tokens=18432, max_running_requests=2049, context_len=32768
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:24 TP0] max_total_num_tokens=32768, chunked_prefill_size=8192, max_prefill_tokens=18432, max_running_requests=2049, context_len=32768
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:31:24 TP0] max_total_num_tokens=32768, chunked_prefill_size=8192, max_prefill_tokens=18432, max_running_requests=2049, context_len=32768
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:31:24 TP1] max_total_num_tokens=32768, chunked_prefill_size=8192, max_prefill_tokens=18432, max_running_requests=2049, context_len=32768
+[36m(WorkerDict pid=248391)[0m nodedup torch.distributed.get_rank() = 0 releasing memory occupation
+[36m(WorkerDict pid=248391)[0m nodedup torch.distributed.get_rank() = 0 engine initialized
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:25 TP0] Cache flushed successfully!
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:25 TP1] Cache flushed successfully!
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:20 TP0] Setup Custom allreduce failed with CUDART error: peer access is not supported between these two devices. To silence this warning, specify --disable-custom-all-reduce explicitly.[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:20 TP1] Init torch distributed ends. mem usage=0.22 GB[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:20 TP1] Load weight begin. avail mem=18.96 GB[32m [repeated 2x across cluster][0m
+[36m(TaskRunner pid=248165)[0m Training Progress:   0%|          | 0/1 [00:00<?, ?it/s]
+[36m(TaskRunner pid=248165)[0m Using LocalLogger is deprecated. The constructor API will change 
+[36m(TaskRunner pid=248165)[0m Checkpoint tracker file does not exist: %s /data/skyrl/outputs/checkpoints/real_pilot_20260830_112955/latest_checkpointed_iteration.txt
+[36m(TaskRunner pid=248165)[0m Training from scratch
+[36m(WorkerDict pid=248391)[0m in sharding manager role='actor_rollout' device_mesh=DeviceMesh('cuda', [[0, 1], [2, 3]], mesh_dim_names=('dp', 'infer_tp')) dp_rank=0
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:25] Before state_dict() in sharding manager memory, current proc memory allocated (GB): 7.140809059143066, memory reserved (GB): 13.744140625; global memory free (GB): 23.898193359375, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m /usr/bin/ld: skipping incompatible /lib/i386-linux-gnu/libcuda.so when searching for -lcuda[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248391)[0m state_dict dtype, device of base_model.model.model.embed_tokens.weight: v.dtype=torch.float32 device=device(type='cuda', index=0)
+[36m(WorkerDict pid=248391)[0m SMOKE ONLY: preserving LoRA delta precision in effective rollout payload
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:29] After state_dict() in sharding manager memory, current proc memory allocated (GB): 14.279245853424072, memory reserved (GB): 21.119140625; global memory free (GB): 16.523193359375, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 0it [00:00, ?it/s]
+[36m(WorkerDict pid=248391)[0m Loading safetensors checkpoint shards:   0% Completed | 0/4 [00:00<?, ?it/s]
+[36m(WorkerDict pid=248532)[0m Loading safetensors checkpoint shards: 100% Completed | 4/4 [00:03<00:00,  1.24it/s][32m [repeated 9x across cluster][0m
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:31:24 TP1] Load weight end. type=Qwen2ForCausalLM, dtype=torch.bfloat16, avail mem=11.74 GB, mem usage=7.22 GB.[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248391)[0m param count: streaming; used 3.2528934478759766 seconds to prepare tensor list
+[36m(WorkerDict pid=248391)[0m resuming memory occupation
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:29] After del state_dict and empty_cache in sharding manager, current proc memory allocated (GB): 14.279245853424072, memory reserved (GB): 18.833984375; global memory free (GB): 18.808349609375, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:31:24 TP1] KV Cache is allocated. #tokens: 32768, K size: 0.44 GB, V size: 0.44 GB[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:31:24 TP1] Memory pool end. avail mem=10.50 GB[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248391)[0m resumed memory occupation
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:29] Before sync model weights in sharding manager, current proc memory allocated (GB): 14.279245853424072, memory reserved (GB): 18.833984375; global memory free (GB): 10.349365234375, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248532)[0m 2026-08-30 11:31:24,553 - INFO - flashinfer.jit: Prebuilt kernels not found, using JIT backend[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248391)[0m got gpu_tensor_list self.exchange_size=500000000 count=1089994752 done=False
+[36m(WorkerDict pid=248391)[0m Using `update_weights_from_tensor`
+[36m(WorkerDict pid=248532)[0m nodedup torch.distributed.get_rank() = 2 releasing memory occupation
+[36m(WorkerDict pid=248532)[0m nodedup torch.distributed.get_rank() = 2 engine initialized
+[36m(WorkerDict pid=248533)[0m in sharding manager role='actor_rollout' device_mesh=DeviceMesh('cuda', [[0, 1], [2, 3]], mesh_dim_names=('dp', 'infer_tp')) dp_rank=1[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:33] After loop 0 done=False loop_consumed_time=4.25864052772522 in sharding manager, current proc memory allocated (GB): 15.294382572174072, memory reserved (GB): 18.833984375; global memory free (GB): 10.35113525390625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 1it [00:04,  4.42s/it]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:33 TP0] Cache flushed successfully![32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248532)[0m 1it [00:04,  4.46s/it]
+[36m(WorkerDict pid=248532)[0m 2it [00:04,  1.98s/it]
+[36m(WorkerDict pid=248391)[0m 2it [00:04,  2.00s/it]
+[36m(WorkerDict pid=248532)[0m 8it [00:04,  2.83it/s]
+[36m(WorkerDict pid=248391)[0m 8it [00:04,  2.77it/s]
+[36m(WorkerDict pid=248533)[0m state_dict dtype, device of base_model.model.model.embed_tokens.weight: v.dtype=torch.float32 device=device(type='cuda', index=0)[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248532)[0m SMOKE ONLY: preserving LoRA delta precision in effective rollout payload
+[36m(WorkerDict pid=248532)[0m param count: streaming; used 3.2545242309570312 seconds to prepare tensor list
+[36m(WorkerDict pid=248532)[0m resuming memory occupation
+[36m(WorkerDict pid=248532)[0m resumed memory occupation
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:36] After loop 1 done=False loop_consumed_time=2.7715444564819336 in sharding manager, current proc memory allocated (GB): 14.89448881149292, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 10it [00:07,  1.73it/s]
+[36m(WorkerDict pid=248532)[0m 0it [00:00, ?it/s]
+[36m(WorkerDict pid=248391)[0m 11it [00:08,  1.47it/s]
+[36m(WorkerDict pid=248532)[0m 12it [00:08,  1.70it/s]
+[36m(WorkerDict pid=248391)[0m 14it [00:08,  2.42it/s]
+[36m(WorkerDict pid=248532)[0m 15it [00:08,  2.66it/s]
+[36m(WorkerDict pid=248391)[0m 20it [00:08,  4.87it/s]
+[36m(WorkerDict pid=248532)[0m 20it [00:08,  4.76it/s]
+[36m(WorkerDict pid=248391)[0m got gpu_tensor_list self.exchange_size=500000000 count=660626432 done=False[32m [repeated 4x across cluster][0m
+[36m(WorkerDict pid=248391)[0m Using `update_weights_from_tensor`[32m [repeated 4x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:38] After loop 2 done=False loop_consumed_time=2.6149134635925293 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:38 TP0] Cache flushed successfully![32m [repeated 8x across cluster][0m
+[36m(WorkerDict pid=248391)[0m 22it [00:10,  2.53it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:41] After loop 3 done=False loop_consumed_time=2.3035101890563965 in sharding manager, current proc memory allocated (GB): 14.785105228424072, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 24it [00:12,  2.26it/s]
+[36m(WorkerDict pid=248532)[0m 23it [00:12,  2.05it/s]
+[36m(WorkerDict pid=248391)[0m 28it [00:12,  3.58it/s]
+[36m(WorkerDict pid=248532)[0m 26it [00:12,  2.81it/s]
+[36m(WorkerDict pid=248391)[0m 32it [00:12,  5.33it/s]
+[36m(WorkerDict pid=248532)[0m 32it [00:12,  4.96it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:43] After loop 4 done=False loop_consumed_time=2.4467391967773438 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 35it [00:15,  2.23it/s]
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:31:43 TP1] Cache flushed successfully![32m [repeated 11x across cluster][0m
+[36m(WorkerDict pid=248532)[0m 36it [00:15,  2.52it/s]
+[36m(WorkerDict pid=248391)[0m 38it [00:15,  3.02it/s]
+[36m(WorkerDict pid=248532)[0m 40it [00:15,  3.51it/s]
+[36m(WorkerDict pid=248391)[0m 44it [00:15,  5.21it/s]
+[36m(WorkerDict pid=248532)[0m got gpu_tensor_list self.exchange_size=500000000 count=660626432 done=False[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248532)[0m Using `update_weights_from_tensor`[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:46] After loop 5 done=False loop_consumed_time=2.5497961044311523 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:48] After loop 6 done=False loop_consumed_time=2.2595410346984863 in sharding manager, current proc memory allocated (GB): 14.785105228424072, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 47it [00:19,  2.38it/s]
+[36m(WorkerDict pid=248532)[0m 47it [00:19,  2.38it/s]
+[36m(WorkerDict pid=248391)[0m 50it [00:19,  3.09it/s]
+[36m(WorkerDict pid=248532)[0m 50it [00:19,  3.13it/s]
+[36m(WorkerDict pid=248391)[0m 56it [00:19,  5.03it/s]
+[36m(WorkerDict pid=248532)[0m 57it [00:20,  3.93it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:51] After loop 7 done=False loop_consumed_time=2.5022530555725098 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:51 TP1] Cache flushed successfully![32m [repeated 10x across cluster][0m
+[36m(WorkerDict pid=248391)[0m 59it [00:23,  2.42it/s]
+[36m(WorkerDict pid=248391)[0m 61it [00:23,  2.86it/s]
+[36m(WorkerDict pid=248532)[0m 59it [00:23,  2.49it/s]
+[36m(WorkerDict pid=248391)[0m 63it [00:23,  3.47it/s]
+[36m(WorkerDict pid=248532)[0m 62it [00:23,  3.22it/s]
+[36m(WorkerDict pid=248391)[0m got gpu_tensor_list self.exchange_size=500000000 count=660626432 done=False[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m Using `update_weights_from_tensor`[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:53] After loop 8 done=False loop_consumed_time=2.6032063961029053 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 69it [00:24,  4.04it/s]
+[36m(WorkerDict pid=248532)[0m 69it [00:24,  4.03it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:55] After loop 9 done=False loop_consumed_time=2.2455639839172363 in sharding manager, current proc memory allocated (GB): 14.785105228424072, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 71it [00:26,  2.45it/s]
+[36m(WorkerDict pid=248391)[0m 74it [00:26,  3.29it/s]
+[36m(WorkerDict pid=248532)[0m 74it [00:26,  3.34it/s]
+[36m(WorkerDict pid=248391)[0m 81it [00:28,  4.17it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:55 TP1] Cache flushed successfully![32m [repeated 10x across cluster][0m
+[36m(WorkerDict pid=248532)[0m 81it [00:27,  4.20it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:31:58] After loop 10 done=False loop_consumed_time=2.4747838973999023 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248532)[0m 83it [00:30,  2.46it/s]
+[36m(WorkerDict pid=248391)[0m 83it [00:30,  2.56it/s]
+[36m(WorkerDict pid=248391)[0m 86it [00:30,  3.35it/s]
+[36m(WorkerDict pid=248532)[0m 86it [00:30,  3.39it/s]
+[36m(WorkerDict pid=248532)[0m got gpu_tensor_list self.exchange_size=500000000 count=660626432 done=False[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248532)[0m Using `update_weights_from_tensor`[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248532)[0m 93it [00:31,  4.36it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:00] After loop 11 done=False loop_consumed_time=2.4860265254974365 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 93it [00:31,  4.15it/s]
+[36m(WorkerDict pid=248532)[0m 94it [00:32,  3.15it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:03] After loop 12 done=False loop_consumed_time=2.307461738586426 in sharding manager, current proc memory allocated (GB): 14.785105228424072, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 95it [00:33,  2.59it/s][2026-08-30 11:32:03 TP1] Cache flushed successfully![32m [repeated 10x across cluster][0m
+[36m(WorkerDict pid=248391)[0m 98it [00:34,  3.35it/s]
+[36m(WorkerDict pid=248532)[0m 98it [00:34,  3.39it/s]
+[36m(WorkerDict pid=248532)[0m 105it [00:35,  4.44it/s]
+[36m(WorkerDict pid=248391)[0m 105it [00:35,  4.17it/s]
+[36m(WorkerDict pid=248532)[0m 106it [00:36,  3.18it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:05] After loop 13 done=False loop_consumed_time=2.470583915710449 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 107it [00:37,  2.62it/s]
+[36m(WorkerDict pid=248532)[0m 107it [00:37,  2.38it/s]
+[36m(WorkerDict pid=248391)[0m 110it [00:37,  3.34it/s]
+[36m(WorkerDict pid=248532)[0m 110it [00:37,  3.46it/s]
+[36m(WorkerDict pid=248532)[0m 116it [00:37,  6.33it/s]
+[36m(WorkerDict pid=248391)[0m 116it [00:37,  5.37it/s]
+[36m(WorkerDict pid=248532)[0m got gpu_tensor_list self.exchange_size=500000000 count=660626432 done=False[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248532)[0m Using `update_weights_from_tensor`[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:08] After loop 14 done=False loop_consumed_time=2.5951075553894043 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:08 TP0] Cache flushed successfully![32m [repeated 7x across cluster][0m
+[36m(WorkerDict pid=248391)[0m 118it [00:40,  2.98it/s]
+[36m(WorkerDict pid=248532)[0m 118it [00:40,  2.91it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:10] After loop 15 done=False loop_consumed_time=2.0719032287597656 in sharding manager, current proc memory allocated (GB): 14.785105228424072, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 124it [00:41,  4.00it/s]
+[36m(WorkerDict pid=248532)[0m 124it [00:41,  4.05it/s]
+[36m(WorkerDict pid=248391)[0m 128it [00:41,  5.73it/s]
+[36m(WorkerDict pid=248532)[0m 129it [00:42,  4.10it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:13] After loop 16 done=False loop_consumed_time=2.364009141921997 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 131it [00:45,  2.21it/s]
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:32:12 TP1] Cache flushed successfully![32m [repeated 11x across cluster][0m
+[36m(WorkerDict pid=248532)[0m 131it [00:45,  2.28it/s]
+[36m(WorkerDict pid=248391)[0m 134it [00:45,  2.96it/s]
+[36m(WorkerDict pid=248532)[0m 134it [00:45,  3.09it/s]
+[36m(WorkerDict pid=248391)[0m 140it [00:45,  5.08it/s]
+[36m(WorkerDict pid=248532)[0m 140it [00:45,  5.38it/s]
+[36m(WorkerDict pid=248391)[0m got gpu_tensor_list self.exchange_size=500000000 count=660626432 done=False[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m Using `update_weights_from_tensor`[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:15] After loop 17 done=False loop_consumed_time=2.4466969966888428 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:17] After loop 18 done=False loop_consumed_time=2.2151784896850586 in sharding manager, current proc memory allocated (GB): 14.785105228424072, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 144it [00:48,  2.56it/s]
+[36m(WorkerDict pid=248391)[0m 148it [00:48,  3.54it/s]
+[36m(WorkerDict pid=248532)[0m 146it [00:48,  3.14it/s]
+[36m(WorkerDict pid=248391)[0m 153it [00:49,  3.80it/s]
+[36m(WorkerDict pid=248532)[0m 153it [00:49,  3.99it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:20] After loop 19 done=False loop_consumed_time=2.5315921306610107 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:20 TP0] Cache flushed successfully![32m [repeated 9x across cluster][0m
+[36m(WorkerDict pid=248532)[0m 155it [00:52,  2.55it/s]
+[36m(WorkerDict pid=248391)[0m 156it [00:52,  2.61it/s]
+[36m(WorkerDict pid=248532)[0m 158it [00:52,  3.31it/s]
+[36m(WorkerDict pid=248391)[0m 160it [00:52,  3.64it/s]
+[36m(WorkerDict pid=248391)[0m 164it [00:52,  5.01it/s]
+[36m(WorkerDict pid=248391)[0m got gpu_tensor_list self.exchange_size=500000000 count=660626432 done=False[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m Using `update_weights_from_tensor`[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:22] After loop 20 done=False loop_consumed_time=2.4367623329162598 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248532)[0m 165it [00:53,  4.07it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:25] After loop 21 done=False loop_consumed_time=2.304969310760498 in sharding manager, current proc memory allocated (GB): 14.785105228424072, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248532)[0m 167it [00:55,  2.57it/s]
+[36m(WorkerDict pid=248391)[0m 170it [00:56,  3.03it/s]
+[36m(WorkerDict pid=248532)[0m 170it [00:56,  3.33it/s]
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:32:25 TP1] Cache flushed successfully![32m [repeated 11x across cluster][0m
+[36m(WorkerDict pid=248391)[0m 177it [00:57,  3.94it/s]
+[36m(WorkerDict pid=248532)[0m 177it [00:57,  4.15it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:27] After loop 22 done=False loop_consumed_time=2.5036373138427734 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 179it [00:59,  2.50it/s]
+[36m(WorkerDict pid=248532)[0m 179it [00:59,  2.59it/s]
+[36m(WorkerDict pid=248391)[0m 182it [00:59,  3.23it/s]
+[36m(WorkerDict pid=248532)[0m 182it [00:59,  3.36it/s]
+[36m(WorkerDict pid=248391)[0m got gpu_tensor_list self.exchange_size=500000000 count=660626432 done=False[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m Using `update_weights_from_tensor`[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:29] After loop 23 done=False loop_consumed_time=2.469733238220215 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 189it [01:00,  4.10it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:32] After loop 24 done=False loop_consumed_time=2.2735848426818848 in sharding manager, current proc memory allocated (GB): 14.785105228424072, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 191it [01:03,  2.60it/s][2026-08-30 11:32:32 TP1] Cache flushed successfully![32m [repeated 10x across cluster][0m
+[36m(WorkerDict pid=248391)[0m 194it [01:03,  3.34it/s]
+[36m(WorkerDict pid=248532)[0m 194it [01:03,  3.40it/s]
+[36m(WorkerDict pid=248391)[0m 200it [01:03,  5.52it/s]
+[36m(WorkerDict pid=248532)[0m 200it [01:03,  5.61it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:34] After loop 25 done=False loop_consumed_time=2.4980430603027344 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 203it [01:06,  2.50it/s]
+[36m(WorkerDict pid=248532)[0m 203it [01:06,  2.51it/s]
+[36m(WorkerDict pid=248391)[0m 206it [01:06,  3.22it/s]
+[36m(WorkerDict pid=248532)[0m 206it [01:06,  3.24it/s]
+[36m(WorkerDict pid=248391)[0m 212it [01:06,  5.24it/s]
+[36m(WorkerDict pid=248391)[0m got gpu_tensor_list self.exchange_size=500000000 count=660626432 done=False[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m Using `update_weights_from_tensor`[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:37] After loop 26 done=False loop_consumed_time=2.500481128692627 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:37 TP0] Cache flushed successfully![32m [repeated 7x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:39] After loop 27 done=False loop_consumed_time=2.248131036758423 in sharding manager, current proc memory allocated (GB): 14.785105228424072, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 218it [01:10,  3.19it/s]
+[36m(WorkerDict pid=248532)[0m 218it [01:10,  3.34it/s]
+[36m(WorkerDict pid=248391)[0m 224it [01:10,  5.18it/s]
+[36m(WorkerDict pid=248532)[0m 224it [01:10,  5.45it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:41] After loop 28 done=False loop_consumed_time=2.4546384811401367 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 227it [01:13,  2.48it/s]
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:32:42 TP1] Cache flushed successfully![32m [repeated 11x across cluster][0m
+[36m(WorkerDict pid=248532)[0m 227it [01:13,  2.52it/s]
+[36m(WorkerDict pid=248391)[0m 230it [01:14,  3.20it/s]
+[36m(WorkerDict pid=248532)[0m 230it [01:14,  3.25it/s]
+[36m(WorkerDict pid=248391)[0m 236it [01:14,  5.22it/s]
+[36m(WorkerDict pid=248532)[0m got gpu_tensor_list self.exchange_size=500000000 count=660626432 done=False[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248532)[0m Using `update_weights_from_tensor`[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:44] After loop 29 done=False loop_consumed_time=2.475639581680298 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:46] After loop 30 done=False loop_consumed_time=2.308675527572632 in sharding manager, current proc memory allocated (GB): 14.785105228424072, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248532)[0m 241it [01:17,  3.08it/s]
+[36m(WorkerDict pid=248391)[0m 243it [01:17,  3.30it/s]
+[36m(WorkerDict pid=248532)[0m 243it [01:17,  3.70it/s]
+[36m(WorkerDict pid=248391)[0m 248it [01:17,  4.91it/s]
+[36m(WorkerDict pid=248532)[0m 249it [01:18,  4.21it/s]
+[36m(WorkerDict pid=248391)[0m 240it [01:17,  2.62it/s][2026-08-30 11:32:46 TP1] Cache flushed successfully![32m [repeated 8x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:49] After loop 31 done=False loop_consumed_time=2.4857540130615234 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 251it [01:21,  2.37it/s]
+[36m(WorkerDict pid=248532)[0m 251it [01:21,  2.46it/s]
+[36m(WorkerDict pid=248391)[0m 254it [01:21,  3.05it/s]
+[36m(WorkerDict pid=248532)[0m 254it [01:21,  3.29it/s]
+[36m(WorkerDict pid=248532)[0m 260it [01:21,  5.65it/s]
+[36m(WorkerDict pid=248391)[0m 260it [01:21,  4.99it/s]
+[36m(WorkerDict pid=248391)[0m got gpu_tensor_list self.exchange_size=500000000 count=660626432 done=False[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m Using `update_weights_from_tensor`[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:51] After loop 32 done=False loop_consumed_time=2.4508748054504395 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:53] After loop 33 done=False loop_consumed_time=2.0713307857513428 in sharding manager, current proc memory allocated (GB): 14.785105228424072, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 263it [01:24,  2.58it/s][2026-08-30 11:32:53 TP1] Cache flushed successfully![32m [repeated 10x across cluster][0m
+[36m(WorkerDict pid=248532)[0m 263it [01:24,  2.57it/s]
+[36m(WorkerDict pid=248391)[0m 266it [01:24,  3.26it/s]
+[36m(WorkerDict pid=248532)[0m 266it [01:24,  3.34it/s]
+[36m(WorkerDict pid=248391)[0m 272it [01:24,  5.33it/s]
+[36m(WorkerDict pid=248532)[0m 273it [01:25,  4.17it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:56] After loop 34 done=False loop_consumed_time=2.4771575927734375 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 275it [01:28,  2.52it/s]
+[36m(WorkerDict pid=248532)[0m 275it [01:28,  2.61it/s]
+[36m(WorkerDict pid=248391)[0m 278it [01:28,  3.20it/s]
+[36m(WorkerDict pid=248532)[0m 278it [01:28,  3.39it/s]
+[36m(WorkerDict pid=248391)[0m 284it [01:28,  5.12it/s]
+[36m(WorkerDict pid=248391)[0m got gpu_tensor_list self.exchange_size=500000000 count=660626432 done=False[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m Using `update_weights_from_tensor`[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:58] After loop 35 done=False loop_consumed_time=2.5363852977752686 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248532)[0m 285it [01:29,  4.11it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:32:58 TP1] Cache flushed successfully![32m [repeated 9x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:33:01] After loop 36 done=False loop_consumed_time=2.268321990966797 in sharding manager, current proc memory allocated (GB): 14.785105228424072, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248532)[0m 287it [01:31,  2.62it/s]
+[36m(WorkerDict pid=248391)[0m 290it [01:31,  3.18it/s]
+[36m(WorkerDict pid=248532)[0m 290it [01:31,  3.40it/s]
+[36m(WorkerDict pid=248391)[0m 296it [01:32,  5.19it/s]
+[36m(WorkerDict pid=248532)[0m 297it [01:33,  4.24it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:33:03] After loop 37 done=False loop_consumed_time=2.2783124446868896 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 299it [01:35,  2.64it/s]
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:33:03 TP1] Cache flushed successfully![32m [repeated 9x across cluster][0m
+[36m(WorkerDict pid=248532)[0m 299it [01:35,  2.82it/s]
+[36m(WorkerDict pid=248391)[0m 304it [01:35,  3.95it/s]
+[36m(WorkerDict pid=248532)[0m 304it [01:35,  4.26it/s]
+[36m(WorkerDict pid=248391)[0m 308it [01:35,  5.31it/s]
+[36m(WorkerDict pid=248391)[0m got gpu_tensor_list self.exchange_size=500000000 count=660626432 done=False[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m Using `update_weights_from_tensor`[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:33:05] After loop 38 done=False loop_consumed_time=2.241868734359741 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248532)[0m 309it [01:36,  4.22it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:33:07] After loop 39 done=False loop_consumed_time=2.237462282180786 in sharding manager, current proc memory allocated (GB): 14.785105228424072, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 312it [01:38,  2.67it/s]
+[36m(WorkerDict pid=248391)[0m 316it [01:38,  3.68it/s]
+[36m(WorkerDict pid=248532)[0m 314it [01:38,  3.46it/s]
+[36m(WorkerDict pid=248532)[0m 320it [01:38,  5.74it/s]
+[36m(WorkerDict pid=248391)[0m 320it [01:38,  4.88it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:33:10] After loop 40 done=False loop_consumed_time=2.4476847648620605 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:33:10 TP0] Cache flushed successfully![32m [repeated 9x across cluster][0m
+[36m(WorkerDict pid=248391)[0m 323it [01:42,  2.39it/s]
+[36m(WorkerDict pid=248532)[0m 323it [01:42,  2.49it/s]
+[36m(WorkerDict pid=248391)[0m 326it [01:42,  3.06it/s]
+[36m(WorkerDict pid=248532)[0m 326it [01:42,  3.22it/s]
+[36m(WorkerDict pid=248391)[0m got gpu_tensor_list self.exchange_size=500000000 count=660626432 done=False[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m Using `update_weights_from_tensor`[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:33:12] After loop 41 done=False loop_consumed_time=2.495589256286621 in sharding manager, current proc memory allocated (GB): 14.89450216293335, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:33:14] After loop 42 done=False loop_consumed_time=2.0384786128997803 in sharding manager, current proc memory allocated (GB): 14.785105228424072, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248532)[0m 335it [01:45,  2.72it/s]
+[36m(WorkerDict pid=248531)[0m param count: 0; used 109.11407661437988 seconds to prepare tensor list
+[36m(WorkerDict pid=248532)[0m got gpu_tensor_list self.exchange_size=500000000 count=1090016256 done=False[32m [repeated 4x across cluster][0m
+[36m(WorkerDict pid=248532)[0m Using `update_weights_from_tensor`[32m [repeated 4x across cluster][0m
+[36m(WorkerDict pid=248532)[0m 339it [01:49,  1.85it/s]339it [01:49,  3.10it/s]
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:33:18 TP1] Cache flushed successfully![32m [repeated 13x across cluster][0m
+[36m(WorkerDict pid=248532)[0m got gpu_tensor_list self.exchange_size=500000000 count=0 done=True
+[36m(WorkerDict pid=248532)[0m Recorded complete LoRA-sensitive rollout sync fingerprint with 196 tensors
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:33:18] After loop 43 done=False loop_consumed_time=4.106363773345947 in sharding manager, current proc memory allocated (GB): 15.294402599334717, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m 339it [01:49,  1.73it/s]339it [01:49,  3.09it/s]
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:33:18] After sync model weights in sharding manager, current proc memory allocated (GB): 8.663534164428711, memory reserved (GB): 18.833984375; global memory free (GB): 9.9556884765625, total (GB): 39.55743408203125
+[36m(WorkerDict pid=248391)[0m final sampling params: {'temperature': 1.0, 'top_p': 0.95, 'max_new_tokens': 1024, 'top_k': -1, 'min_p': 0, 'repetition_penalty': 1, 'skip_special_tokens': False}
+[36m(WorkerDict pid=248391)[0m max eval parallel agents:  2
+[36m(WorkerDict pid=248533)[0m param count: 0; used 109.08596467971802 seconds to prepare tensor list
+[36m(WorkerDict pid=248391)[0m got gpu_tensor_list self.exchange_size=500000000 count=1090016256 done=False
+[36m(WorkerDict pid=248391)[0m Using `update_weights_from_tensor`
+[36m(WorkerDict pid=248391)[0m got gpu_tensor_list self.exchange_size=500000000 count=0 done=True
+[36m(WorkerDict pid=248391)[0m Recorded complete LoRA-sensitive rollout sync fingerprint with 196 tensors
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:33:24] nodedup in generate seq torch.distributed.get_rank()=0 self.tp_rank=0
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:33:18 TP1] Cache flushed successfully![32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248531)[0m INFO:2026-08-30 11:33:24,354:nodedup in generate seq torch.distributed.get_rank()=1 self.tp_rank=1
+[36m(WorkerDict pid=248391)[0m Total instances: 2
+[36m(WorkerDict pid=248391)[0m [92m11:33:24 - openhands:INFO[0m: codeact.py:1257 - Initializing runtime for instance getmoto__moto-6920, trajectory 0
+[36m(WorkerDict pid=248391)[0m [92m11:33:24 - openhands:INFO[0m: codeact.py:864 - Using instance container image: docker.io/xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6920. Please make sure this image exists. Submit an issue on https://github.com/All-Hands-AI/OpenHands if you run into any issues.
+[36m(WorkerDict pid=248391)[0m [92m11:33:24 - openhands:INFO[0m: codeact.py:1257 - Initializing runtime for instance getmoto__moto-5085, trajectory 0
+[36m(WorkerDict pid=248391)[0m [92m11:33:24 - openhands:INFO[0m: codeact.py:864 - Using instance container image: docker.io/xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5085. Please make sure this image exists. Submit an issue on https://github.com/All-Hands-AI/OpenHands if you run into any issues.
+[36m(WorkerDict pid=248391)[0m [92m11:33:24 - openhands:INFO[0m: runtime_build.py:186 - Building image: ghcr.io/all-hands-ai/runtime:oh_v0.25.0_sximih2417c7tmwx
+[36m(WorkerDict pid=248391)[0m [92m11:33:24 - openhands:INFO[0m: docker_runtime.py:140 - [runtime 15c30780-724d-4c50-9665-0a4a0823a99a-888b7ce8f8b745dd] Starting runtime with image: ghcr.io/all-hands-ai/runtime:oh_v0.25.0_sximih2417c7tmwx
+[36m(WorkerDict pid=248391)[0m [92m11:33:24 - openhands:INFO[0m: runtime_build.py:186 - Building image: ghcr.io/all-hands-ai/runtime:oh_v0.25.0_8bilxupunbj6i663
+[36m(WorkerDict pid=248391)[0m [92m11:33:24 - openhands:INFO[0m: docker_runtime.py:140 - [runtime 060c013b-3c19-432d-8d9b-af024c95a974-768b7146a490236a] Starting runtime with image: ghcr.io/all-hands-ai/runtime:oh_v0.25.0_8bilxupunbj6i663
+[36m(WorkerDict pid=248391)[0m [92m11:33:25 - openhands:INFO[0m: docker_runtime.py:144 - [runtime 15c30780-724d-4c50-9665-0a4a0823a99a-888b7ce8f8b745dd] Container started: openhands-runtime-15c30780-724d-4c50-9665-0a4a0823a99a-888b7ce8f8b745dd. VSCode URL: None
+[36m(WorkerDict pid=248391)[0m [92m11:33:25 - openhands:INFO[0m: docker_runtime.py:155 - [runtime 15c30780-724d-4c50-9665-0a4a0823a99a-888b7ce8f8b745dd] Waiting for client to become ready at http://localhost:36557...
+[36m(WorkerDict pid=248391)[0m [92m11:33:25 - openhands:INFO[0m: docker_runtime.py:144 - [runtime 060c013b-3c19-432d-8d9b-af024c95a974-768b7146a490236a] Container started: openhands-runtime-060c013b-3c19-432d-8d9b-af024c95a974-768b7146a490236a. VSCode URL: None
+[36m(WorkerDict pid=248391)[0m [92m11:33:25 - openhands:INFO[0m: docker_runtime.py:155 - [runtime 060c013b-3c19-432d-8d9b-af024c95a974-768b7146a490236a] Waiting for client to become ready at http://localhost:30106...
+[36m(WorkerDict pid=248391)[0m [92m11:33:45 - openhands:INFO[0m: docker_runtime.py:161 - [runtime 15c30780-724d-4c50-9665-0a4a0823a99a-888b7ce8f8b745dd] Runtime is ready.
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:33:24] nodedup in generate seq torch.distributed.get_rank()=2 self.tp_rank=0
+[36m(WorkerDict pid=248533)[0m INFO:2026-08-30 11:33:24,334:nodedup in generate seq torch.distributed.get_rank()=3 self.tp_rank=1
+[36m(WorkerDict pid=248532)[0m [92m11:33:24 - openhands:INFO[0m: codeact.py:1257 - Initializing runtime for instance getmoto__moto-7365, trajectory 0[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248532)[0m [92m11:33:24 - openhands:INFO[0m: codeact.py:864 - Using instance container image: docker.io/xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7365. Please make sure this image exists. Submit an issue on https://github.com/All-Hands-AI/OpenHands if you run into any issues.[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248532)[0m [92m11:33:24 - openhands:INFO[0m: runtime_build.py:186 - Building image: ghcr.io/all-hands-ai/runtime:oh_v0.25.0_aav2t7tu589kfh9q[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248532)[0m [92m11:33:24 - openhands:INFO[0m: docker_runtime.py:140 - [runtime b096c99b-1ee9-40f7-8ae5-12783ea7f29f-c00239e91d356da7] Starting runtime with image: ghcr.io/all-hands-ai/runtime:oh_v0.25.0_aav2t7tu589kfh9q[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248532)[0m [92m11:33:25 - openhands:INFO[0m: docker_runtime.py:144 - [runtime 9822679e-f3cf-415d-a846-e918bfaaa057-4ecfc24149c2354a] Container started: openhands-runtime-9822679e-f3cf-415d-a846-e918bfaaa057-4ecfc24149c2354a. VSCode URL: None[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248532)[0m [92m11:33:25 - openhands:INFO[0m: docker_runtime.py:155 - [runtime 9822679e-f3cf-415d-a846-e918bfaaa057-4ecfc24149c2354a] Waiting for client to become ready at http://localhost:36402...[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [92m11:33:46 - openhands:INFO[0m: utils.py:139 - ------------------------------
+[36m(WorkerDict pid=248391)[0m [92m11:33:46 - openhands:INFO[0m: utils.py:140 - BEGIN Runtime Initialization Fn
+[36m(WorkerDict pid=248391)[0m [92m11:33:46 - openhands:INFO[0m: utils.py:141 - ------------------------------
+[36m(WorkerDict pid=248391)[0m 11:33:46 - ACTION
+[36m(WorkerDict pid=248391)[0m **CmdRunAction (source=None, is_input=False)**
+[36m(WorkerDict pid=248391)[0m COMMAND:
+[36m(WorkerDict pid=248391)[0m echo 'export SWE_INSTANCE_ID=getmoto__moto-6920' >> ~/.bashrc && echo 'export PIP_CACHE_DIR=~/.cache/pip' >> ~/.bashrc && echo "alias git='git --no-pager'" >> ~/.bashrc
+[36m(WorkerDict pid=248391)[0m 11:33:47 - OBSERVATION
+[36m(WorkerDict pid=248391)[0m **CmdOutputObservation (source=None, exit code=0, metadata={
+[36m(WorkerDict pid=248391)[0m   "exit_code": 0,
+[36m(WorkerDict pid=248391)[0m   "pid": -1,
+[36m(WorkerDict pid=248391)[0m   "username": "root",
+[36m(WorkerDict pid=248391)[0m   "hostname": "78ff300ebb43",
+[36m(WorkerDict pid=248391)[0m   "working_dir": "/workspace",
+[36m(WorkerDict pid=248391)[0m   "py_interpreter_path": "/opt/miniconda3/envs/testbed/bin/python",
+[36m(WorkerDict pid=248391)[0m   "prefix": "",
+[36m(WorkerDict pid=248391)[0m   "suffix": "\n[The command completed with exit code 0.]"
+[36m(WorkerDict pid=248391)[0m })**
+[36m(WorkerDict pid=248391)[0m --BEGIN AGENT OBSERVATION--
+[36m(WorkerDict pid=248391)[0m 
+[36m(WorkerDict pid=248391)[0m [The command completed with exit code 0.]
+[36m(WorkerDict pid=248391)[0m [Current working directory: /workspace]
+[36m(WorkerDict pid=248391)[0m [Python interpreter: /opt/miniconda3/envs/testbed/bin/python]
+[36m(WorkerDict pid=248391)[0m [Command finished with exit code 0]
+[36m(WorkerDict pid=248391)[0m --END AGENT OBSERVATION--
+[36m(WorkerDict pid=248391)[0m export USER=$(whoami); echo USER=${USER} 
+[36m(WorkerDict pid=248532)[0m 
+[36m(WorkerDict pid=248391)[0m USER=root
+[36m(WorkerDict pid=248391)[0m mkdir -p /swe_util/eval_data/instances
+[36m(WorkerDict pid=248391)[0m 
+[36m(WorkerDict pid=248391)[0m cat ~/.bashrc
+[36m(WorkerDict pid=248532)[0m 
+[36m(WorkerDict pid=248391)[0m source /opt/miniconda3/etc/profile.d/conda.sh && conda activate testbed
+[36m(WorkerDict pid=248391)[0m export ENABLE_AUTO_LINT=******
+[36m(WorkerDict pid=248391)[0m export SWE_INSTANCE_ID=getmoto__moto-6920
+[36m(WorkerDict pid=248391)[0m export PIP_CACHE_DIR=~/.cache/pip
+[36m(WorkerDict pid=248391)[0m alias git='git --no-pager'
+[36m(WorkerDict pid=248391)[0m source ~/.bashrc
+[36m(WorkerDict pid=248391)[0m 
+[36m(WorkerDict pid=248532)[0m 
+[36m(WorkerDict pid=248391)[0m 
+[36m(WorkerDict pid=248391)[0m source /swe_util/instance_swe_entry.sh
+[36m(WorkerDict pid=248532)[0m 
+[36m(WorkerDict pid=248391)[0m 
+[36m(WorkerDict pid=248532)[0m [92m11:33:47 - openhands:INFO[0m: docker_runtime.py:161 - [runtime b096c99b-1ee9-40f7-8ae5-12783ea7f29f-c00239e91d356da7] Runtime is ready.[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248532)[0m WORKSPACE_NAME: getmoto__moto__4.1
+[36m(WorkerDict pid=248532)[0m cd /workspace/getmoto__moto__4.1
+[36m(WorkerDict pid=248532)[0m 
+[36m(WorkerDict pid=248532)[0m   "working_dir": "/workspace/getmoto__moto__4.1",
+[36m(WorkerDict pid=248532)[0m 
+[36m(WorkerDict pid=248532)[0m [Current working directory: /workspace/getmoto__moto__4.1]
+[36m(WorkerDict pid=248532)[0m git reset --hard
+[36m(WorkerDict pid=248391)[0m 
+[36m(WorkerDict pid=248391)[0m 
+[36m(WorkerDict pid=248532)[0m [92m11:33:48 - openhands:INFO[0m: utils.py:141 - ------------------------------[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=248532)[0m [92m11:33:48 - openhands:INFO[0m: utils.py:140 - BEGIN Runtime Initialization Fn[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m 11:33:51 - ACTION[32m [repeated 26x across cluster][0m
+[36m(WorkerDict pid=248391)[0m **CmdRunAction (source=None, is_input=False)**[32m [repeated 26x across cluster][0m
+[36m(WorkerDict pid=248391)[0m COMMAND:[32m [repeated 26x across cluster][0m
+[36m(WorkerDict pid=248532)[0m echo 'export SWE_INSTANCE_ID=getmoto__moto-7365' >> ~/.bashrc && echo 'export PIP_CACHE_DIR=~/.cache/pip' >> ~/.bashrc && echo "alias git='git --no-pager'" >> ~/.bashrc[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248532)[0m HEAD is now at 6d41ad72e EC2: Simplify describe_sg_rules() logic (#5875)
+[36m(WorkerDict pid=248532)[0m for remote_name in $(git remote); do git remote remove "${remote_name}"; done
+[36m(WorkerDict pid=248532)[0m 
+[36m(WorkerDict pid=248391)[0m HEAD is now at 2021e564f EC2: KeyPairs now support tags (#6919)
+[36m(WorkerDict pid=248532)[0m 
+[36m(WorkerDict pid=248532)[0m which python
+[36m(WorkerDict pid=248532)[0m 11:33:52 - OBSERVATION[32m [repeated 26x across cluster][0m
+[36m(WorkerDict pid=248532)[0m **CmdOutputObservation (source=None, exit code=0, metadata={[32m [repeated 26x across cluster][0m
+[36m(WorkerDict pid=248532)[0m   "exit_code": 0,[32m [repeated 26x across cluster][0m
+[36m(WorkerDict pid=248532)[0m   "pid": -1,[32m [repeated 26x across cluster][0m
+[36m(WorkerDict pid=248532)[0m   "username": "root",[32m [repeated 26x across cluster][0m
+[36m(WorkerDict pid=248532)[0m   "hostname": "93c689782aa9",[32m [repeated 26x across cluster][0m
+[36m(WorkerDict pid=248532)[0m   "working_dir": "/workspace",[32m [repeated 21x across cluster][0m
+[36m(WorkerDict pid=248532)[0m   "py_interpreter_path": "/opt/miniconda3/envs/testbed/bin/python",[32m [repeated 26x across cluster][0m
+[36m(WorkerDict pid=248532)[0m   "prefix": "",[32m [repeated 26x across cluster][0m
+[36m(WorkerDict pid=248532)[0m   "suffix": "\n[The command completed with exit code 0.]"[32m [repeated 26x across cluster][0m
+[36m(WorkerDict pid=248532)[0m })**[32m [repeated 26x across cluster][0m
+[36m(WorkerDict pid=248532)[0m --BEGIN AGENT OBSERVATION--[32m [repeated 26x across cluster][0m
+[36m(WorkerDict pid=248532)[0m [The command completed with exit code 0.][32m [repeated 26x across cluster][0m
+[36m(WorkerDict pid=248532)[0m [Current working directory: /workspace][32m [repeated 21x across cluster][0m
+[36m(WorkerDict pid=248532)[0m [Python interpreter: /opt/miniconda3/envs/testbed/bin/python][32m [repeated 26x across cluster][0m
+[36m(WorkerDict pid=248532)[0m [Command finished with exit code 0][32m [repeated 26x across cluster][0m
+[36m(WorkerDict pid=248532)[0m --END AGENT OBSERVATION--[32m [repeated 26x across cluster][0m
+[36m(WorkerDict pid=248532)[0m export USER=$(whoami); echo USER=${USER} [32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m 
+[36m(WorkerDict pid=248532)[0m USER=root[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248532)[0m mkdir -p /swe_util/eval_data/instances[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248532)[0m Successfully initialized runtime for instance getmoto__moto-5876, trajectory 0 in 28.43 seconds
+[36m(WorkerDict pid=248532)[0m final sampling params: {'temperature': 1.0, 'top_p': 0.95, 'max_new_tokens': 1024, 'top_k': -1, 'min_p': 0, 'repetition_penalty': 1, 'skip_special_tokens': False}
+[36m(WorkerDict pid=248532)[0m max eval parallel agents:  2
+[36m(WorkerDict pid=248532)[0m Total instances: 2
+[36m(WorkerDict pid=248532)[0m /opt/miniconda3/envs/testbed/bin/python
+[36m(WorkerDict pid=248532)[0m [92m11:33:53 - openhands:INFO[0m: utils.py:269 - END Runtime Initialization Fn
+[36m(WorkerDict pid=248532)[0m [92m11:33:53 - openhands:INFO[0m: codeact.py:915 - Successfully initialized runtime for instance getmoto__moto-5876
+[36m(WorkerDict pid=248532)[0m [92m11:33:53 - openhands:INFO[0m: codeact.py:1299 - Running agent for instance getmoto__moto-5876, trajectory 0
+[36m(WorkerDict pid=248532)[0m [92m11:33:53 - openhands:INFO[0m: codeact.py:1257 - Initializing runtime for instance getmoto__moto-5876, trajectory 1
+[36m(WorkerDict pid=248532)[0m [92m11:33:53 - openhands:INFO[0m: codeact.py:864 - Using instance container image: docker.io/xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5876. Please make sure this image exists. Submit an issue on https://github.com/All-Hands-AI/OpenHands if you run into any issues.
+[36m(WorkerDict pid=248391)[0m /opt/miniconda3/envs/testbed/bin/python
+[36m(WorkerDict pid=248532)[0m instance id getmoto__moto-5876, trajectory 0, step 1
+[36m(WorkerDict pid=248532)[0m [92m11:33:53 - openhands:INFO[0m: agent_controller.py:466 - [Agent Controller default] Setting agent(OnlineCodeActAgent) state from AgentState.LOADING to AgentState.RUNNING
+[36m(WorkerDict pid=248532)[0m 
+[36m(WorkerDict pid=248532)[0m [Agent Controller default] LEVEL 0 LOCAL STEP 0 GLOBAL STEP 0
+[36m(WorkerDict pid=248532)[0m [92m11:33:53 - openhands:INFO[0m: runtime_build.py:186 - Building image: ghcr.io/all-hands-ai/runtime:oh_v0.25.0_p4nd3e5o4d7mg727
+[36m(WorkerDict pid=248532)[0m [92m11:33:53 - openhands:INFO[0m: docker_runtime.py:140 - [runtime 22263d31-f32b-48ae-a4fa-d689b5f2a028-7178e7d843301147] Starting runtime with image: ghcr.io/all-hands-ai/runtime:oh_v0.25.0_p4nd3e5o4d7mg727
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:33:53 TP0] Prefill batch. #new-seq: 1, #new-token: 4399, #cached-token: 0, token usage: 0.00, #running-req: 0, #queue-req: 0
+[36m(WorkerDict pid=248391)[0m 
+[36m(WorkerDict pid=248532)[0m cat ~/.bashrc[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248532)[0m HEAD is now at 7f6c9cb1d Techdebt: Update Cloudformation Coverage (to use mock_aws) (#7362)
+[36m(WorkerDict pid=248391)[0m HEAD is now at 6b70cd1b6 EC2 SpotFleetRequests - support LaunchTemplates (#5084)
+[36m(WorkerDict pid=248532)[0m source /opt/miniconda3/etc/profile.d/conda.sh && conda activate testbed[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248532)[0m export ENABLE_AUTO_LINT=******[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248532)[0m export SWE_INSTANCE_ID=getmoto__moto-7365[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248532)[0m export PIP_CACHE_DIR=~/.cache/pip[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248532)[0m alias git='git --no-pager'[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248532)[0m source ~/.bashrc[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248532)[0m 
+[36m(WorkerDict pid=248391)[0m 
+[36m(WorkerDict pid=248532)[0m source /swe_util/instance_swe_entry.sh[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m /usr/bin/ld: skipping incompatible /lib/i386-linux-gnu/libcuda.so when searching for -lcuda
+[36m(WorkerDict pid=248391)[0m /usr/bin/ld: skipping incompatible /lib/i386-linux-gnu/libcuda.so when searching for -lcuda
+[36m(WorkerDict pid=248391)[0m [92m11:33:54 - openhands:INFO[0m: docker_runtime.py:144 - [runtime ccea0337-d16b-4bca-b443-01f880455811-a4478af195b50e91] Container started: openhands-runtime-ccea0337-d16b-4bca-b443-01f880455811-a4478af195b50e91. VSCode URL: None
+[36m(WorkerDict pid=248391)[0m [92m11:33:54 - openhands:INFO[0m: docker_runtime.py:155 - [runtime ccea0337-d16b-4bca-b443-01f880455811-a4478af195b50e91] Waiting for client to become ready at http://localhost:39046...
+[36m(WorkerDict pid=248532)[0m /opt/miniconda3/envs/testbed/bin/python
+[36m(WorkerDict pid=248391)[0m /opt/miniconda3/envs/testbed/bin/python
+[36m(WorkerDict pid=248391)[0m WORKSPACE_NAME: getmoto__moto__3.1[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m cd /workspace/getmoto__moto__3.1[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m   "working_dir": "/workspace/getmoto__moto__3.1",[32m [repeated 15x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [Current working directory: /workspace/getmoto__moto__3.1][32m [repeated 15x across cluster][0m
+[36m(WorkerDict pid=248391)[0m git reset --hard[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m 2026-08-30 11:33:56,989 - INFO - flashinfer.jit: Loading JIT ops: batch_prefill_with_kv_cache_dtype_q_bf16_dtype_kv_bf16_dtype_o_bf16_dtype_idx_i32_head_dim_qk_128_head_dim_vo_128_posenc_0_use_swa_False_use_logits_cap_False_f16qk_False
+[36m(WorkerDict pid=248391)[0m 2026-08-30 11:33:57,002 - INFO - flashinfer.jit: Loading JIT ops: batch_prefill_with_kv_cache_dtype_q_bf16_dtype_kv_bf16_dtype_o_bf16_dtype_idx_i32_head_dim_qk_128_head_dim_vo_128_posenc_0_use_swa_False_use_logits_cap_False_f16qk_False
+[36m(WorkerDict pid=248391)[0m [92m11:33:55 - openhands:INFO[0m: utils.py:270 - ------------------------------[32m [repeated 8x across cluster][0m
+[36m(WorkerDict pid=248391)[0m 11:33:54 - ACTION[32m [repeated 13x across cluster][0m
+[36m(WorkerDict pid=248391)[0m **CmdRunAction (source=None, is_input=False)**[32m [repeated 13x across cluster][0m
+[36m(WorkerDict pid=248391)[0m COMMAND:[32m [repeated 13x across cluster][0m
+[36m(WorkerDict pid=248391)[0m for remote_name in $(git remote); do git remote remove "${remote_name}"; done[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248532)[0m 2026-08-30 11:33:57,046 - INFO - flashinfer.jit: Finished loading JIT ops: batch_prefill_with_kv_cache_dtype_q_bf16_dtype_kv_bf16_dtype_o_bf16_dtype_idx_i32_head_dim_qk_128_head_dim_vo_128_posenc_0_use_swa_False_use_logits_cap_False_f16qk_False
+[36m(WorkerDict pid=248391)[0m which python[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m 11:33:55 - OBSERVATION[32m [repeated 13x across cluster][0m
+[36m(WorkerDict pid=248391)[0m **CmdOutputObservation (source=None, exit code=0, metadata={[32m [repeated 13x across cluster][0m
+[36m(WorkerDict pid=248391)[0m   "exit_code": 0,[32m [repeated 13x across cluster][0m
+[36m(WorkerDict pid=248391)[0m   "pid": -1,[32m [repeated 13x across cluster][0m
+[36m(WorkerDict pid=248391)[0m   "username": "root",[32m [repeated 13x across cluster][0m
+[36m(WorkerDict pid=248391)[0m   "hostname": "71632a7f6b99",[32m [repeated 13x across cluster][0m
+[36m(WorkerDict pid=248391)[0m   "working_dir": "/workspace",[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248391)[0m   "py_interpreter_path": "/opt/miniconda3/envs/testbed/bin/python",[32m [repeated 13x across cluster][0m
+[36m(WorkerDict pid=248391)[0m   "prefix": "",[32m [repeated 13x across cluster][0m
+[36m(WorkerDict pid=248391)[0m   "suffix": "\n[The command completed with exit code 0.]"[32m [repeated 13x across cluster][0m
+[36m(WorkerDict pid=248391)[0m })**[32m [repeated 13x across cluster][0m
+[36m(WorkerDict pid=248391)[0m --BEGIN AGENT OBSERVATION--[32m [repeated 13x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [The command completed with exit code 0.][32m [repeated 13x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [Current working directory: /workspace][32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [Python interpreter: /opt/miniconda3/envs/testbed/bin/python][32m [repeated 13x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [Command finished with exit code 0][32m [repeated 13x across cluster][0m
+[36m(WorkerDict pid=248391)[0m --END AGENT OBSERVATION--[32m [repeated 13x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [92m11:33:55 - openhands:INFO[0m: utils.py:269 - END Runtime Initialization Fn[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [92m11:33:55 - openhands:INFO[0m: codeact.py:915 - Successfully initialized runtime for instance getmoto__moto-5085[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [92m11:33:55 - openhands:INFO[0m: codeact.py:1299 - Running agent for instance getmoto__moto-5085, trajectory 0[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [92m11:33:55 - openhands:INFO[0m: codeact.py:1257 - Initializing runtime for instance getmoto__moto-5085, trajectory 1[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [92m11:33:55 - openhands:INFO[0m: codeact.py:864 - Using instance container image: docker.io/xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5085. Please make sure this image exists. Submit an issue on https://github.com/All-Hands-AI/OpenHands if you run into any issues.[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [92m11:33:55 - openhands:INFO[0m: agent_controller.py:466 - [Agent Controller default] Setting agent(OnlineCodeActAgent) state from AgentState.LOADING to AgentState.RUNNING[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [Agent Controller default] LEVEL 0 LOCAL STEP 0 GLOBAL STEP 0[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [92m11:33:55 - openhands:INFO[0m: runtime_build.py:186 - Building image: ghcr.io/all-hands-ai/runtime:oh_v0.25.0_8bilxupunbj6i663[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [92m11:33:55 - openhands:INFO[0m: docker_runtime.py:140 - [runtime 054eb392-66d0-49d8-8a5b-d60678cf053b-5efaeecde0e9b25f] Starting runtime with image: ghcr.io/all-hands-ai/runtime:oh_v0.25.0_8bilxupunbj6i663[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:33:53 TP0] Prefill batch. #new-seq: 1, #new-token: 3990, #cached-token: 0, token usage: 0.00, #running-req: 0, #queue-req: 0
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:33:59 TP0] Prefill batch. #new-seq: 1, #new-token: 1052, #cached-token: 2895, token usage: 0.13, #running-req: 1, #queue-req: 0
+[36m(WorkerDict pid=248532)[0m 2026-08-30 11:33:59,339 - INFO - flashinfer.jit: Loading JIT ops: cascade
+[36m(WorkerDict pid=248532)[0m 2026-08-30 11:33:59,356 - INFO - flashinfer.jit: Loading JIT ops: cascade
+[36m(WorkerDict pid=248532)[0m 2026-08-30 11:33:59,362 - INFO - flashinfer.jit: Finished loading JIT ops: cascade
+[36m(WorkerDict pid=248532)[0m 2026-08-30 11:33:59,429 - INFO - flashinfer.jit: Finished loading JIT ops: cascade
+[36m(WorkerDict pid=248391)[0m /usr/bin/ld: skipping incompatible /lib/i386-linux-gnu/libcuda.so when searching for -lcuda[32m [repeated 24x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [92m11:33:56 - openhands:INFO[0m: docker_runtime.py:144 - [runtime 054eb392-66d0-49d8-8a5b-d60678cf053b-5efaeecde0e9b25f] Container started: openhands-runtime-054eb392-66d0-49d8-8a5b-d60678cf053b-5efaeecde0e9b25f. VSCode URL: None[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [92m11:33:56 - openhands:INFO[0m: docker_runtime.py:155 - [runtime 054eb392-66d0-49d8-8a5b-d60678cf053b-5efaeecde0e9b25f] Waiting for client to become ready at http://localhost:32567...[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:34:01 TP0] Decode batch. #running-req: 2, #token: 5532, token usage: 0.17, gen throughput (token/s): 0.50, #queue-req: 0
+[36m(WorkerDict pid=248532)[0m 2026-08-30 11:33:57,026 - INFO - flashinfer.jit: Loading JIT ops: batch_prefill_with_kv_cache_dtype_q_bf16_dtype_kv_bf16_dtype_o_bf16_dtype_idx_i32_head_dim_qk_128_head_dim_vo_128_posenc_0_use_swa_False_use_logits_cap_False_f16qk_False[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248532)[0m 2026-08-30 11:33:57,180 - INFO - flashinfer.jit: Finished loading JIT ops: batch_prefill_with_kv_cache_dtype_q_bf16_dtype_kv_bf16_dtype_o_bf16_dtype_idx_i32_head_dim_qk_128_head_dim_vo_128_posenc_0_use_swa_False_use_logits_cap_False_f16qk_False[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248532)[0m Take action: <class 'list'>
+[36m(WorkerDict pid=248391)[0m Successfully initialized runtime for instance getmoto__moto-5085, trajectory 0 in 30.95 seconds[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248391)[0m instance id getmoto__moto-5085, trajectory 0, step 1[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=248532)[0m [92m11:34:03 - openhands:INFO[0m: agent_controller.py:466 - [Agent Controller default] Setting agent(OnlineCodeActAgent) state from AgentState.RUNNING to AgentState.FINISHED
+[36m(WorkerDict pid=248532)[0m [Agent Controller default] LEVEL 0 LOCAL STEP 1 GLOBAL STEP 1
+[36m(WorkerDict pid=248391)[0m [Agent Controller default] LEVEL 0 LOCAL STEP 1 GLOBAL STEP 1
+[36m(WorkerDict pid=248532)[0m 
+[36m(WorkerDict pid=248532)[0m [92m11:34:04 - openhands:INFO[0m: utils.py:282 - ------------------------------
+[36m(WorkerDict pid=248532)[0m [92m11:34:04 - openhands:INFO[0m: utils.py:283 - BEGIN Runtime Completion Fn
+[36m(WorkerDict pid=248532)[0m [92m11:34:04 - openhands:INFO[0m: utils.py:284 - ------------------------------
+[36m(WorkerDict pid=248532)[0m 11:34:04 - ACTION
+[36m(WorkerDict pid=248532)[0m **CmdRunAction (source=None, is_input=False)**
+[36m(WorkerDict pid=248532)[0m COMMAND:
+[36m(WorkerDict pid=248532)[0m cd /workspace/getmoto__moto__5.0
+[36m(WorkerDict pid=248532)[0m 11:34:04 - OBSERVATION
+[36m(WorkerDict pid=248532)[0m **CmdOutputObservation (source=None, exit code=0, metadata={
+[36m(WorkerDict pid=248532)[0m   "exit_code": 0,
+[36m(WorkerDict pid=248532)[0m   "pid": -1,
+[36m(WorkerDict pid=248532)[0m   "username": "root",
+[36m(WorkerDict pid=248532)[0m   "hostname": "32f92d8969e4",
+[36m(WorkerDict pid=248532)[0m   "working_dir": "/workspace/getmoto__moto__5.0",
+[36m(WorkerDict pid=248532)[0m   "py_interpreter_path": "/opt/miniconda3/envs/testbed/bin/python",
+[36m(WorkerDict pid=248532)[0m   "prefix": "",
+[36m(WorkerDict pid=248532)[0m   "suffix": "\n[The command completed with exit code 0.]"
+[36m(WorkerDict pid=248532)[0m })**
+[36m(WorkerDict pid=248532)[0m --BEGIN AGENT OBSERVATION--
+[36m(WorkerDict pid=248532)[0m 
+[36m(WorkerDict pid=248532)[0m [The command completed with exit code 0.]
+[36m(WorkerDict pid=248532)[0m [Current working directory: /workspace/getmoto__moto__5.0]
+[36m(WorkerDict pid=248532)[0m [Python interpreter: /opt/miniconda3/envs/testbed/bin/python]
+[36m(WorkerDict pid=248532)[0m [Command finished with exit code 0]
+[36m(WorkerDict pid=248532)[0m --END AGENT OBSERVATION--
+[36m(WorkerDict pid=248532)[0m 11:34:04 - ACTION
+[36m(WorkerDict pid=248532)[0m **CmdRunAction (source=None, is_input=False)**
+[36m(WorkerDict pid=248532)[0m COMMAND:
+[36m(WorkerDict pid=248532)[0m git config --global core.pager ""
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:34:04 TP0] Prefill batch. #new-seq: 1, #new-token: 1845, #cached-token: 3416, token usage: 0.10, #running-req: 0, #queue-req: 0[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248391)[0m 2026-08-30 11:33:59,815 - INFO - flashinfer.jit: Loading JIT ops: cascade[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248391)[0m 2026-08-30 11:33:59,885 - INFO - flashinfer.jit: Finished loading JIT ops: cascade[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248391)[0m /usr/bin/ld: skipping incompatible /lib/i386-linux-gnu/libcuda.so when searching for -lcuda[32m [repeated 4x across cluster][0m
+[36m(WorkerDict pid=248532)[0m 11:34:05 - OBSERVATION
+[36m(WorkerDict pid=248532)[0m **CmdOutputObservation (source=None, exit code=0, metadata={
+[36m(WorkerDict pid=248532)[0m   "exit_code": 0,
+[36m(WorkerDict pid=248532)[0m   "pid": -1,
+[36m(WorkerDict pid=248532)[0m   "username": "root",
+[36m(WorkerDict pid=248532)[0m   "hostname": "32f92d8969e4",
+[36m(WorkerDict pid=248532)[0m   "working_dir": "/workspace/getmoto__moto__5.0",
+[36m(WorkerDict pid=248532)[0m   "py_interpreter_path": "/opt/miniconda3/envs/testbed/bin/python",
+[36m(WorkerDict pid=248532)[0m   "prefix": "",
+[36m(WorkerDict pid=248532)[0m   "suffix": "\n[The command completed with exit code 0.]"
+[36m(WorkerDict pid=248532)[0m })**
+[36m(WorkerDict pid=248532)[0m --BEGIN AGENT OBSERVATION--
+[36m(WorkerDict pid=248532)[0m 
+[36m(WorkerDict pid=248532)[0m [The command completed with exit code 0.]
+[36m(WorkerDict pid=248532)[0m [Current working directory: /workspace/getmoto__moto__5.0]
+[36m(WorkerDict pid=248532)[0m [Python interpreter: /opt/miniconda3/envs/testbed/bin/python]
+[36m(WorkerDict pid=248532)[0m [Command finished with exit code 0]
+[36m(WorkerDict pid=248532)[0m --END AGENT OBSERVATION--
+[36m(WorkerDict pid=248532)[0m 11:34:05 - ACTION
+[36m(WorkerDict pid=248532)[0m **CmdRunAction (source=None, is_input=False)**
+[36m(WorkerDict pid=248532)[0m COMMAND:
+[36m(WorkerDict pid=248532)[0m git add -A
+[36m(WorkerDict pid=248532)[0m 11:34:06 - OBSERVATION
+[36m(WorkerDict pid=248532)[0m **CmdOutputObservation (source=None, exit code=0, metadata={
+[36m(WorkerDict pid=248532)[0m   "exit_code": 0,
+[36m(WorkerDict pid=248532)[0m   "pid": -1,
+[36m(WorkerDict pid=248532)[0m   "username": "root",
+[36m(WorkerDict pid=248532)[0m   "hostname": "32f92d8969e4",
+[36m(WorkerDict pid=248532)[0m   "working_dir": "/workspace/getmoto__moto__5.0",
+[36m(WorkerDict pid=248532)[0m   "py_interpreter_path": "/opt/miniconda3/envs/testbed/bin/python",
+[36m(WorkerDict pid=248532)[0m   "prefix": "",
+[36m(WorkerDict pid=248532)[0m   "suffix": "\n[The command completed with exit code 0.]"
+[36m(WorkerDict pid=248532)[0m })**
+[36m(WorkerDict pid=248532)[0m --BEGIN AGENT OBSERVATION--
+[36m(WorkerDict pid=248532)[0m 
+[36m(WorkerDict pid=248532)[0m [The command completed with exit code 0.]
+[36m(WorkerDict pid=248532)[0m [Current working directory: /workspace/getmoto__moto__5.0]
+[36m(WorkerDict pid=248532)[0m [Python interpreter: /opt/miniconda3/envs/testbed/bin/python]
+[36m(WorkerDict pid=248532)[0m [Command finished with exit code 0]
+[36m(WorkerDict pid=248532)[0m --END AGENT OBSERVATION--
+[36m(WorkerDict pid=248532)[0m 11:34:06 - ACTION
+[36m(WorkerDict pid=248532)[0m **CmdRunAction (source=None, is_input=False)**
+[36m(WorkerDict pid=248532)[0m COMMAND:
+[36m(WorkerDict pid=248532)[0m git diff --no-color --cached 7f6c9cb1deafb280fe7fcc7551c38e397f11a706
+*** SIGTERM received at time=1788060846 on cpu 20 ***
+PC: @     0x7f83b8c91117  (unknown)  (unknown)
+    @     0x7f83b8c42520  (unknown)  (unknown)
+    @ ... and at least 1 more frames
+[2026-08-30 11:34:06,300 E 245940 245940] logging.cc:484: *** SIGTERM received at time=1788060846 on cpu 20 ***
+[2026-08-30 11:34:06,300 E 245940 245940] logging.cc:484: PC: @     0x7f83b8c91117  (unknown)  (unknown)
+[2026-08-30 11:34:06,301 E 245940 245940] logging.cc:484:     @     0x7f83b8c42520  (unknown)  (unknown)
+[2026-08-30 11:34:06,301 E 245940 245940] logging.cc:484:     @ ... and at least 1 more frames
+[36m(WorkerDict pid=248532)[0m 11:34:06 - OBSERVATION
+[36m(WorkerDict pid=248532)[0m **CmdOutputObservation (source=None, exit code=0, metadata={
+[36m(WorkerDict pid=248532)[0m   "exit_code": 0,
+[36m(WorkerDict pid=248532)[0m   "pid": -1,
+[36m(WorkerDict pid=248532)[0m   "username": "root",
+[36m(WorkerDict pid=248532)[0m   "hostname": "32f92d8969e4",
+[36m(WorkerDict pid=248532)[0m   "working_dir": "/workspace/getmoto__moto__5.0",
+[36m(WorkerDict pid=248532)[0m   "py_interpreter_path": "/opt/miniconda3/envs/testbed/bin/python",
+[36m(WorkerDict pid=248532)[0m   "prefix": "",
+[36m(WorkerDict pid=248532)[0m   "suffix": "\n[The command completed with exit code 0.]"
+[36m(WorkerDict pid=248532)[0m })**
+[36m(WorkerDict pid=248532)[0m --BEGIN AGENT OBSERVATION--
+[36m(WorkerDict pid=248532)[0m 
+[36m(WorkerDict pid=248532)[0m [The command completed with exit code 0.]
+[36m(WorkerDict pid=248532)[0m [Current working directory: /workspace/getmoto__moto__5.0]
+[36m(WorkerDict pid=248532)[0m [Python interpreter: /opt/miniconda3/envs/testbed/bin/python]
+[36m(WorkerDict pid=248532)[0m [Command finished with exit code 0]
+[36m(WorkerDict pid=248532)[0m --END AGENT OBSERVATION--
+[36m(WorkerDict pid=248532)[0m [92m11:34:06 - openhands:INFO[0m: utils.py:360 - ------------------------------
+[36m(WorkerDict pid=248532)[0m [92m11:34:06 - openhands:INFO[0m: utils.py:361 - END Runtime Completion Fn
+[36m(WorkerDict pid=248532)[0m [92m11:34:06 - openhands:INFO[0m: utils.py:362 - ------------------------------
+[36m(WorkerDict pid=248532)[0m [2026-08-30 11:34:06 TP0] Decode batch. #running-req: 1, #token: 4458, token usage: 0.14, gen throughput (token/s): 9.74, #queue-req: 0[32m [repeated 5x across cluster][0m
+[36m(WorkerDict pid=248391)[0m Take action: <class 'list'>[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248391)[0m instance id getmoto__moto-6920, trajectory 0, step 2[32m [repeated 4x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [Agent Controller default] LEVEL 0 LOCAL STEP 1 GLOBAL STEP 1[32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=248391)[0m [2026-08-30 11:34:06 TP0] Prefill batch. #new-seq: 1, #new-token: 300, #cached-token: 4050, token usage: 0.20, #running-req: 1, #queue-req: 0[32m [repeated 2x across cluster][0m

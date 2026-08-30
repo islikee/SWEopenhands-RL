@@ -219,9 +219,8 @@ def codeact_user_response(
         else ''
     )
     msg = (
-        'You have very few turns left. Use your next action to edit the relevant non-test source file, or finish if you have already edited it.\n'
-        'Use at most one compact shell command if you still need context. Do not browse, explain, create tests, create reproductions, create backup files, or run broad test suites.\n'
-        'When the source is changed, finish the interaction so the existing tests can be run for you.\n'
+        'Please continue working on the task on whatever approach you think is suitable.\n'
+        'If you think you have solved the task, please first send your answer to user through message and then finish the interaction.\n'
         f'{encaps_str}'
         'IMPORTANT: YOU SHOULD NEVER ASK FOR HUMAN HELP.\n'
     )
@@ -448,6 +447,10 @@ class OnlineCodeActAgent(Agent):
         # if we're done, go back
         latest_user_message = state.get_last_user_message()
         if latest_user_message and latest_user_message.content.strip() == '/exit':
+            logger.info(
+                f"FINISH_REASON=user_exit instance={self.instance_id} "
+                f"trajectory={self.trajectory_id} step={self.step_count}"
+            )
             return AgentFinishAction()
 
         # prepare what we want to send to the LLM
@@ -462,6 +465,12 @@ class OnlineCodeActAgent(Agent):
                 messages, add_generation_prompt=True, tokenize=True, enable_thinking=self.qwen3_enable_thinking
             )
             if len(input_ids) >= self.max_prompt_length:
+                logger.warning(
+                    f"FINISH_REASON=context_limit instance={self.instance_id} "
+                    f"trajectory={self.trajectory_id} step={self.step_count} "
+                    f"context_tokens={len(input_ids)} "
+                    f"context_limit={self.max_prompt_length}"
+                )
                 return AgentFinishAction(thought="The context is too long. Exit now.")
 
             response_str = call_async_from_sync(self.generate, input_ids=input_ids, sampling_params=self.sampling_params)
@@ -487,8 +496,19 @@ class OnlineCodeActAgent(Agent):
                 actions = codeact_function_calling.response_to_actions(
                     self.convert_str_to_completion_format(fn_call_messages)
                 )
-                print(f"Take action: {type(actions)}")
-                
+                action_names = [type(action).__name__ for action in actions]
+                logger.info(
+                    f"ACTION_TYPES instance={self.instance_id} "
+                    f"trajectory={self.trajectory_id} step={self.step_count} "
+                    f"actions={action_names}"
+                )
+
+                if any(isinstance(action, AgentFinishAction) for action in actions):
+                    logger.info(
+                        f"FINISH_REASON=model_finish instance={self.instance_id} "
+                        f"trajectory={self.trajectory_id} step={self.step_count}"
+                    )
+
                 for action in actions:
                     self.pending_actions.append(action)
         
@@ -512,8 +532,16 @@ class OnlineCodeActAgent(Agent):
         
         # Return the first pending action
         if not self.pending_actions:
-            # Fallback in case of empty actions
-            return AgentFinishAction()
+            logger.warning(
+                f"EMPTY_ACTION_RETRY instance={self.instance_id} "
+                f"trajectory={self.trajectory_id} step={self.step_count}"
+            )
+            return MessageAction(
+                content=(
+                    "No valid tool action was produced. "
+                    "I should continue working on the task and use an available tool."
+                )
+            )
             
         return self.pending_actions.popleft()
     

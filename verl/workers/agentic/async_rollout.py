@@ -100,7 +100,10 @@ class AsyncRollout(BaseRollout):
             batch=prompts,
             num_trajectories=self.config.n_trajectories,
             infer_engine=self.engine,
-            max_prompt_length=self.config.prompt_length,
+            max_prompt_length=self.config.get(
+                "agent_max_prompt_length",
+                self.config.prompt_length,
+            ),
             max_response_length=self.config.response_length,
             max_starting_message_length=self.config.max_starting_message_length,
             max_parallel_agents=self.config.max_parallel_agents // self.device_mesh.size(0),
