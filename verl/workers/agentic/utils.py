@@ -57,8 +57,43 @@ RUN_WITH_BROWSING = os.environ.get('RUN_WITH_BROWSING', 'false').lower() == 'tru
 def _get_swebench_workspace_dir_name(instance: pd.Series) -> str:
     return f'{instance.repo}__{instance.version}'.replace('/', '__')
 
+def _format_optional_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if not isinstance(value, (list, tuple, np.ndarray)) and pd.isna(value):
+        return ""
+    return str(value).strip()
+
+def _format_optional_sequence(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value] if value.strip() else []
+    if not isinstance(value, (list, tuple, np.ndarray)) and pd.isna(value):
+        return []
+    if isinstance(value, np.ndarray):
+        value = value.tolist()
+    if not isinstance(value, (list, tuple)):
+        value = [value]
+    return [str(item).strip() for item in value if str(item).strip()]
+
 def get_instruction(instance: pd.Series):
     workspace_dir_name = _get_swebench_workspace_dir_name(instance)
+    hints_text = _format_optional_text(instance.get("hints_text", ""))
+    target_tests = _format_optional_sequence(instance.get("FAIL_TO_PASS", []))
+    available_context = ""
+    if target_tests or hints_text:
+        available_context += "\n<available_context>\n"
+        if target_tests:
+            available_context += "Existing failing tests that should pass after the fix (do not edit these tests):\n"
+            available_context += "\n".join(f"- {test_name}" for test_name in target_tests)
+            available_context += "\n"
+        if hints_text:
+            available_context += "Maintainer hints:\n"
+            available_context += hints_text
+            available_context += "\n"
+        available_context += "</available_context>\n"
+
     instruction = f"""
 <uploaded_files>
 /workspace/{workspace_dir_name}
@@ -69,47 +104,20 @@ I've uploaded a python code repository in the directory {workspace_dir_name}. Co
 <issue_description>
 {instance.problem_statement}
 </issue_description>
+{available_context}
 
 Can you help me implement the necessary changes to the repository so that the requirements specified in the <issue_description> are met?
-I've already taken care of all changes to any of the test files described in the <issue_description>. This means you DON'T have to modify the testing logic or any of the tests in any way!
+Do not create or modify test files or reproduction scripts. The tests already exist and will be run for you.
 Also the development Python environment is already set up for you (i.e., all dependencies already installed), so you don't need to install other packages.
 Your task is to make the minimal changes to non-test files in the /workspace/{workspace_dir_name} directory to ensure the <issue_description> is satisfied.
 
-Follow these steps to resolve the issue:
+You only have a very small number of interaction turns. Spend them on producing a source-code patch:
 
-1. EXPLORATION: First, thoroughly explore the repository structure using tools like `find` and `grep`.
-   - Identify all files mentioned in the problem statement
-   - Locate where the issue occurs in the codebase
-   - Understand the surrounding context and dependencies
-   - Use `grep` to search for relevant functions, classes, or error messages
+1. Locate the relevant implementation with at most one compact shell command such as `grep`, `find`, or `sed`. Use the failing test name and maintainer hints above when present.
+2. Edit the non-test source file immediately with the smallest likely fix.
+3. If you have changed the source, finish the interaction so the existing tests can be run for you.
 
-2. ANALYSIS: Based on your exploration, think carefully about the problem and propose 2-5 possible approaches to fix the issue.
-   - Analyze the root cause of the problem
-   - Consider trade-offs between different solutions
-   - Select the most promising approach and explain your reasoning
-
-3. TEST CREATION: Before implementing any fix, create a script to reproduce and verify the issue.
-   - Look at existing test files in the repository to understand the test format/structure
-   - Create a minimal reproduction script that demonstrates the issue
-   - Run your script to confirm the error exists
-
-4. IMPLEMENTATION: Edit the source code to implement your chosen solution.
-   - Make minimal, focused changes to fix the issue
-
-5. VERIFICATION: Test your implementation thoroughly.
-   - Run your reproduction script to verify the fix works
-   - Add edge cases to your test script to ensure comprehensive coverage
-   - Run existing tests related to the modified code to ensure you haven't broken anything
-
-6. FINAL REVIEW: Carefully re-read the problem description and compare your changes with the base commit {instance["base_commit"]}.
-   - Ensure you've fully addressed all requirements
-   - Run any tests in the repository related to:
-     * The issue you are fixing
-     * The files you modified
-     * The functions you changed
-   - If any tests fail, revise your implementation until all tests pass
-
-Be thorough in your exploration, testing, and reasoning. It's fine if your thinking process is lengthy - quality and completeness are more important than brevity.
+Do not spend turns writing long explanations, proposing multiple approaches, creating reproductions, or running broad test suites. Do not create backup files such as `.bak` files, and do not copy or rewrite whole modules or classes. Keep the patch localized to the relevant function or small helper. A small plausible source patch is better than no patch.
 """
 
     if RUN_WITH_BROWSING:

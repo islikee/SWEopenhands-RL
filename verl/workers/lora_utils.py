@@ -67,6 +67,81 @@ def get_trainable_parameter_stats(model) -> dict[str, int]:
     return {"trainable": trainable, "total": total}
 
 
+def _parameter_fingerprint(parameter: torch.nn.Parameter) -> dict[str, float]:
+    with torch.no_grad():
+        values = parameter.detach().float()
+        return {
+            "sum": float(values.sum().item()),
+            "abs_sum": float(values.abs().sum().item()),
+            "squared_sum": float((values * values).sum().item()),
+        }
+
+
+def find_lora_b_parameter_fingerprint(model) -> dict[str, Any]:
+    for name, parameter in model.named_parameters():
+        if parameter.requires_grad and "lora_B" in name and parameter.numel() > 0:
+            return {"name": name, **_parameter_fingerprint(parameter)}
+    raise RuntimeError("No trainable LoRA B parameter found for smoke update verification")
+
+
+def find_parameter_fingerprint(model, target_name: str) -> dict[str, Any]:
+    for name, parameter in model.named_parameters():
+        if name == target_name:
+            return {"name": name, **_parameter_fingerprint(parameter)}
+    raise RuntimeError(f"Parameter {target_name!r} not found for smoke update verification")
+
+
+def find_frozen_base_parameter_fingerprint(model) -> dict[str, Any]:
+    for name, parameter in model.named_parameters():
+        if not parameter.requires_grad and "lora_" not in name and parameter.numel() > 0:
+            return {"name": name, **_parameter_fingerprint(parameter)}
+    raise RuntimeError("No frozen base parameter found for smoke update verification")
+
+
+def fingerprint_changed(before: dict[str, Any], after: dict[str, Any]) -> bool:
+    return any(before[key] != after[key] for key in ("sum", "abs_sum", "squared_sum"))
+
+
+def max_lora_grad_abs(model) -> tuple[str | None, float]:
+    max_name = None
+    max_abs = 0.0
+    for name, parameter in model.named_parameters():
+        if not parameter.requires_grad or "lora_" not in name or parameter.grad is None:
+            continue
+        grad_max = float(parameter.grad.detach().abs().max().item())
+        if max_name is None or grad_max > max_abs:
+            max_name = name
+            max_abs = grad_max
+    return max_name, max_abs
+
+
+def max_lora_b_grad_abs(model) -> tuple[str | None, float]:
+    max_name = None
+    max_abs = 0.0
+    for name, parameter in model.named_parameters():
+        if not parameter.requires_grad or "lora_B" not in name or parameter.grad is None:
+            continue
+        grad_max = float(parameter.grad.detach().abs().max().item())
+        if max_name is None or grad_max > max_abs:
+            max_name = name
+            max_abs = grad_max
+    return max_name, max_abs
+
+
+def distributed_max_float(value: float, device: torch.device | str | None = None) -> float:
+    if not torch.distributed.is_available() or not torch.distributed.is_initialized():
+        return float(value)
+    if device is None:
+        device = torch.device("cuda", torch.cuda.current_device()) if torch.cuda.is_available() else torch.device("cpu")
+    reduced = torch.tensor(float(value), device=device)
+    torch.distributed.all_reduce(reduced, op=torch.distributed.ReduceOp.MAX)
+    return float(reduced.item())
+
+
+def distributed_any(value: bool, device: torch.device | str | None = None) -> bool:
+    return distributed_max_float(1.0 if value else 0.0, device=device) > 0.0
+
+
 def save_lora_checkpoint(model, path: str | Path) -> None:
     path = Path(path)
     path.mkdir(parents=True, exist_ok=True)
@@ -156,11 +231,35 @@ def _delta_from_state_dict(
     return sum(deltas)
 
 
+def _has_lora_delta_in_state_dict(prefix: str, module, state_dict: dict[str, torch.Tensor]) -> bool:
+    for adapter in _active_adapters(module):
+        a_key = f"{prefix}.lora_A.{adapter}.weight"
+        b_key = f"{prefix}.lora_B.{adapter}.weight"
+        if a_key in state_dict and b_key in state_dict:
+            return True
+    return False
+
+
 def build_effective_rollout_weight_payload(
     model,
     state_dict: dict[str, torch.Tensor] | None = None,
 ) -> list[tuple[str, torch.Tensor]]:
     return list(iter_effective_rollout_weight_payload(model, state_dict=state_dict))
+
+
+def lora_sensitive_payload_names(model, state_dict: dict[str, torch.Tensor] | None = None) -> set[str]:
+    unwrapped = _unwrap_module(model)
+    state_dict = state_dict or unwrapped.state_dict()
+    modules = dict(unwrapped.named_modules())
+    names = set()
+    for name in state_dict:
+        if not name.endswith(".base_layer.weight"):
+            continue
+        prefix = name[: -len(".base_layer.weight")]
+        module = modules.get(prefix)
+        if module is not None and _has_lora_delta_in_state_dict(prefix, module, state_dict):
+            names.add(_normalize_peft_key(name))
+    return names
 
 
 def iter_effective_rollout_weight_payload(
@@ -170,6 +269,7 @@ def iter_effective_rollout_weight_payload(
     target_device: torch.device | str | None = None,
     target_dtype: torch.dtype | None = None,
     emit_payload: bool = True,
+    preserve_lora_delta_precision: bool = False,
 ):
     unwrapped = _unwrap_module(model)
     state_dict = state_dict or unwrapped.state_dict()
@@ -187,6 +287,7 @@ def iter_effective_rollout_weight_payload(
         if has_lora and name.endswith(".base_layer.weight"):
             prefix = name[: -len(".base_layer.weight")]
             module = modules.get(prefix)
+            has_lora_delta = module is not None and _has_lora_delta_in_state_dict(prefix, module, state_dict)
             if module is not None:
                 delta = _delta_from_state_dict(
                     prefix,
@@ -198,10 +299,14 @@ def iter_effective_rollout_weight_payload(
                 if delta is not None:
                     materialized = materialized.float() + delta.to(materialized.device)
                     materialized = materialized.to(dtype=tensor.dtype)
+            else:
+                has_lora_delta = False
+        else:
+            has_lora_delta = False
         if not emit_payload:
             del materialized
             continue
-        if target_dtype is not None:
+        if target_dtype is not None and not (preserve_lora_delta_precision and has_lora_delta):
             materialized = materialized.to(dtype=target_dtype)
         if target_device is not None:
             materialized = materialized.to(device=target_device)
@@ -252,7 +357,13 @@ def _rollout_update_succeeded(result: Any) -> bool | None:
     return None
 
 
-def sync_rollout_weight_payload(inference_engine, payload, *, load_format=_MISSING) -> dict[str, int]:
+def sync_rollout_weight_payload(
+    inference_engine,
+    payload,
+    *,
+    load_format=_MISSING,
+    check_weight_change: bool = True,
+) -> dict[str, int]:
     payload = list(payload)
     summary = validate_rollout_weight_payload(payload)
 
@@ -269,8 +380,11 @@ def sync_rollout_weight_payload(inference_engine, payload, *, load_format=_MISSI
                 f"returned {result!r}"
             )
 
-    if rollout_weight_change_required():
-        _check_payload_changed_after_first_sync(inference_engine, payload)
+    if check_weight_change and rollout_weight_change_required():
+        check_rollout_weight_payload_changed_after_first_sync(
+            inference_engine,
+            payload_fingerprint(payload),
+        )
 
     return summary
 
@@ -279,7 +393,7 @@ def rollout_weight_change_required() -> bool:
     return os.getenv("SKYRL_REQUIRE_ROLLOUT_WEIGHT_CHANGE_AFTER_FIRST_SYNC", "").lower() in {"1", "true", "yes", "on"}
 
 
-def _payload_fingerprint(payload: list[tuple[str, torch.Tensor]]) -> tuple:
+def payload_fingerprint(payload: list[tuple[str, torch.Tensor]]) -> tuple:
     fingerprint = []
     with torch.no_grad():
         for name, tensor in payload:
@@ -298,13 +412,16 @@ def _payload_fingerprint(payload: list[tuple[str, torch.Tensor]]) -> tuple:
     return tuple(fingerprint)
 
 
-def _check_payload_changed_after_first_sync(inference_engine, payload: list[tuple[str, torch.Tensor]]) -> None:
+def check_rollout_weight_payload_changed_after_first_sync(inference_engine, fingerprint: tuple) -> None:
     engine_key = id(inference_engine)
-    fingerprint = _payload_fingerprint(payload)
     previous = _SYNC_FINGERPRINTS.get(engine_key)
     _SYNC_FINGERPRINTS[engine_key] = fingerprint
-    if previous is not None and fingerprint == previous:
+    if previous is None:
+        print(f"Recorded rollout weight sync fingerprint with {len(fingerprint)} tensors")
+    elif fingerprint == previous:
         raise RuntimeError(
             "rollout weight synchronization payload did not change after the previous sync; "
             "cloud_smoke requires an updated effective policy to be sent to the rollout engine"
         )
+    else:
+        print(f"Verified rollout weight sync payload changed after previous sync with {len(fingerprint)} tensors")

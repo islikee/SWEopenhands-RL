@@ -64,6 +64,32 @@ class FSDPCheckpointManager(BaseCheckpointManager):
                          processing_class=processing_class,
                          checkpoint_contents=checkpoint_contents)
 
+    def _has_lora_adapters(self) -> bool:
+        unwrapped = getattr(self.model, "_fsdp_wrapped_module", self.model)
+        if hasattr(unwrapped, "peft_config"):
+            return True
+        return any("lora_" in name for name, _ in self.model.named_parameters())
+
+    def _lora_model_state_dict(self) -> dict[str, torch.Tensor]:
+        return {
+            name: parameter.detach().cpu().clone()
+            for name, parameter in self.model.named_parameters()
+            if parameter.requires_grad or "lora_" in name
+        }
+
+    def _load_lora_model_state_dict(self, state_dict: dict[str, torch.Tensor]) -> None:
+        current_parameters = dict(self.model.named_parameters())
+        missing = []
+        with torch.no_grad():
+            for name, tensor in state_dict.items():
+                parameter = current_parameters.get(name)
+                if parameter is None:
+                    missing.append(name)
+                    continue
+                parameter.copy_(tensor.to(device=parameter.device, dtype=parameter.dtype))
+        if missing:
+            raise RuntimeError(f"LoRA checkpoint contains unknown parameters: {missing}")
+
     def load_checkpoint(self, local_path: str, hdfs_path: str = None, del_local_after_load=False):
         if local_path is None:
             return
@@ -96,6 +122,16 @@ class FSDPCheckpointManager(BaseCheckpointManager):
 
         lr_scheduler_state_dict = extra_state_dict['lr_scheduler']
 
+        if extra_state_dict.get('lora_adapter_only', False):
+            self._load_lora_model_state_dict(model_state_dict)
+            if self.optimizer is not None:
+                self.optimizer.load_state_dict(optimizer_state_dict)
+            if 'rng' in extra_state_dict:
+                self.load_rng_state(extra_state_dict['rng'])
+            if self.lr_scheduler is not None:
+                self.lr_scheduler.load_state_dict(lr_scheduler_state_dict)
+            return
+
         state_dict_cfg = ShardedStateDictConfig(offload_to_cpu=True)
         optim_cfg = ShardedOptimStateDictConfig(offload_to_cpu=True)
         with FSDP.state_dict_type(self.model, StateDictType.SHARDED_STATE_DICT, state_dict_cfg, optim_cfg):
@@ -126,6 +162,36 @@ class FSDPCheckpointManager(BaseCheckpointManager):
 
         local_path = self.local_mkdir(local_path)
         torch.distributed.barrier()
+
+        if self._has_lora_adapters():
+            model_state_dict = self._lora_model_state_dict()
+            if self.optimizer is not None:
+                optimizer_state_dict = self.optimizer.state_dict()
+            else:
+                optimizer_state_dict = None
+            if self.lr_scheduler is not None:
+                lr_scheduler_state_dict = self.lr_scheduler.state_dict()
+            else:
+                lr_scheduler_state_dict = None
+
+            extra_state_dict = {
+                'lr_scheduler': lr_scheduler_state_dict,
+                'rng': self.get_rng_state(),
+                'lora_adapter_only': True,
+            }
+            model_path = os.path.join(local_path, f'model_world_size_{self.world_size}_rank_{self.rank}.pt')
+            optim_path = os.path.join(local_path, f'optim_world_size_{self.world_size}_rank_{self.rank}.pt')
+            extra_path = os.path.join(local_path, f'extra_state_world_size_{self.world_size}_rank_{self.rank}.pt')
+
+            print(f'[rank-{self.rank}]: Saving LoRA adapter checkpoint to {os.path.abspath(model_path)}')
+            print(f'[rank-{self.rank}]: Saving optimizer checkpoint to {os.path.abspath(optim_path)}')
+            print(f'[rank-{self.rank}]: Saving extra_state to {os.path.abspath(extra_path)}')
+            torch.save(model_state_dict, model_path)
+            torch.save(optimizer_state_dict, optim_path)
+            torch.save(extra_state_dict, extra_path)
+            torch.distributed.barrier()
+            self.previous_saved_paths.append(local_path)
+            return
 
         # every rank will save its own model and optim shard
         state_dict_cfg = ShardedStateDictConfig(offload_to_cpu=True)

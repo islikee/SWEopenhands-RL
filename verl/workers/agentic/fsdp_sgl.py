@@ -18,8 +18,11 @@ from verl.utils.debug import log_gpu_memory_usage
 from verl.utils.torch_functional import (broadcast_dict_tensor, allgather_dict_tensors, all_gather_dict_non_tensors,
                                          broadcast_dict_non_tensor)
 from verl.workers.lora_utils import (
+    check_rollout_weight_payload_changed_after_first_sync,
     has_lora_adapters,
     iter_effective_rollout_weight_payload,
+    payload_fingerprint,
+    rollout_weight_change_required,
     sync_rollout_weight_payload,
 )
 from ..sharding_manager.base import BaseShardingManager
@@ -115,6 +118,8 @@ class FSDPSGLShardingManager(BaseShardingManager):
     def __enter__(self):
         local_rank = self.device_mesh.get_local_rank(1)
         tensor_list = []
+        tensor_iter = None
+        sync_fingerprint = []
         if "actor" in self.role:
             start = time.time()
             log_gpu_memory_usage('Before state_dict() in sharding manager memory', logger=logger)
@@ -126,16 +131,23 @@ class FSDPSGLShardingManager(BaseShardingManager):
             # print(f'Weight keys: {st.keys()}')
             target_device = torch.device("cpu") if self.exchange_size else device
             if has_lora_adapters(self.module):
+                preserve_lora_delta_precision = rollout_weight_change_required()
+                if preserve_lora_delta_precision and local_rank == 0:
+                    print("SMOKE ONLY: preserving LoRA delta precision in effective rollout payload")
                 payload_iter = iter_effective_rollout_weight_payload(
                     self.module,
                     state_dict=st,
                     target_device=target_device,
                     target_dtype=torch.bfloat16,
                     emit_payload=local_rank == 0,
+                    preserve_lora_delta_precision=preserve_lora_delta_precision,
                 )
                 if local_rank == 0:
-                    for k, v in tqdm(payload_iter):
-                        tensor_list.append((k, v))
+                    if self.exchange_size is None:
+                        for k, v in tqdm(payload_iter):
+                            tensor_list.append((k, v))
+                    else:
+                        tensor_iter = tqdm(payload_iter)
                 else:
                     for _ in payload_iter:
                         pass
@@ -154,7 +166,7 @@ class FSDPSGLShardingManager(BaseShardingManager):
             del st
             torch.cuda.empty_cache()
             log_gpu_memory_usage('After del state_dict and empty_cache in sharding manager', logger=logger)
-            param_count = sum([v.numel() for k, v in tensor_list])
+            param_count = "streaming" if tensor_iter is not None else sum([v.numel() for k, v in tensor_list])
             print(f"param count: {param_count}; used {time.time() - start} seconds to prepare tensor list")
         if "rollout" in self.role and self.device_mesh.get_local_rank(1) == 0:
             print("resuming memory occupation")
@@ -163,6 +175,10 @@ class FSDPSGLShardingManager(BaseShardingManager):
         torch.cuda.synchronize()
 
         def tensor_loader():
+            if tensor_iter is not None:
+                for k, v in tensor_iter:
+                    yield (k, v.to(device)), v.numel() * v.element_size()
+                return
             for k, v in tensor_list:
                 yield (k, v.to(device)), v.numel() * v.element_size()
 
@@ -201,7 +217,13 @@ class FSDPSGLShardingManager(BaseShardingManager):
                         assert done
                         break
                     print("Using `update_weights_from_tensor`")
-                    sync_rollout_weight_payload(self.inference_engine, gpu_tensor_list)
+                    if rollout_weight_change_required():
+                        sync_fingerprint.extend(payload_fingerprint(gpu_tensor_list))
+                    sync_rollout_weight_payload(
+                        self.inference_engine,
+                        gpu_tensor_list,
+                        check_weight_change=tensor_iter is None,
+                    )
                     del gpu_tensor_list
             else:
                 if self.role == "actor":
@@ -246,6 +268,12 @@ class FSDPSGLShardingManager(BaseShardingManager):
             loop_count += 1
 
         log_gpu_memory_usage('After sync model weights in sharding manager', logger=logger)
+
+        if tensor_iter is not None and rollout_weight_change_required():
+            check_rollout_weight_payload_changed_after_first_sync(
+                self.inference_engine,
+                tuple(sync_fingerprint),
+            )
 
         torch.distributed.barrier()
 

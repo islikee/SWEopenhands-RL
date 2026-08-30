@@ -1,0 +1,395 @@
+Running cloud smoke preflight.
+Cloud smoke preflight: OK
+commit=e321fce0885905b935273b78ecae7ece6c052550
+model path=/data/skyrl/models/Qwen/Qwen2.5-Coder-7B-Instruct
+smoke dataset path=/data/skyrl/datasets/swegym-smoke
+output path=/data/skyrl/outputs
+checkpoint=/data/skyrl/outputs/checkpoints/cloud_smoke_codex_20260829_211708
+training_mode=lora
+reward_manager=swebench_test_informed
+GPU count=4
+train batch=4
+ppo mini batch=4
+entropy_coeff=0.0
+actor param offload=true
+actor optimizer offload=true
+ref param offload=true
+prompt_key=problem_statement
+dataloader_num_workers=0
+n_trajectories=2
+max prompt=8192
+max response=1024
+max starting message=12000
+rollout tensor parallel size=2
+rollout max total tokens=32768
+rollout max prefill tokens=18432
+rollout disable cuda graph=true
+rollout weight exchange size=500000000
+sglang disable tp memory imbalance check=true
+rollout_weight_sync_required=true
+rollout_weight_change_after_first_sync_required=true
+2026-08-29 21:17:15,871	INFO worker.py:1841 -- Started a local Ray instance.
+[36m(TaskRunner pid=406388)[0m {'actor_rollout_ref': {'actor': {'checkpoint': {'contents': ['model',
+[36m(TaskRunner pid=406388)[0m                                                              'optimizer',
+[36m(TaskRunner pid=406388)[0m                                                              'extra']},
+[36m(TaskRunner pid=406388)[0m                                  'clip_ratio': 0.2,
+[36m(TaskRunner pid=406388)[0m                                  'clip_ratio_c': 3.0,
+[36m(TaskRunner pid=406388)[0m                                  'clip_ratio_high': 0.2,
+[36m(TaskRunner pid=406388)[0m                                  'clip_ratio_low': 0.2,
+[36m(TaskRunner pid=406388)[0m                                  'entropy_coeff': 0.0,
+[36m(TaskRunner pid=406388)[0m                                  'fsdp_config': {'fsdp_size': -1,
+[36m(TaskRunner pid=406388)[0m                                                  'optimizer_offload': True,
+[36m(TaskRunner pid=406388)[0m                                                  'param_offload': True,
+[36m(TaskRunner pid=406388)[0m                                                  'wrap_policy': {'min_num_params': 0}},
+[36m(TaskRunner pid=406388)[0m                                  'grad_clip': 1.0,
+[36m(TaskRunner pid=406388)[0m                                  'kl_loss_coef': 0.001,
+[36m(TaskRunner pid=406388)[0m                                  'kl_loss_type': 'low_var_kl',
+[36m(TaskRunner pid=406388)[0m                                  'loss_agg_mode': 'token-mean',
+[36m(TaskRunner pid=406388)[0m                                  'masking': True,
+[36m(TaskRunner pid=406388)[0m                                  'optim': {'lr': 1e-06,
+[36m(TaskRunner pid=406388)[0m                                            'lr_warmup_steps': -1,
+[36m(TaskRunner pid=406388)[0m                                            'lr_warmup_steps_ratio': 0.0,
+[36m(TaskRunner pid=406388)[0m                                            'min_lr_ratio': None,
+[36m(TaskRunner pid=406388)[0m                                            'total_training_steps': -1,
+[36m(TaskRunner pid=406388)[0m                                            'warmup_style': 'constant',
+[36m(TaskRunner pid=406388)[0m                                            'weight_decay': 0.01},
+[36m(TaskRunner pid=406388)[0m                                  'ppo_epochs': 1,
+[36m(TaskRunner pid=406388)[0m                                  'ppo_max_token_len_per_gpu': 16384,
+[36m(TaskRunner pid=406388)[0m                                  'ppo_micro_batch_size': None,
+[36m(TaskRunner pid=406388)[0m                                  'ppo_micro_batch_size_per_gpu': 1,
+[36m(TaskRunner pid=406388)[0m                                  'ppo_mini_batch_size': 4,
+[36m(TaskRunner pid=406388)[0m                                  'shuffle': False,
+[36m(TaskRunner pid=406388)[0m                                  'strategy': 'fsdp',
+[36m(TaskRunner pid=406388)[0m                                  'ulysses_sequence_parallel_size': 1,
+[36m(TaskRunner pid=406388)[0m                                  'use_dynamic_bsz': False,
+[36m(TaskRunner pid=406388)[0m                                  'use_kl_loss': False,
+[36m(TaskRunner pid=406388)[0m                                  'use_torch_compile': True},
+[36m(TaskRunner pid=406388)[0m                        'exchange_size': 500000000,
+[36m(TaskRunner pid=406388)[0m                        'hybrid_engine': True,
+[36m(TaskRunner pid=406388)[0m                        'model': {'enable_gradient_checkpointing': True,
+[36m(TaskRunner pid=406388)[0m                                  'external_lib': None,
+[36m(TaskRunner pid=406388)[0m                                  'lora_alpha': 32,
+[36m(TaskRunner pid=406388)[0m                                  'lora_dropout': 0.0,
+[36m(TaskRunner pid=406388)[0m                                  'lora_rank': 16,
+[36m(TaskRunner pid=406388)[0m                                  'lora_target_modules': None,
+[36m(TaskRunner pid=406388)[0m                                  'override_config': {},
+[36m(TaskRunner pid=406388)[0m                                  'path': '/data/skyrl/models/Qwen/Qwen2.5-Coder-7B-Instruct',
+[36m(TaskRunner pid=406388)[0m                                  'training_mode': 'lora',
+[36m(TaskRunner pid=406388)[0m                                  'use_remove_padding': False},
+[36m(TaskRunner pid=406388)[0m                        'ref': {'fsdp_config': {'param_offload': True,
+[36m(TaskRunner pid=406388)[0m                                                'wrap_policy': {'min_num_params': 0}},
+[36m(TaskRunner pid=406388)[0m                                'log_prob_max_token_len_per_gpu': 16384,
+[36m(TaskRunner pid=406388)[0m                                'log_prob_micro_batch_size': None,
+[36m(TaskRunner pid=406388)[0m                                'log_prob_micro_batch_size_per_gpu': 1,
+[36m(TaskRunner pid=406388)[0m                                'log_prob_use_dynamic_bsz': False,
+[36m(TaskRunner pid=406388)[0m                                'ulysses_sequence_parallel_size': 1},
+[36m(TaskRunner pid=406388)[0m                        'rollout': {'disable_cuda_graph': True,
+[36m(TaskRunner pid=406388)[0m                                    'disable_log_stats': True,
+[36m(TaskRunner pid=406388)[0m                                    'do_sample': True,
+[36m(TaskRunner pid=406388)[0m                                    'dtype': 'bfloat16',
+[36m(TaskRunner pid=406388)[0m                                    'enable_chunked_prefill': True,
+[36m(TaskRunner pid=406388)[0m                                    'enable_memory_saver': True,
+[36m(TaskRunner pid=406388)[0m                                    'enforce_eager': True,
+[36m(TaskRunner pid=406388)[0m                                    'free_cache_engine': True,
+[36m(TaskRunner pid=406388)[0m                                    'gpu_memory_utilization': 0.5,
+[36m(TaskRunner pid=406388)[0m                                    'ignore_eos': False,
+[36m(TaskRunner pid=406388)[0m                                    'load_format': 'dummy_dtensor',
+[36m(TaskRunner pid=406388)[0m                                    'log_messages_dir': None,
+[36m(TaskRunner pid=406388)[0m                                    'log_prob_max_token_len_per_gpu': 16384,
+[36m(TaskRunner pid=406388)[0m                                    'log_prob_micro_batch_size': None,
+[36m(TaskRunner pid=406388)[0m                                    'log_prob_micro_batch_size_per_gpu': 1,
+[36m(TaskRunner pid=406388)[0m                                    'log_prob_use_dynamic_bsz': False,
+[36m(TaskRunner pid=406388)[0m                                    'max_eval_parallel_agents': 4,
+[36m(TaskRunner pid=406388)[0m                                    'max_iterations': 3,
+[36m(TaskRunner pid=406388)[0m                                    'max_model_len': None,
+[36m(TaskRunner pid=406388)[0m                                    'max_num_batched_tokens': 8192,
+[36m(TaskRunner pid=406388)[0m                                    'max_num_seqs': 1024,
+[36m(TaskRunner pid=406388)[0m                                    'max_parallel_agents': 4,
+[36m(TaskRunner pid=406388)[0m                                    'max_prefill_tokens': 18432,
+[36m(TaskRunner pid=406388)[0m                                    'max_starting_message_length': 12000,
+[36m(TaskRunner pid=406388)[0m                                    'max_total_tokens': 32768,
+[36m(TaskRunner pid=406388)[0m                                    'n': 1,
+[36m(TaskRunner pid=406388)[0m                                    'n_trajectories': 2,
+[36m(TaskRunner pid=406388)[0m                                    'name': 'async',
+[36m(TaskRunner pid=406388)[0m                                    'prompt_length': 8192,
+[36m(TaskRunner pid=406388)[0m                                    'qwen3_enable_thinking': True,
+[36m(TaskRunner pid=406388)[0m                                    'remove_think_tokens': False,
+[36m(TaskRunner pid=406388)[0m                                    'response_length': 1024,
+[36m(TaskRunner pid=406388)[0m                                    'sampling_params': {'max_new_tokens': 1024,
+[36m(TaskRunner pid=406388)[0m                                                        'min_p': 0,
+[36m(TaskRunner pid=406388)[0m                                                        'repetition_penalty': 1,
+[36m(TaskRunner pid=406388)[0m                                                        'temperature': 1.0,
+[36m(TaskRunner pid=406388)[0m                                                        'top_k': -1,
+[36m(TaskRunner pid=406388)[0m                                                        'top_p': 0.95},
+[36m(TaskRunner pid=406388)[0m                                    'task_type': 'swegym',
+[36m(TaskRunner pid=406388)[0m                                    'temperature': 1.0,
+[36m(TaskRunner pid=406388)[0m                                    'tensor_model_parallel_size': 2,
+[36m(TaskRunner pid=406388)[0m                                    'top_k': -1,
+[36m(TaskRunner pid=406388)[0m                                    'top_p': 1,
+[36m(TaskRunner pid=406388)[0m                                    'use_fire_sampling': False,
+[36m(TaskRunner pid=406388)[0m                                    'val_kwargs': {'do_sample': False,
+[36m(TaskRunner pid=406388)[0m                                                   'n': 1,
+[36m(TaskRunner pid=406388)[0m                                                   'temperature': 0,
+[36m(TaskRunner pid=406388)[0m                                                   'top_k': -1,
+[36m(TaskRunner pid=406388)[0m                                                   'top_p': 1.0}}},
+[36m(TaskRunner pid=406388)[0m  'algorithm': {'adv_estimator': 'grpo',
+[36m(TaskRunner pid=406388)[0m                'gamma': 1.0,
+[36m(TaskRunner pid=406388)[0m                'kl_ctrl': {'horizon': 10000,
+[36m(TaskRunner pid=406388)[0m                            'kl_coef': 0.001,
+[36m(TaskRunner pid=406388)[0m                            'target_kl': 0.1,
+[36m(TaskRunner pid=406388)[0m                            'type': 'fixed'},
+[36m(TaskRunner pid=406388)[0m                'kl_penalty': 'kl',
+[36m(TaskRunner pid=406388)[0m                'lam': 1.0,
+[36m(TaskRunner pid=406388)[0m                'use_kl_in_reward': False},
+[36m(TaskRunner pid=406388)[0m  'critic': {'checkpoint': {'contents': ['model', 'optimizer', 'extra']},
+[36m(TaskRunner pid=406388)[0m             'cliprange_value': 0.5,
+[36m(TaskRunner pid=406388)[0m             'forward_max_token_len_per_gpu': 32768,
+[36m(TaskRunner pid=406388)[0m             'forward_micro_batch_size': None,
+[36m(TaskRunner pid=406388)[0m             'forward_micro_batch_size_per_gpu': None,
+[36m(TaskRunner pid=406388)[0m             'grad_clip': 1.0,
+[36m(TaskRunner pid=406388)[0m             'model': {'enable_gradient_checkpointing': True,
+[36m(TaskRunner pid=406388)[0m                       'external_lib': None,
+[36m(TaskRunner pid=406388)[0m                       'fsdp_config': {'fsdp_size': -1,
+[36m(TaskRunner pid=406388)[0m                                       'optimizer_offload': False,
+[36m(TaskRunner pid=406388)[0m                                       'param_offload': False,
+[36m(TaskRunner pid=406388)[0m                                       'wrap_policy': {'min_num_params': 0}},
+[36m(TaskRunner pid=406388)[0m                       'override_config': {},
+[36m(TaskRunner pid=406388)[0m                       'path': '~/models/deepseek-llm-7b-chat',
+[36m(TaskRunner pid=406388)[0m                       'tokenizer_path': '/data/skyrl/models/Qwen/Qwen2.5-Coder-7B-Instruct',
+[36m(TaskRunner pid=406388)[0m                       'use_remove_padding': False},
+[36m(TaskRunner pid=406388)[0m             'optim': {'lr': 1e-05,
+[36m(TaskRunner pid=406388)[0m                       'lr_warmup_steps_ratio': 0.0,
+[36m(TaskRunner pid=406388)[0m                       'min_lr_ratio': None,
+[36m(TaskRunner pid=406388)[0m                       'total_training_steps': -1,
+[36m(TaskRunner pid=406388)[0m                       'warmup_style': 'constant',
+[36m(TaskRunner pid=406388)[0m                       'weight_decay': 0.01},
+[36m(TaskRunner pid=406388)[0m             'ppo_epochs': 1,
+[36m(TaskRunner pid=406388)[0m             'ppo_max_token_len_per_gpu': 32768,
+[36m(TaskRunner pid=406388)[0m             'ppo_micro_batch_size': None,
+[36m(TaskRunner pid=406388)[0m             'ppo_micro_batch_size_per_gpu': None,
+[36m(TaskRunner pid=406388)[0m             'ppo_mini_batch_size': 4,
+[36m(TaskRunner pid=406388)[0m             'rollout_n': 1,
+[36m(TaskRunner pid=406388)[0m             'shuffle': False,
+[36m(TaskRunner pid=406388)[0m             'strategy': 'fsdp',
+[36m(TaskRunner pid=406388)[0m             'ulysses_sequence_parallel_size': 1,
+[36m(TaskRunner pid=406388)[0m             'use_dynamic_bsz': False},
+[36m(TaskRunner pid=406388)[0m  'custom_reward_function': {'name': 'compute_score', 'path': None},
+[36m(TaskRunner pid=406388)[0m  'data': {'dataloader_num_workers': 0,
+[36m(TaskRunner pid=406388)[0m           'filter_overlong_prompts': False,
+[36m(TaskRunner pid=406388)[0m           'filter_overlong_prompts_workers': 1,
+[36m(TaskRunner pid=406388)[0m           'image_key': 'images',
+[36m(TaskRunner pid=406388)[0m           'max_prompt_length': 8192,
+[36m(TaskRunner pid=406388)[0m           'max_response_length': 1024,
+[36m(TaskRunner pid=406388)[0m           'prompt_key': 'problem_statement',
+[36m(TaskRunner pid=406388)[0m           'return_raw_chat': False,
+[36m(TaskRunner pid=406388)[0m           'return_raw_input_ids': False,
+[36m(TaskRunner pid=406388)[0m           'reward_fn_key': 'data_source',
+[36m(TaskRunner pid=406388)[0m           'shuffle': True,
+[36m(TaskRunner pid=406388)[0m           'tokenizer': None,
+[36m(TaskRunner pid=406388)[0m           'train_batch_size': 4,
+[36m(TaskRunner pid=406388)[0m           'train_files': ['/data/skyrl/datasets/swegym-smoke/train.parquet'],
+[36m(TaskRunner pid=406388)[0m           'truncation': 'error',
+[36m(TaskRunner pid=406388)[0m           'val_batch_size': None,
+[36m(TaskRunner pid=406388)[0m           'val_files': ['/data/skyrl/datasets/swegym-smoke/validation.parquet']},
+[36m(TaskRunner pid=406388)[0m  'reward_model': {'enable': False,
+[36m(TaskRunner pid=406388)[0m                   'forward_max_token_len_per_gpu': 32768,
+[36m(TaskRunner pid=406388)[0m                   'max_length': None,
+[36m(TaskRunner pid=406388)[0m                   'micro_batch_size': None,
+[36m(TaskRunner pid=406388)[0m                   'micro_batch_size_per_gpu': None,
+[36m(TaskRunner pid=406388)[0m                   'model': {'external_lib': None,
+[36m(TaskRunner pid=406388)[0m                             'fsdp_config': {'fsdp_size': -1,
+[36m(TaskRunner pid=406388)[0m                                             'param_offload': False,
+[36m(TaskRunner pid=406388)[0m                                             'wrap_policy': {'min_num_params': 0}},
+[36m(TaskRunner pid=406388)[0m                             'input_tokenizer': '/data/skyrl/models/Qwen/Qwen2.5-Coder-7B-Instruct',
+[36m(TaskRunner pid=406388)[0m                             'path': '~/models/FsfairX-LLaMA3-RM-v0.1',
+[36m(TaskRunner pid=406388)[0m                             'use_remove_padding': False},
+[36m(TaskRunner pid=406388)[0m                   'num_processes': 128,
+[36m(TaskRunner pid=406388)[0m                   'reward_manager': 'swebench_test_informed',
+[36m(TaskRunner pid=406388)[0m                   'score_timeout': 300,
+[36m(TaskRunner pid=406388)[0m                   'strategy': 'fsdp',
+[36m(TaskRunner pid=406388)[0m                   'ulysses_sequence_parallel_size': 1,
+[36m(TaskRunner pid=406388)[0m                   'use_dynamic_bsz': False},
+[36m(TaskRunner pid=406388)[0m  'trainer': {'balance_batch': True,
+[36m(TaskRunner pid=406388)[0m              'critic_warmup': 0,
+[36m(TaskRunner pid=406388)[0m              'default_hdfs_dir': None,
+[36m(TaskRunner pid=406388)[0m              'default_local_dir': '/data/skyrl/outputs/checkpoints/cloud_smoke_codex_20260829_211708',
+[36m(TaskRunner pid=406388)[0m              'del_local_ckpt_after_load': False,
+[36m(TaskRunner pid=406388)[0m              'experiment_name': 'gsm8k',
+[36m(TaskRunner pid=406388)[0m              'log_val_generations': 0,
+[36m(TaskRunner pid=406388)[0m              'logger': ['console'],
+[36m(TaskRunner pid=406388)[0m              'max_actor_ckpt_to_keep': None,
+[36m(TaskRunner pid=406388)[0m              'max_critic_ckpt_to_keep': None,
+[36m(TaskRunner pid=406388)[0m              'n_gpus_per_node': 4,
+[36m(TaskRunner pid=406388)[0m              'nnodes': 1,
+[36m(TaskRunner pid=406388)[0m              'project_name': 'verl_examples',
+[36m(TaskRunner pid=406388)[0m              'resume_from_path': None,
+[36m(TaskRunner pid=406388)[0m              'resume_mode': 'auto',
+[36m(TaskRunner pid=406388)[0m              'save_freq': 1,
+[36m(TaskRunner pid=406388)[0m              'test_freq': -1,
+[36m(TaskRunner pid=406388)[0m              'total_epochs': 30,
+[36m(TaskRunner pid=406388)[0m              'total_training_steps': 2,
+[36m(TaskRunner pid=406388)[0m              'val_before_train': False},
+[36m(TaskRunner pid=406388)[0m  'verifier': {'reward_coef': 1}}
+[36m(TaskRunner pid=406388)[0m [validate_config] All configuration checks passed successfully!
+[36m(TaskRunner pid=406388)[0m dataset len: 4
+[36m(TaskRunner pid=406388)[0m DeprecationWarning: `ray.state.available_resources_per_node` is a private attribute and access will be removed in a future Ray version.
+[36m(TaskRunner pid=406388)[0m dataset len: 4
+[36m(TaskRunner pid=406388)[0m Size of train dataloader: 1
+[36m(TaskRunner pid=406388)[0m Total training steps: 2
+[36m(WorkerDict pid=406758)[0m nodedup INIT ActorRolloutRefWorker: role='actor_rollout' torch.distributed.get_rank()=2 world_size=4 self.device_mesh=DeviceMesh('cuda', [0, 1, 2, 3], mesh_dim_names=('fsdp',)) os.environ['CUDA_VISIBLE_DEVICES']='2'
+[36m(WorkerDict pid=406758)[0m Flash Attention 2.0 only supports torch.float16 and torch.bfloat16 dtypes, but the current dype in Qwen2ForCausalLM is torch.float32. You should run training or inference using Automatic Mixed-Precision via the `with torch.autocast(device_type='torch_device'):` decorator, or load the model with the `torch_dtype` argument. Example: `model = AutoModel.from_pretrained("openai/whisper-tiny", attn_implementation="flash_attention_2", torch_dtype=torch.float16)`
+[36m(WorkerDict pid=406758)[0m You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.
+[36m(WorkerDict pid=406759)[0m Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]
+[36m(WorkerDict pid=406613)[0m Model config after override: Qwen2Config {
+[36m(WorkerDict pid=406613)[0m   "architectures": [
+[36m(WorkerDict pid=406613)[0m     "Qwen2ForCausalLM"
+[36m(WorkerDict pid=406613)[0m   ],
+[36m(WorkerDict pid=406613)[0m   "attention_dropout": 0.0,
+[36m(WorkerDict pid=406613)[0m   "eos_token_id": 151645,
+[36m(WorkerDict pid=406613)[0m   "hidden_act": "silu",
+[36m(WorkerDict pid=406613)[0m   "hidden_size": 3584,
+[36m(WorkerDict pid=406613)[0m   "initializer_range": 0.02,
+[36m(WorkerDict pid=406613)[0m   "intermediate_size": 18944,
+[36m(WorkerDict pid=406613)[0m   "max_position_embeddings": 32768,
+[36m(WorkerDict pid=406613)[0m   "max_window_layers": 28,
+[36m(WorkerDict pid=406613)[0m   "model_type": "qwen2",
+[36m(WorkerDict pid=406613)[0m   "num_attention_heads": 28,
+[36m(WorkerDict pid=406613)[0m   "num_hidden_layers": 28,
+[36m(WorkerDict pid=406613)[0m   "num_key_value_heads": 4,
+[36m(WorkerDict pid=406613)[0m   "pad_token_id": 151643,
+[36m(WorkerDict pid=406613)[0m   "rms_norm_eps": 1e-06,
+[36m(WorkerDict pid=406613)[0m   "rope_scaling": null,
+[36m(WorkerDict pid=406613)[0m   "rope_theta": 1000000.0,
+[36m(WorkerDict pid=406613)[0m   "sliding_window": 131072,
+[36m(WorkerDict pid=406613)[0m   "tie_word_embeddings": false,
+[36m(WorkerDict pid=406613)[0m   "torch_dtype": "bfloat16",
+[36m(WorkerDict pid=406613)[0m   "transformers_version": "4.51.1",
+[36m(WorkerDict pid=406613)[0m   "use_cache": true,
+[36m(WorkerDict pid=406613)[0m   "use_sliding_window": false,
+[36m(WorkerDict pid=406613)[0m   "vocab_size": 152064
+[36m(WorkerDict pid=406613)[0m }
+[36m(WorkerDict pid=406613)[0m 
+[36m(WorkerDict pid=406613)[0m Loading checkpoint shards:  25%|██▌       | 1/4 [00:05<00:15,  5.01s/it]
+[36m(WorkerDict pid=406613)[0m Flash Attention 2.0 only supports torch.float16 and torch.bfloat16 dtypes, but the current dype in Qwen2ForCausalLM is torch.float32. You should run training or inference using Automatic Mixed-Precision via the `with torch.autocast(device_type='torch_device'):` decorator, or load the model with the `torch_dtype` argument. Example: `model = AutoModel.from_pretrained("openai/whisper-tiny", attn_implementation="flash_attention_2", torch_dtype=torch.float16)`[32m [repeated 3x across cluster] (Ray deduplicates logs by default. Set RAY_DEDUP_LOGS=0 to disable log deduplication, or see https://docs.ray.io/en/master/ray-observability/user-guides/configure-logging.html#log-deduplication for more options.)[0m
+[36m(WorkerDict pid=406613)[0m You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=406613)[0m Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=406613)[0m Loading checkpoint shards:  50%|█████     | 2/4 [00:10<00:10,  5.24s/it][32m [repeated 4x across cluster][0m
+[36m(WorkerDict pid=406613)[0m Loading checkpoint shards: 100%|██████████| 4/4 [00:16<00:00,  3.41s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:16<00:00,  4.01s/it]
+[36m(WorkerDict pid=406758)[0m Loading checkpoint shards:  75%|███████▌  | 3/4 [00:15<00:05,  5.05s/it][32m [repeated 7x across cluster][0m
+[36m(WorkerDict pid=406759)[0m [rank3]:[W829 21:18:07.018825007 ProcessGroupNCCL.cpp:4561] [PG ID 0 PG GUID 0 Rank 3]  using GPU 0 to perform barrier as devices used by this process are currently unknown. This can potentially cause a hang if this rank to GPU mapping is incorrect. Specify device_ids in barrier() to force use of a particular device, or call init_process_group() with a device_id.
+[36m(WorkerDict pid=406613)[0m LoRA training enabled: trainable=40370176 total=7655986688
+[36m(WorkerDict pid=406613)[0m NCCL version 2.21.5+cuda12.4
+[36m(WorkerDict pid=406757)[0m nodedup INIT ActorRolloutRefWorker: role='actor_rollout' torch.distributed.get_rank()=1 world_size=4 self.device_mesh=DeviceMesh('cuda', [0, 1, 2, 3], mesh_dim_names=('fsdp',)) os.environ['CUDA_VISIBLE_DEVICES']='1'[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=406613)[0m PeftModelForCausalLM contains 7.66B parameters
+[36m(WorkerDict pid=406613)[0m actor module Mixed precision: MixedPrecision(param_dtype=torch.bfloat16, reduce_dtype=torch.float32, buffer_dtype=torch.bfloat16, keep_low_precision_grads=False, cast_forward_inputs=False, cast_root_forward_inputs=True, _module_classes_to_ignore=(<class 'torch.nn.modules.batchnorm._BatchNorm'>,))
+[36m(WorkerDict pid=406759)[0m Total steps: 2, num_warmup_steps: 0
+[36m(WorkerDict pid=406759)[0m Actor use_remove_padding=False
+[36m(WorkerDict pid=406757)[0m actor module Mixed precision: MixedPrecision(param_dtype=torch.bfloat16, reduce_dtype=torch.float32, buffer_dtype=torch.bfloat16, keep_low_precision_grads=False, cast_forward_inputs=False, cast_root_forward_inputs=True, _module_classes_to_ignore=(<class 'torch.nn.modules.batchnorm._BatchNorm'>,))[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=406757)[0m [92m21:18:19 - openhands:INFO[0m: codeact.py:73 - Using docker image prefix: docker.io/xingyaoww/
+[36m(WorkerDict pid=406758)[0m Loading checkpoint shards: 100%|██████████| 4/4 [00:16<00:00,  3.50s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:16<00:00,  4.13s/it][32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=406613)[0m [rank0]:[W829 21:18:07.377564023 ProcessGroupNCCL.cpp:4561] [PG ID 0 PG GUID 0 Rank 0]  using GPU 0 to perform barrier as devices used by this process are currently unknown. This can potentially cause a hang if this rank to GPU mapping is incorrect. Specify device_ids in barrier() to force use of a particular device, or call init_process_group() with a device_id.[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=406758)[0m NCCL version 2.21.5+cuda12.4
+[36m(WorkerDict pid=406613)[0m nodedup in async rollout os.environ['CUDA_VISIBLE_DEVICES']='0,1' @ torch.distributed.get_rank()=0 self.tp_rank=0
+[36m(WorkerDict pid=406613)[0m async rollout config.gpu_memory_utilization=0.5
+[36m(WorkerDict pid=406613)[0m [2026-08-29 21:18:27 TP1] Attention backend not set. Use flashinfer backend by default.
+[36m(WorkerDict pid=406613)[0m [2026-08-29 21:18:27 TP1] Init torch distributed begin.
+[36m(WorkerDict pid=406613)[0m [92m21:18:20 - openhands:INFO[0m: codeact.py:73 - Using docker image prefix: docker.io/xingyaoww/[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=406758)[0m [2026-08-29 21:18:28 TP1] sglang is using nccl==2.21.5
+[36m(WorkerDict pid=406758)[0m [2026-08-29 21:18:28 TP0] sglang is using nccl==2.21.5
+[36m(WorkerDict pid=406758)[0m NCCL version 2.21.5+cuda12.4
+[36m(WorkerDict pid=406613)[0m Total steps: 2, num_warmup_steps: 0[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=406613)[0m Actor use_remove_padding=False[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=406757)[0m nodedup in async rollout os.environ['CUDA_VISIBLE_DEVICES']='0,1' @ torch.distributed.get_rank()=1 self.tp_rank=1[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=406757)[0m async rollout config.gpu_memory_utilization=0.5[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=406613)[0m NCCL version 2.21.5+cuda12.4
+[36m(WorkerDict pid=406758)[0m [2026-08-29 21:18:29 TP1] Setup Custom allreduce failed with CUDART error: peer access is not supported between these two devices. To silence this warning, specify --disable-custom-all-reduce explicitly.
+[36m(WorkerDict pid=406758)[0m [2026-08-29 21:18:29 TP0] Setup Custom allreduce failed with CUDART error: peer access is not supported between these two devices. To silence this warning, specify --disable-custom-all-reduce explicitly.
+[36m(WorkerDict pid=406613)[0m [2026-08-29 21:18:29 TP1] Scheduler hit an exception: Traceback (most recent call last):
+[36m(WorkerDict pid=406613)[0m   File "/root/SWEopenhands-RL/.venv/lib/python3.12/site-packages/sglang/srt/managers/scheduler.py", line 2014, in run_scheduler_process
+[36m(WorkerDict pid=406613)[0m     scheduler = Scheduler(server_args, port_args, gpu_id, tp_rank, dp_rank)
+[36m(WorkerDict pid=406613)[0m                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[36m(WorkerDict pid=406613)[0m   File "/root/SWEopenhands-RL/.venv/lib/python3.12/site-packages/sglang/srt/managers/scheduler.py", line 258, in __init__
+[36m(WorkerDict pid=406613)[0m     self.tp_worker = TpWorkerClass(
+[36m(WorkerDict pid=406613)[0m                      ^^^^^^^^^^^^^^
+[36m(WorkerDict pid=406613)[0m   File "/root/SWEopenhands-RL/.venv/lib/python3.12/site-packages/sglang/srt/managers/tp_worker_overlap_thread.py", line 63, in __init__
+[36m(WorkerDict pid=406613)[0m     self.worker = TpModelWorker(server_args, gpu_id, tp_rank, dp_rank, nccl_port)
+[36m(WorkerDict pid=406613)[0m                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[36m(WorkerDict pid=406613)[0m   File "/root/SWEopenhands-RL/.venv/lib/python3.12/site-packages/sglang/srt/managers/tp_worker.py", line 75, in __init__
+[36m(WorkerDict pid=406613)[0m     self.model_runner = ModelRunner(
+[36m(WorkerDict pid=406613)[0m                         ^^^^^^^^^^^^
+[36m(WorkerDict pid=406613)[0m   File "/root/SWEopenhands-RL/.venv/lib/python3.12/site-packages/sglang/srt/model_executor/model_runner.py", line 177, in __init__
+[36m(WorkerDict pid=406613)[0m     min_per_gpu_memory = self.init_torch_distributed()
+[36m(WorkerDict pid=406613)[0m                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[36m(WorkerDict pid=406613)[0m   File "/root/SWEopenhands-RL/.venv/lib/python3.12/site-packages/sglang/srt/model_executor/model_runner.py", line 368, in init_torch_distributed
+[36m(WorkerDict pid=406613)[0m     initialize_model_parallel(tensor_model_parallel_size=self.tp_size)
+[36m(WorkerDict pid=406613)[0m   File "/root/SWEopenhands-RL/.venv/lib/python3.12/site-packages/sglang/srt/distributed/parallel_state.py", line 1131, in initialize_model_parallel
+[36m(WorkerDict pid=406613)[0m     _TP = init_model_parallel_group(
+[36m(WorkerDict pid=406613)[0m           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+[36m(WorkerDict pid=406613)[0m   File "/root/SWEopenhands-RL/.venv/lib/python3.12/site-packages/sglang/srt/distributed/parallel_state.py", line 958, in init_model_parallel_group
+[36m(WorkerDict pid=406613)[0m     return GroupCoordinator(
+[36m(WorkerDict pid=406613)[0m            ^^^^^^^^^^^^^^^^^
+[36m(WorkerDict pid=406613)[0m   File "/root/SWEopenhands-RL/.venv/lib/python3.12/site-packages/sglang/srt/distributed/parallel_state.py", line 259, in __init__
+[36m(WorkerDict pid=406613)[0m     self.pynccl_comm = PyNcclCommunicator(
+[36m(WorkerDict pid=406613)[0m                        ^^^^^^^^^^^^^^^^^^^
+[36m(WorkerDict pid=406613)[0m   File "/root/SWEopenhands-RL/.venv/lib/python3.12/site-packages/sglang/srt/distributed/device_communicators/pynccl.py", line 108, in __init__
+[36m(WorkerDict pid=406613)[0m     self.comm: ncclComm_t = self.nccl.ncclCommInitRank(
+[36m(WorkerDict pid=406613)[0m                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[36m(WorkerDict pid=406613)[0m   File "/root/SWEopenhands-RL/.venv/lib/python3.12/site-packages/sglang/srt/distributed/device_communicators/pynccl_wrapper.py", line 350, in ncclCommInitRank
+[36m(WorkerDict pid=406613)[0m     self.NCCL_CHECK(
+[36m(WorkerDict pid=406613)[0m   File "/root/SWEopenhands-RL/.venv/lib/python3.12/site-packages/sglang/srt/distributed/device_communicators/pynccl_wrapper.py", line 329, in NCCL_CHECK
+[36m(WorkerDict pid=406613)[0m     raise RuntimeError(f"NCCL error: {error_str}")
+[36m(WorkerDict pid=406613)[0m RuntimeError: NCCL error: unhandled system error (run with NCCL_DEBUG=INFO for details)
+[36m(WorkerDict pid=406613)[0m 
+[36m(WorkerDict pid=406613)[0m [2026-08-29 21:18:29] Received sigquit from a child process. It usually means the child failed.
+[36m(WorkerDict pid=406613)[0m 
+[36m(WorkerDict pid=406613)[0m ubuntu22:407109:407109 [1] misc/socket.cc:484 NCCL WARN socketStartConnect: Connect to 192.168.122.4<55873> failed : Software caused connection abort
+[36m(WorkerDict pid=406758)[0m [2026-08-29 21:18:29 TP1] Init torch distributed ends. mem usage=0.22 GB
+[36m(WorkerDict pid=406758)[0m [2026-08-29 21:18:29 TP1] Load weight begin. avail mem=18.96 GB
+[36m(WorkerDict pid=406758)[0m [2026-08-29 21:18:29 TP0] Init torch distributed ends. mem usage=0.22 GB
+[36m(WorkerDict pid=406758)[0m [2026-08-29 21:18:29 TP0] Load weight begin. avail mem=18.96 GB
+[33m(raylet)[0m A worker died or was killed while executing a task by an unexpected system error. To troubleshoot the problem, check the logs for the dead worker. RayTask ID: ffffffffffffffff9067845d18b797b09987628201000000 Worker ID: e4e1ebdef3a44a6c71968badcf580942e59deacbf7166eb644e7e8a2 Node ID: 6fc3d5fe73b35e1cba052870b7e15307812a82dc0317ee4702597914 Worker IP address: 192.168.122.4 Worker port: 45593 Worker PID: 406613 Worker exit type: SYSTEM_ERROR Worker exit detail: Worker unexpectedly exits with a connection error code 2. End of file. There are some potential root causes. (1) The process is killed by SIGKILL by OOM killer due to high memory usage. (2) ray stop --force is called. (3) The worker is crashed unexpectedly due to SIGSEGV or other unexpected errors.
+Error executing job with overrides: ['algorithm.adv_estimator=grpo', 'data.train_files=["/data/skyrl/datasets/swegym-smoke/train.parquet"]', 'data.val_files=["/data/skyrl/datasets/swegym-smoke/validation.parquet"]', 'data.prompt_key=problem_statement', 'data.train_batch_size=4', 'data.max_prompt_length=8192', 'data.max_response_length=1024', 'data.dataloader_num_workers=0', 'actor_rollout_ref.model.path=/data/skyrl/models/Qwen/Qwen2.5-Coder-7B-Instruct', 'actor_rollout_ref.model.training_mode=lora', 'actor_rollout_ref.exchange_size=500000000', 'actor_rollout_ref.actor.ppo_mini_batch_size=4', 'actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=1', 'actor_rollout_ref.actor.masking=True', 'actor_rollout_ref.actor.entropy_coeff=0.0', 'actor_rollout_ref.actor.fsdp_config.param_offload=True', 'actor_rollout_ref.actor.fsdp_config.optimizer_offload=True', 'actor_rollout_ref.ref.fsdp_config.param_offload=True', 'actor_rollout_ref.rollout.name=async', 'actor_rollout_ref.rollout.n_trajectories=2', 'actor_rollout_ref.rollout.max_iterations=3', 'actor_rollout_ref.rollout.max_parallel_agents=4', 'actor_rollout_ref.rollout.max_eval_parallel_agents=4', '+actor_rollout_ref.rollout.max_starting_message_length=12000', 'actor_rollout_ref.rollout.tensor_model_parallel_size=2', 'actor_rollout_ref.rollout.enable_memory_saver=True', 'actor_rollout_ref.rollout.max_total_tokens=32768', 'actor_rollout_ref.rollout.max_prefill_tokens=18432', 'actor_rollout_ref.rollout.disable_cuda_graph=True', 'actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=1', 'actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=1', 'reward_model.reward_manager=swebench_test_informed', 'trainer.total_training_steps=2', 'trainer.nnodes=1', 'trainer.n_gpus_per_node=4', 'trainer.save_freq=1', 'trainer.logger=["console"]', 'trainer.default_local_dir=/data/skyrl/outputs/checkpoints/cloud_smoke_codex_20260829_211708']
+Traceback (most recent call last):
+  File "/root/SWEopenhands-RL/verl/trainer/main_ppo.py", line 55, in main
+    run_ppo(config)
+  File "/root/SWEopenhands-RL/verl/trainer/main_ppo.py", line 75, in run_ppo
+    ray.get(runner.run.remote(config))
+  File "/root/SWEopenhands-RL/.venv/lib/python3.12/site-packages/ray/_private/auto_init_hook.py", line 21, in auto_init_wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/root/SWEopenhands-RL/.venv/lib/python3.12/site-packages/ray/_private/client_mode_hook.py", line 103, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/root/SWEopenhands-RL/.venv/lib/python3.12/site-packages/ray/_private/worker.py", line 2771, in get
+    values, debugger_breakpoint = worker.get_objects(object_refs, timeout=timeout)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/SWEopenhands-RL/.venv/lib/python3.12/site-packages/ray/_private/worker.py", line 919, in get_objects
+    raise value.as_instanceof_cause()
+ray.exceptions.RayTaskError(ActorDiedError): [36mray::TaskRunner.run()[39m (pid=406388, ip=192.168.122.4, actor_id=9ddf8254bfee06e913f227c901000000, repr=<main_ppo.TaskRunner object at 0x7f27d2c58920>)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/SWEopenhands-RL/verl/trainer/main_ppo.py", line 212, in run
+    trainer.init_workers()
+  File "/root/SWEopenhands-RL/verl/trainer/ppo/ray_trainer.py", line 704, in init_workers
+    self.actor_rollout_wg.init_model()
+  File "/root/SWEopenhands-RL/verl/single_controller/ray/base.py", line 42, in func
+    output = ray.get(output)
+             ^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ray.exceptions.ActorDiedError: The actor died unexpectedly before finishing this task.
+	class_name: create_colocated_worker_cls.<locals>.WorkerDict
+	actor_id: 9067845d18b797b09987628201000000
+	pid: 406613
+	name: 7TyjrmWorkerDict_0:0
+	namespace: 4e5aaf71-60b0-4e72-a4e7-ad44b5988a94
+	ip: 192.168.122.4
+The actor is dead because its worker process has died. Worker exit type: SYSTEM_ERROR Worker exit detail: Worker unexpectedly exits with a connection error code 2. End of file. There are some potential root causes. (1) The process is killed by SIGKILL by OOM killer due to high memory usage. (2) ray stop --force is called. (3) The worker is crashed unexpectedly due to SIGSEGV or other unexpected errors.
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
+[36m(WorkerDict pid=406758)[0m /usr/bin/ld: skipping incompatible /lib/i386-linux-gnu/libcuda.so when searching for -lcuda
+[36m(WorkerDict pid=406758)[0m /usr/bin/ld: skipping incompatible /lib/i386-linux-gnu/libcuda.so when searching for -lcuda
+[36m(WorkerDict pid=406613)[0m [2026-08-29 21:18:28 TP0] Attention backend not set. Use flashinfer backend by default.[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=406613)[0m [2026-08-29 21:18:28 TP0] Init torch distributed begin.[32m [repeated 3x across cluster][0m
+[36m(WorkerDict pid=406613)[0m [2026-08-29 21:18:28 TP0] sglang is using nccl==2.21.5[32m [repeated 2x across cluster][0m

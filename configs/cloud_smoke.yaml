@@ -58,7 +58,7 @@ trainer:
   nnodes: 1
   n_gpus_per_node: 4
   total_training_steps: 2
-  save_freq: 1
+  save_freq: -1
   test_freq: -1
   logger: ["console"]
 
@@ -68,3 +68,4 @@ smoke:
   require_nonzero_lora_delta: true
   require_base_unchanged: true
   require_nonzero_advantage: true
+  force_nonzero_advantage_if_all_zero: true

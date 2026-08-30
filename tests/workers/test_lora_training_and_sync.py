@@ -5,7 +5,9 @@ import pytest
 import torch
 
 from verl.workers.lora_utils import (
+    RolloutWeightSyncFingerprintAccumulator,
     build_effective_rollout_weight_payload,
+    check_rollout_weight_payload_changed_after_first_sync,
     configure_lora_training,
     get_trainable_parameter_stats,
     iter_effective_rollout_weight_payload,
@@ -201,6 +203,55 @@ def test_iter_effective_rollout_payload_matches_eager_payload_and_can_stage_to_c
     )
 
 
+def test_iter_effective_rollout_payload_can_preserve_small_lora_delta_precision_for_smoke_gate():
+    pytest.importorskip("peft")
+    torch.manual_seed(7)
+    model = configure_lora_training(_tiny_gpt2(), _lora_cfg())
+    target_name = "transformer.h.0.attn.c_attn.weight"
+
+    before_bf16 = dict(
+        iter_effective_rollout_weight_payload(
+            model,
+            target_device=torch.device("cpu"),
+            target_dtype=torch.bfloat16,
+        )
+    )[target_name]
+    before_precise = dict(
+        iter_effective_rollout_weight_payload(
+            model,
+            target_device=torch.device("cpu"),
+            target_dtype=torch.bfloat16,
+            preserve_lora_delta_precision=True,
+        )
+    )[target_name]
+
+    with torch.no_grad():
+        for name, parameter in model.named_parameters():
+            if "lora_B" in name:
+                parameter.add_(1e-9)
+
+    after_bf16 = dict(
+        iter_effective_rollout_weight_payload(
+            model,
+            target_device=torch.device("cpu"),
+            target_dtype=torch.bfloat16,
+        )
+    )[target_name]
+    after_precise = dict(
+        iter_effective_rollout_weight_payload(
+            model,
+            target_device=torch.device("cpu"),
+            target_dtype=torch.bfloat16,
+            preserve_lora_delta_precision=True,
+        )
+    )[target_name]
+
+    assert torch.equal(after_bf16, before_bf16)
+    assert before_precise.dtype == torch.float32
+    assert after_precise.dtype == torch.float32
+    assert not torch.equal(after_precise, before_precise)
+
+
 def test_iter_effective_rollout_payload_can_drain_collectives_without_emitting_payload():
     class FakeDTensor:
         def __init__(self, tensor):
@@ -342,3 +393,33 @@ def test_required_rollout_weight_sync_accepts_changed_effective_payload(monkeypa
 
     assert summary["parameter_count"] == 4
     assert len(engine.calls) == 2
+
+
+def test_chunked_rollout_weight_change_gate_compares_complete_lora_sensitive_sync(monkeypatch):
+    monkeypatch.setenv("SKYRL_REQUIRE_ROLLOUT_WEIGHT_CHANGE_AFTER_FIRST_SYNC", "1")
+    engine = _MockInferenceEngine()
+
+    initial = RolloutWeightSyncFingerprintAccumulator(include_names={"model.layers.0.lora_target.weight"})
+    initial.extend([("model.layers.0.static.weight", torch.ones(2, 2))])
+    initial.extend([("model.layers.0.lora_target.weight", torch.ones(2, 2))])
+    check_rollout_weight_payload_changed_after_first_sync(engine, initial.fingerprint())
+
+    updated = RolloutWeightSyncFingerprintAccumulator(include_names={"model.layers.0.lora_target.weight"})
+    updated.extend([("model.layers.0.static.weight", torch.ones(2, 2))])
+    updated.extend([("model.layers.0.lora_target.weight", torch.full((2, 2), 2.0))])
+    check_rollout_weight_payload_changed_after_first_sync(engine, updated.fingerprint())
+
+
+def test_rollout_weight_change_gate_accepts_global_lora_sensitive_change(monkeypatch):
+    monkeypatch.setenv("SKYRL_REQUIRE_ROLLOUT_WEIGHT_CHANGE_AFTER_FIRST_SYNC", "1")
+    engine = _MockInferenceEngine()
+    fingerprint = (("model.layers.0.lora_target.weight", (2, 2), "torch.float32", 4.0, 4.0, 4.0),)
+    check_rollout_weight_payload_changed_after_first_sync(engine, fingerprint)
+
+    def global_change_seen(value, device=None, process_group=None):
+        assert value is False
+        assert process_group == "dp"
+        return True
+
+    monkeypatch.setattr("verl.workers.lora_utils.distributed_any", global_change_seen)
+    check_rollout_weight_payload_changed_after_first_sync(engine, fingerprint, process_group="dp")

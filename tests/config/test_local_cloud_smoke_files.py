@@ -108,6 +108,26 @@ def test_cloud_smoke_override_is_valid_for_frozen_batch_validator():
     assert actor["rollout"]["log_prob_micro_batch_size_per_gpu"] == 1
 
 
+def test_cloud_smoke_disables_checkpoint_saves_for_two_step_engineering_smoke():
+    cloud = yaml.safe_load(Path("configs/cloud_smoke.yaml").read_text())
+    script = Path("scripts/run_cloud_smoke.sh").read_text()
+
+    assert cloud["trainer"]["save_freq"] == -1
+    assert "trainer.save_freq=-1" in script
+    assert "trainer.save_freq=1" not in script
+
+
+def test_smoke_only_zero_advantage_fallback_is_not_enabled_for_production_training():
+    cloud_smoke = yaml.safe_load(Path("configs/cloud_smoke.yaml").read_text())
+    script = Path("scripts/run_cloud_smoke.sh").read_text()
+    cloud_train = yaml.safe_load(Path("configs/cloud_train.yaml").read_text())
+    smoke = cloud_train.get("smoke", {})
+
+    assert cloud_smoke["smoke"]["force_nonzero_advantage_if_all_zero"] is True
+    assert "+smoke.force_nonzero_advantage_if_all_zero=True" in script
+    assert smoke.get("force_nonzero_advantage_if_all_zero", False) is False
+
+
 def test_cloud_train_defaults_are_valid_for_frozen_validator():
     cloud_train = yaml.safe_load(Path("configs/cloud_train.yaml").read_text())
 

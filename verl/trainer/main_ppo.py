@@ -112,10 +112,16 @@ class TaskRunner:
 
         from verl.trainer.ppo.ray_trainer import ResourcePoolManager, Role
 
-        if config.trainer.get("hybrid_engine", True):
+        hybrid_engine = config.trainer.get("hybrid_engine", True)
+        if hybrid_engine:
             role_worker_mapping = {
                 Role.ActorRollout: ray.remote(ActorRolloutRefWorker),
                 Role.Critic: ray.remote(CriticWorker),
+            }
+
+            global_pool_id = "global_pool"
+            resource_pool_spec = {
+                global_pool_id: [config.trainer.n_gpus_per_node] * config.trainer.nnodes,
             }
 
             mapping = {
@@ -126,7 +132,6 @@ class TaskRunner:
             role_worker_mapping = {
                 Role.Actor: ray.remote(ActorRolloutRefWorker),
                 Role.Critic: ray.remote(CriticWorker),
-                Role.RefPolicy: ray.remote(ActorRolloutRefWorker),
                 Role.Rollout: ray.remote(ActorRolloutRefWorker),
             }
 
@@ -140,7 +145,6 @@ class TaskRunner:
             mapping = {
                 Role.Actor: "actor_pool",
                 Role.Critic: "critic_pool",
-                Role.RefPolicy: "ref_pool",
                 Role.Rollout: "rollout_pool",
             }
 
@@ -163,7 +167,7 @@ class TaskRunner:
         #use reference model
         if config.algorithm.use_kl_in_reward or config.actor_rollout_ref.actor.use_kl_loss:
             role_worker_mapping[Role.RefPolicy] = ray.remote(ActorRolloutRefWorker)
-            mapping[Role.RefPolicy] = global_pool_id
+            mapping[Role.RefPolicy] = global_pool_id if hybrid_engine else "ref_pool"
 
         reward_manager_name = config.reward_model.get("reward_manager", "naive")
         if reward_manager_name == 'naive':

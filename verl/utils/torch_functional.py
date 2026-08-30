@@ -507,9 +507,11 @@ def get_constant_schedule_with_warmup(
     num_warmup_steps: int,
     last_epoch: int = -1,
 ):
+    if num_warmup_steps <= 0:
+        return LambdaLR(optimizer, lambda _: 1.0, last_epoch)
 
     def lr_lambda(current_step):
-        return min(1, float(current_step) / float(max(1, num_warmup_steps)))
+        return min(1, float(current_step) / float(num_warmup_steps))
 
     return LambdaLR(optimizer, lr_lambda, last_epoch)
 

@@ -26,6 +26,14 @@ from verl import DataProto
 from verl.trainer.ppo import core_algos
 from verl.trainer.ppo.core_algos import compute_policy_loss, kl_penalty, agg_loss
 from verl.workers.actor import BasePPOActor
+from verl.workers.lora_utils import (
+    distributed_any,
+    distributed_max_float,
+    find_frozen_base_parameter_fingerprint,
+    find_parameter_fingerprint,
+    fingerprint_changed,
+    max_lora_b_grad_abs,
+)
 from verl.utils.py_functional import append_to_dict
 from verl.utils.torch_functional import logprobs_from_logits, masked_mean
 from verl.utils.ulysses import ulysses_pad_and_slice_inputs, gather_outpus_and_unpad
@@ -206,7 +214,9 @@ class DataParallelPPOActor(BasePPOActor):
             print(f"WARN: grad_norm is not finite: {grad_norm}")
             self.actor_optimizer.zero_grad()
         else:
+            step_lrs = [group["lr"] for group in self.actor_optimizer.param_groups]
             self.actor_optimizer.step()
+            print(f"optimizer.step completed lr={step_lrs}")
         return grad_norm
 
     def compute_log_prob(self, data: DataProto) -> torch.Tensor:
@@ -297,6 +307,13 @@ class DataParallelPPOActor(BasePPOActor):
             dataloader = batch.split(self.config.ppo_mini_batch_size)
 
         metrics = {}
+        require_lora_update = bool(self.config.get("smoke_require_lora_update", False))
+        require_base_unchanged = bool(self.config.get("smoke_require_base_unchanged", False))
+        smoke_saw_global_lora_grad = False
+        smoke_saw_global_lora_change = False
+        smoke_max_lora_grad_abs = 0.0
+        smoke_max_lora_abs_sum_diff = 0.0
+        smoke_max_base_abs_sum_diff = 0.0
         for epoch in range(self.config.ppo_epochs):
             for batch_idx, data in enumerate(dataloader):
                 # split batch into micro_batches
@@ -440,8 +457,123 @@ class DataParallelPPOActor(BasePPOActor):
                     }
                     append_to_dict(metrics, data)
 
+                lora_before = None
+                base_before = None
+                smoke_metrics = {}
+                if require_lora_update:
+                    grad_name, grad_max_abs = max_lora_b_grad_abs(self.actor_module)
+                    global_grad_max_abs = distributed_max_float(grad_max_abs)
+                    smoke_max_lora_grad_abs = max(smoke_max_lora_grad_abs, global_grad_max_abs)
+                    print(f"LoRA grad max abs: {grad_max_abs} name={grad_name}")
+                    print(f"SMOKE ONLY: global LoRA grad max abs: {global_grad_max_abs}")
+                    if grad_name is None:
+                        raise RuntimeError("SMOKE ONLY: no trainable LoRA B parameter found after backward")
+                    if global_grad_max_abs > 0.0:
+                        smoke_saw_global_lora_grad = True
+                        lora_before = find_parameter_fingerprint(self.actor_module, grad_name)
+                        print(
+                            "SMOKE ONLY: LoRA parameter before optimizer.step "
+                            f"name={lora_before['name']} "
+                            f"sum={lora_before['sum']} "
+                            f"abs_sum={lora_before['abs_sum']} "
+                            f"squared_sum={lora_before['squared_sum']}"
+                        )
+                        smoke_metrics["actor/lora_grad_max_abs"] = global_grad_max_abs
+                    else:
+                        print("SMOKE ONLY: global LoRA grad is zero for this minibatch; deferring update assertion")
+                if require_base_unchanged:
+                    base_before = find_frozen_base_parameter_fingerprint(self.actor_module)
+                    print(
+                        "SMOKE ONLY: frozen base parameter before optimizer.step "
+                        f"name={base_before['name']} "
+                        f"sum={base_before['sum']} "
+                        f"abs_sum={base_before['abs_sum']} "
+                        f"squared_sum={base_before['squared_sum']}"
+                    )
+
                 grad_norm = self._optimizer_step()
-                data = {'actor/grad_norm': grad_norm.detach().item()}
+                if require_lora_update and lora_before is not None:
+                    lora_after = find_parameter_fingerprint(self.actor_module, lora_before["name"])
+                    lora_changed = fingerprint_changed(lora_before, lora_after)
+                    print(
+                        "SMOKE ONLY: LoRA parameter after optimizer.step "
+                        f"name={lora_after['name']} "
+                        f"sum={lora_after['sum']} "
+                        f"abs_sum={lora_after['abs_sum']} "
+                        f"squared_sum={lora_after['squared_sum']} "
+                        f"changed={lora_changed} "
+                        f"sum_diff={lora_after['sum'] - lora_before['sum']} "
+                        f"abs_sum_diff={lora_after['abs_sum'] - lora_before['abs_sum']} "
+                        f"squared_sum_diff={lora_after['squared_sum'] - lora_before['squared_sum']}"
+                    )
+                    lora_abs_sum_diff = abs(lora_after["abs_sum"] - lora_before["abs_sum"])
+                    global_lora_changed = distributed_any(lora_changed)
+                    global_lora_abs_sum_diff = distributed_max_float(lora_abs_sum_diff)
+                    smoke_saw_global_lora_change = smoke_saw_global_lora_change or global_lora_changed
+                    smoke_max_lora_abs_sum_diff = max(smoke_max_lora_abs_sum_diff, global_lora_abs_sum_diff)
+                    print(
+                        "SMOKE ONLY: global LoRA parameter changed="
+                        f"{global_lora_changed} max_abs_sum_diff={global_lora_abs_sum_diff}"
+                    )
+                    if not global_lora_changed:
+                        raise RuntimeError("SMOKE ONLY: LoRA parameter did not change after optimizer.step")
+                    smoke_metrics["actor/lora_parameter_changed"] = 1.0
+                    smoke_metrics["actor/lora_parameter_abs_sum_diff"] = global_lora_abs_sum_diff
+                if require_base_unchanged:
+                    base_after = find_frozen_base_parameter_fingerprint(self.actor_module)
+                    base_changed = fingerprint_changed(base_before, base_after)
+                    print(
+                        "SMOKE ONLY: frozen base parameter after optimizer.step "
+                        f"name={base_after['name']} "
+                        f"sum={base_after['sum']} "
+                        f"abs_sum={base_after['abs_sum']} "
+                        f"squared_sum={base_after['squared_sum']} "
+                        f"changed={base_changed} "
+                        f"sum_diff={base_after['sum'] - base_before['sum']} "
+                        f"abs_sum_diff={base_after['abs_sum'] - base_before['abs_sum']} "
+                        f"squared_sum_diff={base_after['squared_sum'] - base_before['squared_sum']}"
+                    )
+                    base_abs_sum_diff = abs(base_after["abs_sum"] - base_before["abs_sum"])
+                    global_base_changed = distributed_any(base_changed)
+                    global_base_abs_sum_diff = distributed_max_float(base_abs_sum_diff)
+                    smoke_max_base_abs_sum_diff = max(smoke_max_base_abs_sum_diff, global_base_abs_sum_diff)
+                    print(
+                        "SMOKE ONLY: global frozen base parameter changed="
+                        f"{global_base_changed} max_abs_sum_diff={global_base_abs_sum_diff}"
+                    )
+                    if global_base_changed:
+                        raise RuntimeError("SMOKE ONLY: frozen base parameter changed after optimizer.step")
+                    smoke_metrics["actor/frozen_base_parameter_changed"] = 0.0
+                    smoke_metrics["actor/frozen_base_parameter_abs_sum_diff"] = global_base_abs_sum_diff
+                data = {'actor/grad_norm': grad_norm.detach().item(), **smoke_metrics}
             append_to_dict(metrics, data)
+        if require_lora_update:
+            print(
+                "SMOKE ONLY: update_policy LoRA summary "
+                f"saw_global_grad={smoke_saw_global_lora_grad} "
+                f"saw_global_change={smoke_saw_global_lora_change} "
+                f"max_grad_abs={smoke_max_lora_grad_abs} "
+                f"max_abs_sum_diff={smoke_max_lora_abs_sum_diff}"
+            )
+            if not smoke_saw_global_lora_grad:
+                raise RuntimeError("SMOKE ONLY: LoRA grad max abs is zero after backward")
+            if not smoke_saw_global_lora_change:
+                raise RuntimeError("SMOKE ONLY: LoRA parameter did not change after optimizer.step")
+            append_to_dict(
+                metrics,
+                {
+                    "actor/lora_grad_max_abs": smoke_max_lora_grad_abs,
+                    "actor/lora_parameter_changed": 1.0,
+                    "actor/lora_parameter_abs_sum_diff": smoke_max_lora_abs_sum_diff,
+                },
+            )
+        if require_base_unchanged:
+            append_to_dict(
+                metrics,
+                {
+                    "actor/frozen_base_parameter_changed": 0.0,
+                    "actor/frozen_base_parameter_abs_sum_diff": smoke_max_base_abs_sum_diff,
+                },
+            )
         self.actor_optimizer.zero_grad()
         return metrics
