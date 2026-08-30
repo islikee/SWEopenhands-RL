@@ -24,11 +24,7 @@ fi
 
 GPU_COUNT="${SKYRL_GPUS_PER_NODE:-4}"
 MAX_PARALLEL_AGENTS="${SKYRL_MAX_PARALLEL_AGENTS:-$GPU_COUNT}"
-NUM_TRAJ="${SKYRL_TRAJECTORIES_PER_TASK:-8}"
-MAX_ITERATIONS="${SKYRL_MAX_ITERATIONS:-22}"
-AGENT_MAX_PROMPT_LENGTH="${SKYRL_AGENT_MAX_PROMPT_LENGTH:-16000}"
-ROLLOUT_TEMPERATURE="${SKYRL_ROLLOUT_TEMPERATURE:-0.5}"
-CKPT_PATH="${SKYRL_CKPT_PATH:-$OUTPUT_DIR/checkpoints/real_pilot}"
+CKPT_PATH="${SKYRL_CKPT_PATH:-$OUTPUT_DIR/checkpoints/cloud_smoke}"
 MODEL_PATH="${SKYRL_MODEL_PATH:-$SKYRL_MODEL_LOCAL_DIR}"
 DATA_PATH="${SKYRL_SMOKE_DATA_PATH}"
 
@@ -43,7 +39,7 @@ export SKYRL_REQUIRE_ROLLOUT_WEIGHT_SYNC=1
 export SKYRL_REQUIRE_ROLLOUT_WEIGHT_CHANGE_AFTER_FIRST_SYNC=1
 export SGL_DISABLE_TP_MEMORY_INBALANCE_CHECK=1
 
-echo "Running realistic training pilot preflight."
+echo "Running cloud smoke preflight."
 "$PYTHON_BIN" scripts/cloud_deploy.py preflight-run
 
 COMMIT_SHA="$(git rev-parse HEAD)"
@@ -63,9 +59,8 @@ echo "actor optimizer offload=true"
 echo "ref param offload=true"
 echo "prompt_key=problem_statement"
 echo "dataloader_num_workers=0"
-echo "n_trajectories=$NUM_TRAJ"
-echo "max_iterations=$MAX_ITERATIONS"
-echo "data max prompt=8192"\necho "agent max prompt=$AGENT_MAX_PROMPT_LENGTH"\necho "rollout temperature=$ROLLOUT_TEMPERATURE"
+echo "n_trajectories=8"
+echo "max prompt=8192"
 echo "max response=1024"
 echo "max starting message=12000"
 echo "rollout tensor parallel size=2"
@@ -76,7 +71,7 @@ echo "rollout weight exchange size=500000000"
 echo "sglang disable tp memory imbalance check=true"
 echo "rollout_weight_sync_required=true"
 echo "rollout_weight_change_after_first_sync_required=true"
-echo "force_nonzero_advantage_if_all_zero=false"
+echo "smoke_force_nonzero_advantage_if_all_zero=true"
 
 PYTHONUNBUFFERED=1 "$PYTHON_BIN" \
   -m verl.trainer.main_ppo \
@@ -85,7 +80,7 @@ PYTHONUNBUFFERED=1 "$PYTHON_BIN" \
   data.val_files="[\"$DATA_PATH/validation.parquet\"]" \
   data.prompt_key=problem_statement \
   data.train_batch_size="$GPU_COUNT" \
-  data.max_prompt_length=6144 \
+  data.max_prompt_length=8192 \
   data.max_response_length=1024 \
   data.dataloader_num_workers=0 \
   actor_rollout_ref.model.path="$MODEL_PATH" \
@@ -99,12 +94,16 @@ PYTHONUNBUFFERED=1 "$PYTHON_BIN" \
   actor_rollout_ref.actor.fsdp_config.optimizer_offload=True \
   actor_rollout_ref.ref.fsdp_config.param_offload=True \
   actor_rollout_ref.rollout.name=async \
-  +actor_rollout_ref.rollout.agent_max_prompt_length="$AGENT_MAX_PROMPT_LENGTH" \
-  actor_rollout_ref.rollout.n_trajectories="$NUM_TRAJ" \
-  actor_rollout_ref.rollout.max_iterations="$MAX_ITERATIONS" \
+  actor_rollout_ref.rollout.n_trajectories=8 \
+  actor_rollout_ref.rollout.max_iterations=25 \
   actor_rollout_ref.rollout.max_parallel_agents="$MAX_PARALLEL_AGENTS" \
   actor_rollout_ref.rollout.max_eval_parallel_agents="$MAX_PARALLEL_AGENTS" \
-  +actor_rollout_ref.rollout.max_starting_message_length=10000 \
+  +actor_rollout_ref.rollout.max_starting_message_length=12000 \
+  +actor_rollout_ref.rollout.agent_max_prompt_length=24576 \
+  actor_rollout_ref.rollout.sampling_params.temperature=0.5 \
+  actor_rollout_ref.rollout.temperature=0.5 \
+  actor_rollout_ref.rollout.sampling_params.top_p=0.95 \
+  actor_rollout_ref.rollout.top_p=0.95 \
   actor_rollout_ref.rollout.tensor_model_parallel_size=2 \
   actor_rollout_ref.rollout.enable_memory_saver=True \
   actor_rollout_ref.rollout.max_total_tokens=32768 \
@@ -124,4 +123,4 @@ PYTHONUNBUFFERED=1 "$PYTHON_BIN" \
   trainer.default_local_dir="$CKPT_PATH" \
   "$@"
 
-echo "REALISTIC TRAINING PILOT FINISHED"
+echo "CLOUD LORA SMOKE PASS"
