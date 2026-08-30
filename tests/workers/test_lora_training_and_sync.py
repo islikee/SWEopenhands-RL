@@ -15,9 +15,55 @@ from verl.workers.lora_utils import (
     save_lora_checkpoint,
     load_lora_checkpoint,
     sync_rollout_weight_payload,
+    lora_sensitive_payload_names,
 )
 
+def test_lora_effective_payload_resolves_nested_fsdp_wrapped_module_names():
+    class FakeLoraTarget(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.active_adapters = ["default"]
+            self.scaling = {"default": 1.0}
+            self.fan_in_fan_out = False
 
+    class FakeFSDPWrapper(torch.nn.Module):
+        def __init__(self, module):
+            super().__init__()
+            self._fsdp_wrapped_module = module
+
+    class FakeModel(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            layer = torch.nn.Module()
+            layer.q_proj = FakeLoraTarget()
+            self.layer = FakeFSDPWrapper(layer)
+
+    model = FakeModel()
+
+    state_dict = {
+        "layer.q_proj.base_layer.weight": torch.zeros(2, 2),
+        "layer.q_proj.lora_A.default.weight": torch.eye(2),
+        "layer.q_proj.lora_B.default.weight": torch.full((2, 2), 0.25),
+    }
+
+    sensitive_names = lora_sensitive_payload_names(
+        model,
+        state_dict=state_dict,
+    )
+
+    payload = dict(
+        iter_effective_rollout_weight_payload(
+            model,
+            state_dict=state_dict,
+        )
+    )
+
+    assert sensitive_names == {"layer.q_proj.weight"}
+
+    assert torch.allclose(
+        payload["layer.q_proj.weight"],
+        torch.full((2, 2), 0.25),
+    )
 def _tiny_gpt2():
     transformers = pytest.importorskip("transformers")
     config = transformers.GPT2Config(

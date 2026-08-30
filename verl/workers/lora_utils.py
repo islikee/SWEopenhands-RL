@@ -19,7 +19,22 @@ def _unwrap_module(module):
     if hasattr(module, "_fsdp_wrapped_module"):
         return module._fsdp_wrapped_module
     return module
+def _canonical_module_path(name: str) -> str:
+    return ".".join(
+        part
+        for part in name.split(".")
+        if part != "_fsdp_wrapped_module"
+    )
 
+
+def _named_modules_by_state_dict_path(model) -> dict[str, Any]:
+    modules = {}
+
+    for name, module in model.named_modules():
+        canonical_name = _canonical_module_path(name)
+        modules[canonical_name] = module
+
+    return modules
 
 def resolve_lora_target_modules(model, configured_targets=None) -> list[str]:
     if configured_targets and configured_targets != "auto":
@@ -128,18 +143,43 @@ def max_lora_b_grad_abs(model) -> tuple[str | None, float]:
     return max_name, max_abs
 
 
-def distributed_max_float(value: float, device: torch.device | str | None = None) -> float:
+def distributed_max_float(
+    value: float,
+    device: torch.device | str | None = None,
+    process_group=None,
+) -> float:
     if not torch.distributed.is_available() or not torch.distributed.is_initialized():
         return float(value)
+
     if device is None:
-        device = torch.device("cuda", torch.cuda.current_device()) if torch.cuda.is_available() else torch.device("cpu")
+        device = (
+            torch.device("cuda", torch.cuda.current_device())
+            if torch.cuda.is_available()
+            else torch.device("cpu")
+        )
+
     reduced = torch.tensor(float(value), device=device)
-    torch.distributed.all_reduce(reduced, op=torch.distributed.ReduceOp.MAX)
+    torch.distributed.all_reduce(
+        reduced,
+        op=torch.distributed.ReduceOp.MAX,
+        group=process_group,
+    )
     return float(reduced.item())
 
 
-def distributed_any(value: bool, device: torch.device | str | None = None) -> bool:
-    return distributed_max_float(1.0 if value else 0.0, device=device) > 0.0
+def distributed_any(
+    value: bool,
+    device: torch.device | str | None = None,
+    process_group=None,
+) -> bool:
+    return (
+        distributed_max_float(
+            1.0 if value else 0.0,
+            device=device,
+            process_group=process_group,
+        )
+        > 0.0
+    )
 
 
 def save_lora_checkpoint(model, path: str | Path) -> None:
@@ -250,7 +290,7 @@ def build_effective_rollout_weight_payload(
 def lora_sensitive_payload_names(model, state_dict: dict[str, torch.Tensor] | None = None) -> set[str]:
     unwrapped = _unwrap_module(model)
     state_dict = state_dict or unwrapped.state_dict()
-    modules = dict(unwrapped.named_modules())
+    modules = _named_modules_by_state_dict_path(unwrapped)
     names = set()
     for name in state_dict:
         if not name.endswith(".base_layer.weight"):
@@ -273,7 +313,7 @@ def iter_effective_rollout_weight_payload(
 ):
     unwrapped = _unwrap_module(model)
     state_dict = state_dict or unwrapped.state_dict()
-    modules = dict(unwrapped.named_modules())
+    modules = _named_modules_by_state_dict_path(unwrapped)
     has_lora = any(".lora_A." in name or ".lora_B." in name for name in state_dict)
 
     for name, tensor in state_dict.items():
@@ -393,12 +433,25 @@ def rollout_weight_change_required() -> bool:
     return os.getenv("SKYRL_REQUIRE_ROLLOUT_WEIGHT_CHANGE_AFTER_FIRST_SYNC", "").lower() in {"1", "true", "yes", "on"}
 
 
-def payload_fingerprint(payload: list[tuple[str, torch.Tensor]]) -> tuple:
+def payload_fingerprint(
+    payload: list[tuple[str, torch.Tensor]],
+    *,
+    include_names: set[str] | None = None,
+) -> tuple:
     fingerprint = []
+
     with torch.no_grad():
         for name, tensor in payload:
-            materialized = tensor.full_tensor() if hasattr(tensor, "full_tensor") else tensor.detach()
+            if include_names is not None and name not in include_names:
+                continue
+
+            materialized = (
+                tensor.full_tensor()
+                if hasattr(tensor, "full_tensor")
+                else tensor.detach()
+            )
             materialized = materialized.float()
+
             fingerprint.append(
                 (
                     name,
@@ -409,19 +462,88 @@ def payload_fingerprint(payload: list[tuple[str, torch.Tensor]]) -> tuple:
                     float((materialized * materialized).sum().item()),
                 )
             )
+
     return tuple(fingerprint)
 
+class RolloutWeightSyncFingerprintAccumulator:
+    def __init__(self, include_names: set[str] | None = None):
+        self.include_names = (
+            None if include_names is None else set(include_names)
+        )
+        self._items = []
 
-def check_rollout_weight_payload_changed_after_first_sync(inference_engine, fingerprint: tuple) -> None:
+    def extend(
+        self,
+        payload,
+        *,
+        include_names: set[str] | None = None,
+    ) -> None:
+        selected_names = (
+            self.include_names
+            if include_names is None
+            else set(include_names)
+        )
+
+        self._items.extend(
+            payload_fingerprint(
+                list(payload),
+                include_names=selected_names,
+            )
+        )
+
+    def fingerprint(self) -> tuple:
+        return tuple(sorted(self._items, key=lambda item: item[0]))
+
+def check_rollout_weight_payload_changed_after_first_sync(
+    inference_engine,
+    fingerprint: tuple,
+    *,
+    process_group=None,
+    device: torch.device | str | None = None,
+) -> None:
+    if not fingerprint:
+        raise RuntimeError(
+            "complete LoRA-sensitive rollout sync fingerprint is empty; "
+            "no LoRA-sensitive effective weights were identified"
+        )
     engine_key = id(inference_engine)
     previous = _SYNC_FINGERPRINTS.get(engine_key)
+
     _SYNC_FINGERPRINTS[engine_key] = fingerprint
+
     if previous is None:
-        print(f"Recorded rollout weight sync fingerprint with {len(fingerprint)} tensors")
-    elif fingerprint == previous:
-        raise RuntimeError(
-            "rollout weight synchronization payload did not change after the previous sync; "
-            "cloud_smoke requires an updated effective policy to be sent to the rollout engine"
+        print(
+            "Recorded complete LoRA-sensitive rollout sync fingerprint "
+            f"with {len(fingerprint)} tensors"
+        )
+        return
+
+    local_changed = fingerprint != previous
+
+    if process_group is not None:
+        global_changed = distributed_any(
+            local_changed,
+            device=device,
+            process_group=process_group,
         )
     else:
-        print(f"Verified rollout weight sync payload changed after previous sync with {len(fingerprint)} tensors")
+        global_changed = local_changed
+
+    print(
+        "Complete LoRA-sensitive rollout sync comparison: "
+        f"local_changed={local_changed} "
+        f"global_changed={global_changed} "
+        f"lora_sensitive_tensor_count={len(fingerprint)} "
+        f"complete_fingerprint_item_count={len(fingerprint)}"
+    )
+
+    if not global_changed:
+        raise RuntimeError(
+            "rollout weight synchronization payload did not change after "
+            "the previous complete LoRA-sensitive sync; cloud_smoke requires "
+            "an updated effective policy to be sent to the rollout engine"
+        )
+
+    print(
+        "Verified complete LoRA-sensitive rollout sync changed after actor update"
+    )

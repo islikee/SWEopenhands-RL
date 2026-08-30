@@ -18,10 +18,11 @@ from verl.utils.debug import log_gpu_memory_usage
 from verl.utils.torch_functional import (broadcast_dict_tensor, allgather_dict_tensors, all_gather_dict_non_tensors,
                                          broadcast_dict_non_tensor)
 from verl.workers.lora_utils import (
+    RolloutWeightSyncFingerprintAccumulator,
     check_rollout_weight_payload_changed_after_first_sync,
     has_lora_adapters,
     iter_effective_rollout_weight_payload,
-    payload_fingerprint,
+    lora_sensitive_payload_names,
     rollout_weight_change_required,
     sync_rollout_weight_payload,
 )
@@ -119,7 +120,8 @@ class FSDPSGLShardingManager(BaseShardingManager):
         local_rank = self.device_mesh.get_local_rank(1)
         tensor_list = []
         tensor_iter = None
-        sync_fingerprint = []
+        sync_fingerprint = None
+        lora_sensitive_names = set()
         if "actor" in self.role:
             start = time.time()
             log_gpu_memory_usage('Before state_dict() in sharding manager memory', logger=logger)
@@ -131,6 +133,11 @@ class FSDPSGLShardingManager(BaseShardingManager):
             # print(f'Weight keys: {st.keys()}')
             target_device = torch.device("cpu") if self.exchange_size else device
             if has_lora_adapters(self.module):
+                lora_sensitive_names = lora_sensitive_payload_names(
+                    self.module,
+                    state_dict=st,
+                )
+
                 preserve_lora_delta_precision = rollout_weight_change_required()
                 if preserve_lora_delta_precision and local_rank == 0:
                     print("SMOKE ONLY: preserving LoRA delta precision in effective rollout payload")
@@ -218,18 +225,31 @@ class FSDPSGLShardingManager(BaseShardingManager):
                         break
                     print("Using `update_weights_from_tensor`")
                     if rollout_weight_change_required():
-                        sync_fingerprint.extend(payload_fingerprint(gpu_tensor_list))
+                        if sync_fingerprint is None:
+                            sync_fingerprint = RolloutWeightSyncFingerprintAccumulator(
+                                include_names=lora_sensitive_names
+                            )
+
+                        sync_fingerprint.extend(gpu_tensor_list)
+
                     sync_rollout_weight_payload(
                         self.inference_engine,
                         gpu_tensor_list,
-                        check_weight_change=tensor_iter is None,
+                        check_weight_change=False,
                     )
                     del gpu_tensor_list
             else:
                 if self.role == "actor":
                     if self.device_mesh.get_rank() == 0:
                         assert local_rank == 0
-                        descriptions = {k: (v.shape, v.dtype) for k, v in gpu_tensor_list}
+                        descriptions = {
+                            k: (
+                                v.shape,
+                                v.dtype,
+                                k in lora_sensitive_names,
+                            )
+                            for k, v in gpu_tensor_list
+                        }
                         lst = [descriptions]
                         torch.distributed.barrier(group=self.update_weight_pg)
                         print(f"sending descriptions: {torch.distributed.get_rank()=} {self.update_weight_pg.rank()=}")
@@ -250,13 +270,48 @@ class FSDPSGLShardingManager(BaseShardingManager):
                             f"receiving descriptions: {torch.distributed.get_rank()=} {self.update_weight_pg.rank()=}")
                         torch.distributed.broadcast_object_list(lst, group_src=0, group=self.update_weight_pg)
                         print(f"receiving descriptions completed {lst=}")
-                        for k, (shape, dtype) in lst[0].items():
-                            v = torch.empty(shape, dtype=dtype, device='cuda')
-                            torch.distributed.broadcast(v, group_src=0, group=self.update_weight_pg)
+                        chunk_lora_sensitive_names = set()
+
+                        for k, description in lst[0].items():
+                            shape, dtype, is_lora_sensitive = description
+
+                            v = torch.empty(
+                                shape,
+                                dtype=dtype,
+                                device="cuda",
+                            )
+
+                            torch.distributed.broadcast(
+                                v,
+                                group_src=0,
+                                group=self.update_weight_pg,
+                            )
+
                             tensor_list.append((k, v))
-                        sync_rollout_weight_payload(self.inference_engine, tensor_list)
+
+                            if is_lora_sensitive:
+                                chunk_lora_sensitive_names.add(k)
+
+                        if rollout_weight_change_required():
+                            if sync_fingerprint is None:
+                                sync_fingerprint = RolloutWeightSyncFingerprintAccumulator()
+
+                            sync_fingerprint.extend(
+                                tensor_list,
+                                include_names=chunk_lora_sensitive_names,
+                            )
+
+                        sync_rollout_weight_payload(
+                            self.inference_engine,
+                            tensor_list,
+                            check_weight_change=False,
+                        )
                         lst = [None]
-                        torch.distributed.object_list(lst, group_src=0, group=self.update_weight_pg)
+                        torch.distributed.broadcast_object_list(
+                            lst,
+                            group_src=0,
+                            group=self.update_weight_pg,
+                        )
                         assert lst[0] is not None
                         done = lst[0]
                         del tensor_list, v
@@ -269,10 +324,24 @@ class FSDPSGLShardingManager(BaseShardingManager):
 
         log_gpu_memory_usage('After sync model weights in sharding manager', logger=logger)
 
-        if tensor_iter is not None and rollout_weight_change_required():
+        if (
+            rollout_weight_change_required()
+            and sync_fingerprint is not None
+            and "rollout" in self.role
+            and self.device_mesh.get_local_rank(1) == 0
+        ):
+            complete_fingerprint = sync_fingerprint.fingerprint()
+
+            rollout_dp_group = self.device_mesh.get_group("dp")
+
             check_rollout_weight_payload_changed_after_first_sync(
                 self.inference_engine,
-                tuple(sync_fingerprint),
+                complete_fingerprint,
+                process_group=rollout_dp_group,
+                device=torch.device(
+                    "cuda",
+                    torch.cuda.current_device(),
+                ),
             )
 
         torch.distributed.barrier()
