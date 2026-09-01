@@ -178,54 +178,6 @@ def compute_response_mask(data: DataProto):
     return attention_mask[:, -response_length:]
 
 
-def apply_smoke_nonzero_advantage_fallback(data: DataProto, enabled: bool) -> dict:
-    if not enabled:
-        return {"applied": False}
-
-    advantages = data.batch['advantages']
-    response_mask = data.batch['response_mask'].to(device=advantages.device) == 1
-    valid_advantages = advantages[response_mask]
-    if valid_advantages.numel() == 0:
-        return {"applied": False}
-
-    before_max_abs = float(valid_advantages.detach().abs().max().item())
-    if before_max_abs != 0.0:
-        return {"applied": False}
-
-    valid_counts = response_mask.sum(dim=-1)
-    valid_trajectory_indices = torch.nonzero(valid_counts > 0, as_tuple=False).flatten()
-    if valid_trajectory_indices.numel() == 0:
-        return {"applied": False}
-
-    trajectory_index = int(valid_trajectory_indices[0].item())
-    trajectory_mask = response_mask[trajectory_index]
-    advantages[trajectory_index, trajectory_mask] = 1.0
-
-    after_valid_advantages = advantages[response_mask]
-    after_max_abs = float(after_valid_advantages.detach().abs().max().item())
-    valid_token_count = int(valid_counts[trajectory_index].item())
-
-    print(
-        "SMOKE ONLY: all real GRPO advantages are zero; injecting deterministic nonzero "
-        "advantage for LoRA update/sync verification"
-    )
-    print(
-        "SMOKE ONLY: advantage fallback "
-        f"before_valid_max_abs={before_max_abs} "
-        f"after_valid_max_abs={after_max_abs} "
-        f"trajectory_index={trajectory_index} "
-        f"valid_token_count={valid_token_count}"
-    )
-
-    return {
-        "applied": True,
-        "before_max_abs": before_max_abs,
-        "after_max_abs": after_max_abs,
-        "trajectory_index": trajectory_index,
-        "valid_token_count": valid_token_count,
-    }
-
-
 def compute_advantage(data: DataProto, adv_estimator, gamma=1.0, lam=1.0, num_repeat=1):
     # Back-compatible with trainers that do not compute response mask in fit
     if "response_mask" not in data.batch.keys():
@@ -1091,15 +1043,6 @@ class RayPPOTrainer(object):
                                                   gamma=self.config.algorithm.gamma,
                                                   lam=self.config.algorithm.lam,
                                                   num_repeat=self.config.actor_rollout_ref.rollout.n_trajectories)
-                        apply_smoke_nonzero_advantage_fallback(
-                            batch,
-                            enabled=bool(
-                                self.config.get("smoke", {}).get(
-                                    "force_nonzero_advantage_if_all_zero",
-                                    False,
-                                )
-                            ),
-                        )
 
                     # update critic
                     if self.use_critic:

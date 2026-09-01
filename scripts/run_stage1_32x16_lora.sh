@@ -24,101 +24,97 @@ fi
 
 GPU_COUNT="${SKYRL_GPUS_PER_NODE:-4}"
 MAX_PARALLEL_AGENTS="${SKYRL_MAX_PARALLEL_AGENTS:-$GPU_COUNT}"
-CKPT_PATH="${SKYRL_CKPT_PATH:-$OUTPUT_DIR/checkpoints/cloud_smoke}"
-MODEL_PATH="${SKYRL_MODEL_PATH:-$SKYRL_MODEL_LOCAL_DIR}"
-DATA_PATH="${SKYRL_SMOKE_DATA_PATH}"
-
-if [[ "$MODEL_PATH" == "Qwen/Qwen2.5-Coder-7B-Instruct" ]]; then
-  MODEL_PATH="$SKYRL_MODEL_LOCAL_DIR"
-fi
+CKPT_PATH="${SKYRL_CKPT_PATH:-$OUTPUT_DIR/checkpoints/stage1_32x16_lora_nokl}"
+MODEL_PATH="${SKYRL_MODEL_PATH:-/data/skyrl/models/NovaSky-AI/SWE-Gym-OpenHands-7B-Agent}"
+DATA_PATH="${SKYRL_STAGE1_DATA_PATH:-$DATASET_DIR/skyrl-v0-80-stage1-32x16}"
 
 mkdir -p "$OUTPUT_DIR" "$CKPT_PATH"
 
 export SKYRL_OPENHANDS_RUNTIME=docker
-export SKYRL_REQUIRE_ROLLOUT_WEIGHT_SYNC=1
-export SKYRL_REQUIRE_ROLLOUT_WEIGHT_CHANGE_AFTER_FIRST_SYNC=1
 export SGL_DISABLE_TP_MEMORY_INBALANCE_CHECK=1
 
-echo "Running cloud smoke preflight."
-"$PYTHON_BIN" scripts/cloud_deploy.py preflight-run
+"$PYTHON_BIN" scripts/prepare_stage1_split.py --output "$DATA_PATH"
 
-COMMIT_SHA="$(git rev-parse HEAD)"
-echo "commit=$COMMIT_SHA"
-echo "model path=$MODEL_PATH"
-echo "smoke dataset path=$DATA_PATH"
-echo "output path=$OUTPUT_DIR"
-echo "checkpoint=$CKPT_PATH"
-echo "training_mode=lora"
-echo "reward_manager=swebench_test_informed"
-echo "GPU count=$GPU_COUNT"
-echo "train batch=$GPU_COUNT"
-echo "ppo mini batch=$GPU_COUNT"
-echo "entropy_coeff=0.0"
-echo "actor param offload=true"
-echo "actor optimizer offload=true"
-echo "ref param offload=true"
-echo "prompt_key=problem_statement"
-echo "dataloader_num_workers=0"
+echo "Running stage1 32x16 LoRA no-KL training."
+echo "model=$MODEL_PATH"
+echo "dataset=$DATA_PATH"
+echo "train_tasks=32"
+echo "validation_tasks=16"
+echo "batch=4"
 echo "n_trajectories=8"
-echo "max prompt=8192"
-echo "max response=1024"
-echo "max starting message=12000"
-echo "rollout tensor parallel size=2"
-echo "rollout max total tokens=32768"
-echo "rollout max prefill tokens=18432"
-echo "rollout disable cuda graph=true"
-echo "rollout weight exchange size=500000000"
-echo "sglang disable tp memory imbalance check=true"
-echo "rollout_weight_sync_required=true"
-echo "rollout_weight_change_after_first_sync_required=true"
+echo "total_training_steps=8"
+echo "ppo_epochs=1"
+echo "temperature=0.5"
+echo "lr=1e-6"
+echo "lora=on"
+echo "kl=off"
+echo "max_iterations=22"
+echo "agent_max_prompt_length=20000"
+echo "validation_n=1"
+echo "validation_temperature=0"
+echo "validation_steps=0,8"
 
 PYTHONUNBUFFERED=1 "$PYTHON_BIN" \
   -m verl.trainer.main_ppo \
   algorithm.adv_estimator=grpo \
+  algorithm.use_kl_in_reward=False \
   data.train_files="[\"$DATA_PATH/train.parquet\"]" \
   data.val_files="[\"$DATA_PATH/validation.parquet\"]" \
-  data.prompt_key=problem_statement \
-  data.train_batch_size="$GPU_COUNT" \
+  data.prompt_key=prompt \
+  data.train_batch_size=4 \
   data.max_prompt_length=8192 \
   data.max_response_length=1024 \
   data.dataloader_num_workers=0 \
+  data.shuffle=False \
   actor_rollout_ref.model.path="$MODEL_PATH" \
   actor_rollout_ref.model.training_mode=lora \
-  actor_rollout_ref.exchange_size=500000000 \
-  actor_rollout_ref.actor.ppo_mini_batch_size="$GPU_COUNT" \
+  actor_rollout_ref.model.lora_rank="${SKYRL_LORA_RANK:-16}" \
+  actor_rollout_ref.model.lora_alpha="${SKYRL_LORA_ALPHA:-32}" \
+  actor_rollout_ref.model.lora_dropout="${SKYRL_LORA_DROPOUT:-0.0}" \
+  actor_rollout_ref.actor.ppo_mini_batch_size=4 \
   actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=1 \
+  actor_rollout_ref.actor.ppo_epochs=1 \
+  actor_rollout_ref.actor.optim.lr=1e-6 \
+  actor_rollout_ref.actor.use_kl_loss=False \
   actor_rollout_ref.actor.masking=True \
   actor_rollout_ref.actor.entropy_coeff=0.0 \
   actor_rollout_ref.actor.fsdp_config.param_offload=True \
   actor_rollout_ref.actor.fsdp_config.optimizer_offload=True \
   actor_rollout_ref.ref.fsdp_config.param_offload=True \
+  actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=1 \
   actor_rollout_ref.rollout.name=async \
+  actor_rollout_ref.rollout.task_type=swegym \
   actor_rollout_ref.rollout.n_trajectories=8 \
-  actor_rollout_ref.rollout.max_iterations=25 \
+  actor_rollout_ref.rollout.max_iterations=22 \
+  actor_rollout_ref.rollout.agent_max_prompt_length=20000 \
   actor_rollout_ref.rollout.max_parallel_agents="$MAX_PARALLEL_AGENTS" \
   actor_rollout_ref.rollout.max_eval_parallel_agents="$MAX_PARALLEL_AGENTS" \
-  +actor_rollout_ref.rollout.max_starting_message_length=12000 \
-  +actor_rollout_ref.rollout.agent_max_prompt_length=24576 \
-  actor_rollout_ref.rollout.sampling_params.temperature=0.5 \
-  actor_rollout_ref.rollout.temperature=0.5 \
-  actor_rollout_ref.rollout.sampling_params.top_p=0.95 \
-  actor_rollout_ref.rollout.top_p=0.95 \
+  actor_rollout_ref.rollout.max_starting_message_length=10000 \
   actor_rollout_ref.rollout.tensor_model_parallel_size=2 \
   actor_rollout_ref.rollout.enable_memory_saver=True \
   actor_rollout_ref.rollout.max_total_tokens=32768 \
   actor_rollout_ref.rollout.max_prefill_tokens=18432 \
   actor_rollout_ref.rollout.disable_cuda_graph=True \
-  actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=1 \
+  actor_rollout_ref.rollout.temperature=0.5 \
+  actor_rollout_ref.rollout.sampling_params.temperature=0.5 \
+  actor_rollout_ref.rollout.sampling_params.top_p=0.95 \
+  actor_rollout_ref.rollout.top_p=0.95 \
+  actor_rollout_ref.rollout.val_kwargs.n=1 \
+  actor_rollout_ref.rollout.val_kwargs.temperature=0 \
+  actor_rollout_ref.rollout.val_kwargs.do_sample=False \
   actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=1 \
   reward_model.reward_manager=swebench_test_informed \
-  +smoke.require_nonzero_lora_delta=False \
-  +smoke.require_base_unchanged=True \
-  trainer.total_training_steps=1 \
+  trainer.total_epochs=1 \
+  trainer.total_training_steps=8 \
+  trainer.val_before_train=True \
+  trainer.test_freq=8 \
   trainer.nnodes=1 \
   trainer.n_gpus_per_node="$GPU_COUNT" \
   trainer.save_freq=-1 \
-  trainer.logger='["console"]' \
+  trainer.logger='["console","wandb"]' \
+  trainer.project_name="${WANDB_PROJECT:-skyrl-swegym-stage1}" \
+  trainer.experiment_name="${WANDB_NAME:-oh7b_stage1_32x16_lora_nokl}" \
   trainer.default_local_dir="$CKPT_PATH" \
   "$@"
 
-echo "CLOUD LORA SMOKE PASS"
+echo "STAGE1 32x16 LORA NOKL TRAINING FINISHED"

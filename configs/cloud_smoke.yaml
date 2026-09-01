@@ -68,4 +68,3 @@ smoke:
   require_nonzero_lora_delta: true
   require_base_unchanged: true
   require_nonzero_advantage: true
-  force_nonzero_advantage_if_all_zero: true

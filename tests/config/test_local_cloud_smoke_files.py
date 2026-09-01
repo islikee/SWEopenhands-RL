@@ -117,15 +117,14 @@ def test_cloud_smoke_disables_checkpoint_saves_for_two_step_engineering_smoke():
     assert "trainer.save_freq=1" not in script
 
 
-def test_smoke_only_zero_advantage_fallback_is_not_enabled_for_production_training():
+def test_zero_advantage_fallback_is_not_enabled_in_smoke_or_production_training():
     cloud_smoke = yaml.safe_load(Path("configs/cloud_smoke.yaml").read_text())
     script = Path("scripts/run_cloud_smoke.sh").read_text()
     cloud_train = yaml.safe_load(Path("configs/cloud_train.yaml").read_text())
-    smoke = cloud_train.get("smoke", {})
 
-    assert cloud_smoke["smoke"]["force_nonzero_advantage_if_all_zero"] is True
-    assert "+smoke.force_nonzero_advantage_if_all_zero=True" in script
-    assert smoke.get("force_nonzero_advantage_if_all_zero", False) is False
+    assert "force_nonzero_advantage_if_all_zero" not in cloud_smoke.get("smoke", {})
+    assert "force_nonzero_advantage_if_all_zero" not in cloud_train.get("smoke", {})
+    assert "force_nonzero_advantage_if_all_zero" not in script
 
 
 def test_cloud_train_defaults_are_valid_for_frozen_validator():

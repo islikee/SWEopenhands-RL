@@ -71,7 +71,6 @@ echo "rollout weight exchange size=500000000"
 echo "sglang disable tp memory imbalance check=true"
 echo "rollout_weight_sync_required=true"
 echo "rollout_weight_change_after_first_sync_required=true"
-echo "smoke_force_nonzero_advantage_if_all_zero=true"
 
 PYTHONUNBUFFERED=1 "$PYTHON_BIN" \
   -m verl.trainer.main_ppo \
@@ -109,7 +108,6 @@ PYTHONUNBUFFERED=1 "$PYTHON_BIN" \
   reward_model.reward_manager=swebench_test_informed \
   +smoke.require_nonzero_lora_delta=True \
   +smoke.require_base_unchanged=True \
-  +smoke.force_nonzero_advantage_if_all_zero=True \
   trainer.total_training_steps=2 \
   trainer.nnodes=1 \
   trainer.n_gpus_per_node="$GPU_COUNT" \
