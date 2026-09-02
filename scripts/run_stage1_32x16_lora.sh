@@ -22,13 +22,27 @@ if [[ -f .env ]]; then
   fi
 fi
 
+case "${WANDB_MODE:-}" in
+  offline|disabled) ;;
+  *)
+    if [[ "${WANDB_API_KEY:-}" == "<wandb_api_key>" ]]; then
+      echo "WANDB_API_KEY is still the placeholder value in .env." >&2
+      echo "Set a real key, run wandb login, remove the placeholder, or set WANDB_MODE=offline." >&2
+      exit 1
+    fi
+    ;;
+esac
+
 GPU_COUNT="${SKYRL_GPUS_PER_NODE:-4}"
 MAX_PARALLEL_AGENTS="${SKYRL_MAX_PARALLEL_AGENTS:-$GPU_COUNT}"
 CKPT_PATH="${SKYRL_CKPT_PATH:-$OUTPUT_DIR/checkpoints/stage1_32x16_lora_nokl}"
 MODEL_PATH="${SKYRL_MODEL_PATH:-/data/skyrl/models/NovaSky-AI/SWE-Gym-OpenHands-7B-Agent}"
 DATA_PATH="${SKYRL_STAGE1_DATA_PATH:-$DATASET_DIR/skyrl-v0-80-stage1-32x16}"
+RUN_NAME="${WANDB_NAME:-oh7b_stage1_32x16_lora_nokl}"
+ROLLOUT_LOG_DIR="${SKYRL_ROLLOUT_LOG_DIR:-$OUTPUT_DIR/rollouts/$RUN_NAME}"
+TRACE_LOG_DIR="${SKYRL_TRACE_LOG_DIR:-$ROLLOUT_LOG_DIR/traces}"
 
-mkdir -p "$OUTPUT_DIR" "$CKPT_PATH"
+mkdir -p "$OUTPUT_DIR" "$CKPT_PATH" "$ROLLOUT_LOG_DIR" "$TRACE_LOG_DIR"
 
 export SKYRL_OPENHANDS_RUNTIME=docker
 export SGL_DISABLE_TP_MEMORY_INBALANCE_CHECK=1
@@ -53,6 +67,8 @@ echo "agent_max_prompt_length=20000"
 echo "validation_n=1"
 echo "validation_temperature=0"
 echo "validation_steps=0,8"
+echo "rollout_log_dir=$ROLLOUT_LOG_DIR"
+echo "trace_log_dir=$TRACE_LOG_DIR"
 
 PYTHONUNBUFFERED=1 "$PYTHON_BIN" \
   -m verl.trainer.main_ppo \
@@ -83,13 +99,14 @@ PYTHONUNBUFFERED=1 "$PYTHON_BIN" \
   actor_rollout_ref.ref.fsdp_config.param_offload=True \
   actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=1 \
   actor_rollout_ref.rollout.name=async \
+  actor_rollout_ref.rollout.log_messages_dir="$TRACE_LOG_DIR" \
   actor_rollout_ref.rollout.task_type=swegym \
   actor_rollout_ref.rollout.n_trajectories=8 \
   actor_rollout_ref.rollout.max_iterations=22 \
-  actor_rollout_ref.rollout.agent_max_prompt_length=20000 \
+  +actor_rollout_ref.rollout.agent_max_prompt_length=20000 \
   actor_rollout_ref.rollout.max_parallel_agents="$MAX_PARALLEL_AGENTS" \
   actor_rollout_ref.rollout.max_eval_parallel_agents="$MAX_PARALLEL_AGENTS" \
-  actor_rollout_ref.rollout.max_starting_message_length=10000 \
+  +actor_rollout_ref.rollout.max_starting_message_length=10000 \
   actor_rollout_ref.rollout.tensor_model_parallel_size=2 \
   actor_rollout_ref.rollout.enable_memory_saver=True \
   actor_rollout_ref.rollout.max_total_tokens=32768 \
@@ -112,8 +129,9 @@ PYTHONUNBUFFERED=1 "$PYTHON_BIN" \
   trainer.n_gpus_per_node="$GPU_COUNT" \
   trainer.save_freq=-1 \
   trainer.logger='["console","wandb"]' \
+  +trainer.rollout_log_dir="$ROLLOUT_LOG_DIR" \
   trainer.project_name="${WANDB_PROJECT:-skyrl-swegym-stage1}" \
-  trainer.experiment_name="${WANDB_NAME:-oh7b_stage1_32x16_lora_nokl}" \
+  trainer.experiment_name="$RUN_NAME" \
   trainer.default_local_dir="$CKPT_PATH" \
   "$@"
 

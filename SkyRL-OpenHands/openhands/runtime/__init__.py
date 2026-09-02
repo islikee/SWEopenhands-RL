@@ -1,5 +1,4 @@
 from openhands.runtime.base import Runtime
-from openhands.runtime.impl.daytona.daytona_runtime import DaytonaRuntime
 from openhands.runtime.impl.docker.docker_runtime import (
     DockerRuntime,
 )
@@ -10,6 +9,13 @@ from openhands.runtime.impl.remote.remote_runtime import RemoteRuntime
 from openhands.runtime.impl.runloop.runloop_runtime import RunloopRuntime
 from openhands.utils.import_utils import get_impl
 
+
+def _get_daytona_runtime_cls() -> type[Runtime]:
+    from openhands.runtime.impl.daytona.daytona_runtime import DaytonaRuntime
+
+    return DaytonaRuntime
+
+
 # mypy: disable-error-code="type-abstract"
 _DEFAULT_RUNTIME_CLASSES: dict[str, type[Runtime]] = {
     'eventstream': DockerRuntime,
@@ -19,7 +25,6 @@ _DEFAULT_RUNTIME_CLASSES: dict[str, type[Runtime]] = {
     'modal': ModalRuntime,
     'runloop': RunloopRuntime,
     'local': LocalRuntime,
-    'daytona': DaytonaRuntime,
 }
 
 
@@ -29,6 +34,8 @@ def get_runtime_cls(name: str) -> type[Runtime]:
     Otherwise attempt to resolve name as subclass of Runtime and return it.
     Raise on invalid selections.
     """
+    if name == 'daytona':
+        return _get_daytona_runtime_cls()
     if name in _DEFAULT_RUNTIME_CLASSES:
         return _DEFAULT_RUNTIME_CLASSES[name]
     try:
@@ -38,6 +45,12 @@ def get_runtime_cls(name: str) -> type[Runtime]:
         raise ValueError(
             f'Runtime {name} not supported, known are: {known_keys}'
         ) from e
+
+
+def __getattr__(name: str):
+    if name == 'DaytonaRuntime':
+        return _get_daytona_runtime_cls()
+    raise AttributeError(f'module {__name__!r} has no attribute {name!r}')
 
 
 __all__ = [

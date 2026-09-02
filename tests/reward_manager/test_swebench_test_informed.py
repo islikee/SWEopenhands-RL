@@ -14,6 +14,7 @@ from verl.workers.reward_manager.swebench_report import (
     test_informed_reward_from_facts,
     trajectory_reward_fields,
 )
+from verl.trainer.ppo.metric_utils import process_validation_metrics
 from verl.workers.reward_manager.swebench_test_informed import (
     TestInformedSWEBenchRewardManager,
 )
@@ -222,3 +223,42 @@ def test_test_informed_reward_manager_uses_primitive_fact_fields():
     assert reward_dict["binary_scores"].sum(dim=1).tolist() == pytest.approx([0.0, 0.0, 1.0])
     assert reward_dict["test_informed_scores"].sum(dim=1).tolist() == pytest.approx([0.45, 0.8, 1.0])
     assert metrics["all"] == pytest.approx(torch.tensor([0.45, 0.8, 1.0]).mean().item())
+
+
+def test_test_informed_reward_manager_supports_validation_return_dict():
+    data = _data(
+        {
+            "resolved": [False, True],
+            "target_tests_total": [4, 1],
+            "target_tests_passed": [2, 1],
+            "target_tests_failed": [2, 0],
+            "regression_tests_total": [2, 1],
+            "regression_tests_passed": [2, 1],
+            "regression_tests_failed": [0, 0],
+            "evaluation_error": [None, None],
+            "evaluation_timeout": [False, False],
+            "git_patch": ["diff --git a/a.py b/a.py", "diff --git a/b.py b/b.py"],
+            "ability": ["coding", "coding"],
+        }
+    )
+
+    result = TestInformedSWEBenchRewardManager(
+        tokenizer=None, num_examine=0, config=_config()
+    )(data, return_dict=True)
+
+    assert sorted(result) == ["reward_extra_info", "reward_tensor"]
+    assert result["reward_tensor"].sum(dim=1).tolist() == pytest.approx([0.5, 1.0])
+    assert result["reward_extra_info"]["test_informed_reward"] == pytest.approx([0.5, 1.0])
+    assert result["reward_extra_info"]["binary_reward"] == pytest.approx([0.0, 1.0])
+    assert result["reward_extra_info"]["pred"] == [
+        "diff --git a/a.py b/a.py",
+        "diff --git a/b.py b/b.py",
+    ]
+
+    metrics = process_validation_metrics(
+        np.array(["swe-gym", "swe-gym"], dtype=object),
+        ["prompt-a", "prompt-b"],
+        {"final_reward": [0.5, 1.0], **result["reward_extra_info"]},
+    )
+
+    assert metrics["swe-gym"]["test_informed_reward"]["mean@1"] == pytest.approx(0.75)

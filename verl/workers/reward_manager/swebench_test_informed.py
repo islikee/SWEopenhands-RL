@@ -78,7 +78,7 @@ class TestInformedSWEBenchRewardManager:
         reward_metrics["all"] = data.batch["acc"].mean().item()
         return scores, binary_scores, reward_metrics
 
-    def __call__(self, data: DataProto):
+    def __call__(self, data: DataProto, return_dict: bool = False):
         reward_tensor_dict = {}
         reward_metrics = {}
         reward_tensor = torch.zeros_like(data.batch["responses"], dtype=torch.float32)
@@ -112,4 +112,16 @@ class TestInformedSWEBenchRewardManager:
 
         reward_tensor_dict["all"] = reward_tensor
         reward_metrics["reward_all"] = reward_tensor.sum(dim=-1).mean(dim=0).item()
+        if return_dict:
+            patches = data.non_tensor_batch.get("git_patch", [None] * len(verifier_score))
+            reward_extra_info = {
+                "binary_reward": [float(score) for score in binary_score],
+                "test_informed_reward": [float(score) for score in verifier_score],
+                "verifier": [float(score) for score in verifier_score],
+                "pred": [patch if isinstance(patch, str) else "" for patch in patches],
+            }
+            return {
+                "reward_tensor": reward_tensor,
+                "reward_extra_info": reward_extra_info,
+            }
         return reward_tensor_dict, reward_metrics

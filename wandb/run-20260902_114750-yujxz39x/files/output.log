@@ -1,0 +1,27 @@
+wandb: Detected [huggingface_hub.inference, openai] in use.
+wandb: Use W&B Weave for improved LLM call tracing. Install Weave with `pip install weave` then add `import weave` to the top of your script.
+wandb: For more information, check out the docs at: https://weave-docs.wandb.ai
+Using LocalLogger is deprecated. The constructor API will change
+Checkpoint tracker file does not exist: %s /data/skyrl/outputs/checkpoints/stage1_32x16_lora_nokl/latest_checkpointed_iteration.txt
+Training from scratch
+test_gen_batch meta info: {'eos_token_id': 151645, 'pad_token_id': 151643, 'recompute_log_prob': False, 'do_sample': False, 'validate': True, 'rollout_step': 0, 'rollout_phase': 'validation', 'n_trajectories': 1}
+validation generation end
+STEP 0 VALIDATION ROLLOUT SUMMARY
+trajectories=16 truncated=8/16 resolved=6 eval_error=7 patch_exists=12/16 reward_mean=0.5547
+task | traj | finish | trunc | turns | ctx | reward | eval | ftp | ptp | trace
+getmoto__moto-7167 | 0 | model_finish | no | 15 | - | 1.0000 | resolved | 1/1 | 193/193 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/getmoto__moto-7167_traj0.json
+getmoto__moto-7335 | 0 | context_limit | yes | 8 | 21612/20000 | 0.0000 | not_resolved | 0/2 | 18/20 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/getmoto__moto-7335_traj0.json
+getmoto__moto-5200 | 0 | model_finish | no | 6 | - | 1.0000 | resolved | 1/1 | 84/84 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/getmoto__moto-5200_traj0.json
+getmoto__moto-5058 | 0 | context_limit | yes | 12 | 20250/20000 | 0.0000 | not_resolved | 0/2 | 81/81 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/getmoto__moto-5058_traj0.json
+getmoto__moto-6585 | 0 | context_limit | yes | 6 | 23584/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/getmoto__moto-6585_traj0.json
+python__mypy-16203 | 0 | context_limit | yes | 5 | 20916/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/python__mypy-16203_traj0.json
+conan-io__conan-13403 | 0 | unknown | no | 22 | - | 1.0000 | eval_error | 1/1 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/conan-io__conan-13403_traj0.json
+iterative__dvc-6600 | 0 | unknown | no | 22 | - | 1.0000 | eval_error | 1/1 | 27/27 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/iterative__dvc-6600_traj0.json
+dask__dask-10395 | 0 | unknown | no | 22 | - | 0.0000 | eval_error | 0/1 | 0/629 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/dask__dask-10395_traj0.json
+dask__dask-9213 | 0 | model_finish | no | 10 | - | 1.0000 | resolved | 1/1 | 105/105 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/dask__dask-9213_traj0.json
+pandas-dev__pandas-49120 | 0 | model_finish | no | 9 | - | 1.0000 | resolved | 2/2 | 635/635 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/pandas-dev__pandas-49120_traj0.json
+pandas-dev__pandas-48176 | 0 | model_finish | no | 17 | - | 1.0000 | resolved | 2/2 | 49/49 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/pandas-dev__pandas-48176_traj0.json
+pandas-dev__pandas-56688 | 0 | context_limit | yes | 14 | 25000/20000 | 1.0000 | resolved | 1/1 | 7/7 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/pandas-dev__pandas-56688_traj0.json
+Project-MONAI__MONAI-6912 | 0 | context_limit | yes | 4 | 20948/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/Project-MONAI__MONAI-6912_traj0.json
+Project-MONAI__MONAI-2696 | 0 | context_limit | yes | 12 | 20510/20000 | 0.8750 | not_resolved | 7/8 | 10/10 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/Project-MONAI__MONAI-2696_traj0.json
+Project-MONAI__MONAI-4725 | 0 | context_limit | yes | 5 | 20902/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/Project-MONAI__MONAI-4725_traj0.json

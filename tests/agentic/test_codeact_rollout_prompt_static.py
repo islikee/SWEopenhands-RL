@@ -25,3 +25,9 @@ def test_empty_action_does_not_silently_finish():
     assert "EMPTY_ACTION_RETRY" in source
     assert "FINISH_REASON=model_finish" in source
     assert "FINISH_REASON=context_limit" in source
+
+
+def test_run_agent_initializes_state_before_controller_can_fail():
+    source = CODEACT_SOURCE.read_text()
+
+    assert "state = None\n        try:" in source

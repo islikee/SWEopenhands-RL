@@ -1,0 +1,19 @@
+{"time":"2026-09-02T10:15:20.219514157+08:00","level":"INFO","msg":"wandb-core"}
+{"time":"2026-09-02T10:15:20.220409298+08:00","level":"INFO","msg":"stream: starting","core version":"0.29.0"}
+{"time":"2026-09-02T10:15:20.325318138+08:00","level":"INFO","msg":"stream: created new stream","id":"nfzxf57a"}
+{"time":"2026-09-02T10:15:20.325357308+08:00","level":"INFO","msg":"handler: started"}
+{"time":"2026-09-02T10:15:20.325429387+08:00","level":"INFO","msg":"stream: started"}
+{"time":"2026-09-02T10:15:20.325446327+08:00","level":"INFO","msg":"writer: started","stream_id":"nfzxf57a"}
+{"time":"2026-09-02T10:15:20.325461726+08:00","level":"INFO","msg":"sender: started"}
+{"time":"2026-09-02T10:15:21.770753625+08:00","level":"INFO","msg":"filestream: sending request","total_files":1,"console_offset":0,"console_lines":1}
+{"time":"2026-09-02T10:15:23.227295361+08:00","level":"INFO","msg":"filestream: request sent","status":"200 OK"}
+{"time":"2026-09-02T10:15:36.771618241+08:00","level":"INFO","msg":"filestream: sending request","total_files":2,"console_offset":1,"console_lines":6,"uploaded_len":3}
+{"time":"2026-09-02T10:15:36.874149296+08:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2026-09-02T10:15:37.200279623+08:00","level":"INFO","msg":"filestream: request sent","status":"200 OK"}
+{"time":"2026-09-02T10:15:37.201364908+08:00","level":"INFO","msg":"filestream: sending request","total_files":0,"uploaded_len":2,"complete":true,"exit_code":0}
+{"time":"2026-09-02T10:15:37.614808311+08:00","level":"INFO","msg":"filestream: request sent","status":"200 OK"}
+{"time":"2026-09-02T10:15:37.615681041+08:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2026-09-02T10:15:37.618859017+08:00","level":"INFO","msg":"stream: finishing up"}
+{"time":"2026-09-02T10:15:37.618869864+08:00","level":"INFO","msg":"handler: closed"}
+{"time":"2026-09-02T10:15:37.618912497+08:00","level":"INFO","msg":"sender: closed"}
+{"time":"2026-09-02T10:15:37.618916942+08:00","level":"INFO","msg":"stream: all finished"}

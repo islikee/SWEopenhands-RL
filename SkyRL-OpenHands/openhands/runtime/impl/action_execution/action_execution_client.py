@@ -1,4 +1,6 @@
 import os
+import re
+import shlex
 import tempfile
 import threading
 from pathlib import Path
@@ -51,6 +53,42 @@ def _is_retryable_error(exception):
     return isinstance(
         exception, (httpx.RemoteProtocolError, httpcore.RemoteProtocolError)
     )
+
+
+def _legacy_runtime_action_compat_enabled(
+    runtime_container_image: str | None,
+) -> bool:
+    if not runtime_container_image:
+        return False
+    match = re.search(r'[:/]oh_v(\d+)\.(\d+)\.(\d+)_', runtime_container_image)
+    if not match:
+        return False
+    runtime_version = tuple(int(part) for part in match.groups())
+    return runtime_version < (0, 38, 0)
+
+
+def _event_to_runtime_action_dict(
+    action: Action,
+    legacy_runtime: bool = False,
+) -> dict[str, Any]:
+    action_dict = event_to_dict(action)
+    if legacy_runtime and isinstance(action, CmdRunAction):
+        args = action_dict.get('args')
+        if isinstance(args, dict):
+            cwd = args.get('cwd')
+            command = args.get('command')
+            if cwd and isinstance(command, str):
+                quoted_cwd = shlex.quote(str(cwd))
+                args['command'] = (
+                    f'cd {quoted_cwd} && {command}' if command else f'cd {quoted_cwd}'
+                )
+            args.pop('is_static', None)
+            args.pop('cwd', None)
+    if legacy_runtime and isinstance(action, FileReadAction):
+        args = action_dict.get('args')
+        if isinstance(args, dict):
+            args.pop('concise', None)
+    return action_dict
 
 
 class ActionExecutionClient(Runtime):
@@ -311,8 +349,14 @@ class ActionExecutionClient(Runtime):
             assert action.timeout is not None
 
             try:
+                legacy_runtime = _legacy_runtime_action_compat_enabled(
+                    self.config.sandbox.runtime_container_image
+                )
                 execution_action_body: dict[str, Any] = {
-                    'action': event_to_dict(action),
+                    'action': _event_to_runtime_action_dict(
+                        action,
+                        legacy_runtime=legacy_runtime,
+                    ),
                 }
                 response = self._send_action_server_request(
                     'POST',
@@ -338,19 +382,7 @@ class ActionExecutionClient(Runtime):
         return self.send_action_for_execution(action)
 
     def read(self, action: FileReadAction) -> Observation:
-        # return self.send_action_for_execution(action)
-        # convert to cmd run action
-        path = action.path
-        view_range = action.view_range
-        concise = action.concise
-        cmd = f"str_replace_editor view --path '{path}'"
-        if view_range is not None:
-            view_range_str = f"[{view_range[0]}, {view_range[1]}]"
-            cmd += f" --view_range '{view_range_str}'"
-        if concise:
-            cmd += ' --concise True'
-        cmd_action = CmdRunAction(command=cmd)
-        return self.send_action_for_execution(cmd_action)
+        return self.send_action_for_execution(action)
 
     def write(self, action: FileWriteAction) -> Observation:
         return self.send_action_for_execution(action)

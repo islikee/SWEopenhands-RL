@@ -1,0 +1,81 @@
+{
+  "os":  "Linux-6.2.0-37-generic-x86_64-with-glibc2.35",
+  "python":  "CPython 3.12.7",
+  "startedAt":  "2026-09-02T03:22:01.378773Z",
+  "args":  [
+    "--node-ip-address=192.168.122.2",
+    "--node-manager-port=41263",
+    "--object-store-name=/tmp/ray/session_2026-09-02_11-20-50_627272_142334/sockets/plasma_store",
+    "--raylet-name=/tmp/ray/session_2026-09-02_11-20-50_627272_142334/sockets/raylet",
+    "--redis-address=None",
+    "--metrics-agent-port=55503",
+    "--logging-rotate-bytes=536870912",
+    "--logging-rotate-backup-count=5",
+    "--runtime-env-agent-port=56379",
+    "--gcs-address=192.168.122.2:63820",
+    "--session-name=session_2026-09-02_11-20-50_627272_142334",
+    "--temp-dir=/tmp/ray",
+    "--webui=",
+    "--cluster-id=fa51707e96074302269bf667640ab0daeb289bea9449877fdcb71473",
+    "--startup-token=32",
+    "--worker-launch-time-ms=1788319252191",
+    "--node-id=15580d463e4f073db83cd015c76b2d7a03a0de48e003450b3a4f9174",
+    "--runtime-env-hash=-1681079854"
+  ],
+  "program":  "/root/SWEopenhands-RL/.venv/lib/python3.12/site-packages/ray/_private/workers/default_worker.py",
+  "codePath":  ".venv/lib/python3.12/site-packages/ray/_private/workers/default_worker.py",
+  "codePathLocal":  ".venv/lib/python3.12/site-packages/ray/_private/workers/default_worker.py",
+  "git":  {
+    "remote":  "https://github.com/islikee/SWEopenhands-RL.git",
+    "commit":  "b5808034ba25937348d873cae9d75c186e1e1ff9"
+  },
+  "email":  "jadestocking56@gmail.com",
+  "root":  "/root/SWEopenhands-RL",
+  "host":  "ubuntu22",
+  "executable":  "/root/SWEopenhands-RL/.venv/bin/python",
+  "cpu_count":  16,
+  "cpu_count_logical":  32,
+  "gpu":  "NVIDIA GeForce RTX 4090",
+  "gpu_count":  4,
+  "disk":  {
+    "/":  {
+      "total":  "210246524928",
+      "used":  "64168267776"
+    }
+  },
+  "memory":  {
+    "total":  "101205905408"
+  },
+  "gpu_nvidia":  [
+    {
+      "name":  "NVIDIA GeForce RTX 4090",
+      "memoryTotal":  "51527024640",
+      "cudaCores":  16384,
+      "architecture":  "Ada",
+      "uuid":  "GPU-ffa544a5-cd20-69e9-2541-f7cc00a4b232"
+    },
+    {
+      "name":  "NVIDIA GeForce RTX 4090",
+      "memoryTotal":  "51527024640",
+      "cudaCores":  16384,
+      "architecture":  "Ada",
+      "uuid":  "GPU-89138e9b-7413-362b-ee2c-b63e5a00d574"
+    },
+    {
+      "name":  "NVIDIA GeForce RTX 4090",
+      "memoryTotal":  "51527024640",
+      "cudaCores":  16384,
+      "architecture":  "Ada",
+      "uuid":  "GPU-e4050948-1f91-033f-e8f4-6273e6d9c959"
+    },
+    {
+      "name":  "NVIDIA GeForce RTX 4090",
+      "memoryTotal":  "51527024640",
+      "cudaCores":  16384,
+      "architecture":  "Ada",
+      "uuid":  "GPU-ec53074b-3e0f-a16d-b8e8-4fcc2a81d38f"
+    }
+  ],
+  "cudaVersion":  "12.4",
+  "writerId":  "5b1suslsw8fwzw7d3mk39qjg0xc7nt2l"
+}

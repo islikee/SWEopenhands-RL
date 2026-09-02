@@ -1,0 +1,525 @@
+wandb: Detected [huggingface_hub.inference, openai] in use.
+wandb: Use W&B Weave for improved LLM call tracing. Install Weave with `pip install weave` then add `import weave` to the top of your script.
+wandb: For more information, check out the docs at: https://weave-docs.wandb.ai
+Using LocalLogger is deprecated. The constructor API will change
+Checkpoint tracker file does not exist: %s /data/skyrl/outputs/checkpoints/stage1_32x16_lora_nokl/latest_checkpointed_iteration.txt
+Training from scratch
+test_gen_batch meta info: {'eos_token_id': 151645, 'pad_token_id': 151643, 'recompute_log_prob': False, 'do_sample': False, 'validate': True, 'rollout_step': 0, 'rollout_phase': 'validation', 'n_trajectories': 1}
+validation generation end
+STEP 0 VALIDATION ROLLOUT SUMMARY
+trajectories=16 truncated=9/16 resolved=8 eval_error=5 patch_exists=11/16 reward_mean=0.5000
+task | traj | finish | trunc | turns | ctx | reward | eval | ftp | ptp | trace
+getmoto__moto-7167 | 0 | model_finish | no | 14 | - | 1.0000 | resolved | 1/1 | 193/193 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/getmoto__moto-7167_traj0.json
+getmoto__moto-7335 | 0 | context_limit | yes | 12 | 20091/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/getmoto__moto-7335_traj0.json
+getmoto__moto-5200 | 0 | context_limit | yes | 16 | 20133/20000 | 0.0000 | not_resolved | 0/1 | 84/84 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/getmoto__moto-5200_traj0.json
+getmoto__moto-5058 | 0 | context_limit | yes | 4 | 22865/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/getmoto__moto-5058_traj0.json
+getmoto__moto-6585 | 0 | context_limit | yes | 12 | 20189/20000 | 1.0000 | resolved | 1/1 | 47/47 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/getmoto__moto-6585_traj0.json
+python__mypy-16203 | 0 | model_finish | no | 10 | - | 0.0000 | not_resolved | 0/1 | 1/2 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/python__mypy-16203_traj0.json
+conan-io__conan-13403 | 0 | context_limit | yes | 15 | 21518/20000 | 1.0000 | resolved | 1/1 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/conan-io__conan-13403_traj0.json
+iterative__dvc-6600 | 0 | unknown | no | 22 | - | 1.0000 | resolved | 1/1 | 27/27 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/iterative__dvc-6600_traj0.json
+dask__dask-10395 | 0 | context_limit | yes | 17 | 24761/20000 | 0.0000 | not_resolved | 0/1 | 0/629 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/dask__dask-10395_traj0.json
+dask__dask-9213 | 0 | model_finish | no | 10 | - | 1.0000 | resolved | 1/1 | 105/105 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/dask__dask-9213_traj0.json
+pandas-dev__pandas-49120 | 0 | model_finish | no | 9 | - | 1.0000 | resolved | 2/2 | 635/635 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/pandas-dev__pandas-49120_traj0.json
+pandas-dev__pandas-48176 | 0 | context_limit | yes | 9 | 20226/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/pandas-dev__pandas-48176_traj0.json
+pandas-dev__pandas-56688 | 0 | model_finish | no | 15 | - | 1.0000 | resolved | 1/1 | 7/7 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/pandas-dev__pandas-56688_traj0.json
+Project-MONAI__MONAI-6912 | 0 | context_limit | yes | 4 | 20948/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/Project-MONAI__MONAI-6912_traj0.json
+Project-MONAI__MONAI-2696 | 0 | model_finish | no | 10 | - | 1.0000 | resolved | 8/8 | 10/10 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/Project-MONAI__MONAI-2696_traj0.json
+Project-MONAI__MONAI-4725 | 0 | context_limit | yes | 11 | 20298/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0000/Project-MONAI__MONAI-4725_traj0.json
+("Initial validation metrics: {'val-aux/swe-gym/binary_reward/mean@16': 0.5, "
+ "'val-aux/swe-gym/binary_reward/std@16': 0.5, "
+ "'val-aux/swe-gym/binary_reward/best@2/mean': 0.76, "
+ "'val-aux/swe-gym/binary_reward/best@2/std': 0.4270831300812524, "
+ "'val-aux/swe-gym/binary_reward/worst@2/mean': 0.26, "
+ "'val-aux/swe-gym/binary_reward/worst@2/std': 0.43863424398922624, "
+ "'val-aux/swe-gym/binary_reward/maj@2/mean': 0.517, "
+ "'val-aux/swe-gym/binary_reward/maj@2/std': 0.49971091643069, "
+ "'val-aux/swe-gym/binary_reward/best@4/mean': 0.94, "
+ "'val-aux/swe-gym/binary_reward/best@4/std': 0.23748684174075838, "
+ "'val-aux/swe-gym/binary_reward/worst@4/mean': 0.059, "
+ "'val-aux/swe-gym/binary_reward/worst@4/std': 0.23562470159132295, "
+ "'val-aux/swe-gym/binary_reward/maj@4/mean': 0.406, "
+ "'val-aux/swe-gym/binary_reward/maj@4/std': 0.49108451411136966, "
+ "'val-aux/swe-gym/binary_reward/best@8/mean': 0.997, "
+ "'val-aux/swe-gym/binary_reward/best@8/std': 0.05469003565550128, "
+ "'val-aux/swe-gym/binary_reward/worst@8/mean': 0.007, "
+ "'val-aux/swe-gym/binary_reward/worst@8/std': 0.08337265738837882, "
+ "'val-aux/swe-gym/binary_reward/maj@8/mean': 0.307, "
+ "'val-aux/swe-gym/binary_reward/maj@8/std': 0.4612493902434994, "
+ "'val-aux/swe-gym/binary_reward/best@16/mean': 1.0, "
+ "'val-aux/swe-gym/binary_reward/best@16/std': 0.0, "
+ "'val-aux/swe-gym/binary_reward/worst@16/mean': 0.0, "
+ "'val-aux/swe-gym/binary_reward/worst@16/std': 0.0, "
+ "'val-aux/swe-gym/binary_reward/maj@16/mean': 0.13, "
+ "'val-aux/swe-gym/binary_reward/maj@16/std': 0.33630343441600474, "
+ "'val-aux/swe-gym/test_informed_reward/mean@16': 0.5, "
+ "'val-aux/swe-gym/test_informed_reward/std@16': 0.5, "
+ "'val-aux/swe-gym/test_informed_reward/best@2/mean': 0.76, "
+ "'val-aux/swe-gym/test_informed_reward/best@2/std': 0.4270831300812524, "
+ "'val-aux/swe-gym/test_informed_reward/worst@2/mean': 0.26, "
+ "'val-aux/swe-gym/test_informed_reward/worst@2/std': 0.43863424398922624, "
+ "'val-aux/swe-gym/test_informed_reward/maj@2/mean': 0.517, "
+ "'val-aux/swe-gym/test_informed_reward/maj@2/std': 0.49971091643069, "
+ "'val-aux/swe-gym/test_informed_reward/best@4/mean': 0.94, "
+ "'val-aux/swe-gym/test_informed_reward/best@4/std': 0.23748684174075838, "
+ "'val-aux/swe-gym/test_informed_reward/worst@4/mean': 0.059, "
+ "'val-aux/swe-gym/test_informed_reward/worst@4/std': 0.23562470159132295, "
+ "'val-aux/swe-gym/test_informed_reward/maj@4/mean': 0.406, "
+ "'val-aux/swe-gym/test_informed_reward/maj@4/std': 0.49108451411136966, "
+ "'val-aux/swe-gym/test_informed_reward/best@8/mean': 0.997, "
+ "'val-aux/swe-gym/test_informed_reward/best@8/std': 0.05469003565550128, "
+ "'val-aux/swe-gym/test_informed_reward/worst@8/mean': 0.007, "
+ "'val-aux/swe-gym/test_informed_reward/worst@8/std': 0.08337265738837882, "
+ "'val-aux/swe-gym/test_informed_reward/maj@8/mean': 0.307, "
+ "'val-aux/swe-gym/test_informed_reward/maj@8/std': 0.4612493902434994, "
+ "'val-aux/swe-gym/test_informed_reward/best@16/mean': 1.0, "
+ "'val-aux/swe-gym/test_informed_reward/best@16/std': 0.0, "
+ "'val-aux/swe-gym/test_informed_reward/worst@16/mean': 0.0, "
+ "'val-aux/swe-gym/test_informed_reward/worst@16/std': 0.0, "
+ "'val-aux/swe-gym/test_informed_reward/maj@16/mean': 0.13, "
+ "'val-aux/swe-gym/test_informed_reward/maj@16/std': 0.33630343441600474, "
+ "'val-aux/swe-gym/verifier/mean@16': 0.5, 'val-aux/swe-gym/verifier/std@16': "
+ "0.5, 'val-aux/swe-gym/verifier/best@2/mean': 0.76, "
+ "'val-aux/swe-gym/verifier/best@2/std': 0.4270831300812524, "
+ "'val-aux/swe-gym/verifier/worst@2/mean': 0.26, "
+ "'val-aux/swe-gym/verifier/worst@2/std': 0.43863424398922624, "
+ "'val-aux/swe-gym/verifier/maj@2/mean': 0.517, "
+ "'val-aux/swe-gym/verifier/maj@2/std': 0.49971091643069, "
+ "'val-aux/swe-gym/verifier/best@4/mean': 0.94, "
+ "'val-aux/swe-gym/verifier/best@4/std': 0.23748684174075838, "
+ "'val-aux/swe-gym/verifier/worst@4/mean': 0.059, "
+ "'val-aux/swe-gym/verifier/worst@4/std': 0.23562470159132295, "
+ "'val-aux/swe-gym/verifier/maj@4/mean': 0.406, "
+ "'val-aux/swe-gym/verifier/maj@4/std': 0.49108451411136966, "
+ "'val-aux/swe-gym/verifier/best@8/mean': 0.997, "
+ "'val-aux/swe-gym/verifier/best@8/std': 0.05469003565550128, "
+ "'val-aux/swe-gym/verifier/worst@8/mean': 0.007, "
+ "'val-aux/swe-gym/verifier/worst@8/std': 0.08337265738837882, "
+ "'val-aux/swe-gym/verifier/maj@8/mean': 0.307, "
+ "'val-aux/swe-gym/verifier/maj@8/std': 0.4612493902434994, "
+ "'val-aux/swe-gym/verifier/best@16/mean': 1.0, "
+ "'val-aux/swe-gym/verifier/best@16/std': 0.0, "
+ "'val-aux/swe-gym/verifier/worst@16/mean': 0.0, "
+ "'val-aux/swe-gym/verifier/worst@16/std': 0.0, "
+ "'val-aux/swe-gym/verifier/maj@16/mean': 0.13, "
+ "'val-aux/swe-gym/verifier/maj@16/std': 0.33630343441600474, "
+ "'rollout/validation/trajectory_count': 16.0, "
+ "'rollout/validation/truncated_count': 9.0, "
+ "'rollout/validation/truncated_rate': 0.5625, "
+ "'rollout/validation/patch_exists_count': 11.0, "
+ "'rollout/validation/patch_exists_rate': 0.6875, "
+ "'rollout/validation/resolved_count': 8.0, "
+ "'rollout/validation/resolved_rate': 0.5, "
+ "'rollout/validation/eval_error_count': 5.0, "
+ "'rollout/validation/reward_mean': 0.5, "
+ "'rollout/validation/reward_nonzero_count': 8.0, "
+ "'rollout/validation/finish_reason/model_finish': 6.0, "
+ "'rollout/validation/finish_reason/context_limit': 9.0, "
+ "'rollout/validation/finish_reason/unknown': 1.0, "
+ "'rollout/validation/eval_status/resolved': 8.0, "
+ "'rollout/validation/eval_status/eval_error': 5.0, "
+ "'rollout/validation/eval_status/not_resolved': 3.0}")
+step:0 - val-aux/swe-gym/binary_reward/mean@16:0.500000 - val-aux/swe-gym/binary_reward/std@16:0.500000 - val-aux/swe-gym/binary_reward/best@2/mean:0.760000 - val-aux/swe-gym/binary_reward/best@2/std:0.427083 - val-aux/swe-gym/binary_reward/worst@2/mean:0.260000 - val-aux/swe-gym/binary_reward/worst@2/std:0.438634 - val-aux/swe-gym/binary_reward/maj@2/mean:0.517000 - val-aux/swe-gym/binary_reward/maj@2/std:0.499711 - val-aux/swe-gym/binary_reward/best@4/mean:0.940000 - val-aux/swe-gym/binary_reward/best@4/std:0.237487 - val-aux/swe-gym/binary_reward/worst@4/mean:0.059000 - val-aux/swe-gym/binary_reward/worst@4/std:0.235625 - val-aux/swe-gym/binary_reward/maj@4/mean:0.406000 - val-aux/swe-gym/binary_reward/maj@4/std:0.491085 - val-aux/swe-gym/binary_reward/best@8/mean:0.997000 - val-aux/swe-gym/binary_reward/best@8/std:0.054690 - val-aux/swe-gym/binary_reward/worst@8/mean:0.007000 - val-aux/swe-gym/binary_reward/worst@8/std:0.083373 - val-aux/swe-gym/binary_reward/maj@8/mean:0.307000 - val-aux/swe-gym/binary_reward/maj@8/std:0.461249 - val-aux/swe-gym/binary_reward/best@16/mean:1.000000 - val-aux/swe-gym/binary_reward/best@16/std:0.000000 - val-aux/swe-gym/binary_reward/worst@16/mean:0.000000 - val-aux/swe-gym/binary_reward/worst@16/std:0.000000 - val-aux/swe-gym/binary_reward/maj@16/mean:0.130000 - val-aux/swe-gym/binary_reward/maj@16/std:0.336303 - val-aux/swe-gym/test_informed_reward/mean@16:0.500000 - val-aux/swe-gym/test_informed_reward/std@16:0.500000 - val-aux/swe-gym/test_informed_reward/best@2/mean:0.760000 - val-aux/swe-gym/test_informed_reward/best@2/std:0.427083 - val-aux/swe-gym/test_informed_reward/worst@2/mean:0.260000 - val-aux/swe-gym/test_informed_reward/worst@2/std:0.438634 - val-aux/swe-gym/test_informed_reward/maj@2/mean:0.517000 - val-aux/swe-gym/test_informed_reward/maj@2/std:0.499711 - val-aux/swe-gym/test_informed_reward/best@4/mean:0.940000 - val-aux/swe-gym/test_informed_reward/best@4/std:0.237487 - val-aux/swe-gym/test_informed_reward/worst@4/mean:0.059000 - val-aux/swe-gym/test_informed_reward/worst@4/std:0.235625 - val-aux/swe-gym/test_informed_reward/maj@4/mean:0.406000 - val-aux/swe-gym/test_informed_reward/maj@4/std:0.491085 - val-aux/swe-gym/test_informed_reward/best@8/mean:0.997000 - val-aux/swe-gym/test_informed_reward/best@8/std:0.054690 - val-aux/swe-gym/test_informed_reward/worst@8/mean:0.007000 - val-aux/swe-gym/test_informed_reward/worst@8/std:0.083373 - val-aux/swe-gym/test_informed_reward/maj@8/mean:0.307000 - val-aux/swe-gym/test_informed_reward/maj@8/std:0.461249 - val-aux/swe-gym/test_informed_reward/best@16/mean:1.000000 - val-aux/swe-gym/test_informed_reward/best@16/std:0.000000 - val-aux/swe-gym/test_informed_reward/worst@16/mean:0.000000 - val-aux/swe-gym/test_informed_reward/worst@16/std:0.000000 - val-aux/swe-gym/test_informed_reward/maj@16/mean:0.130000 - val-aux/swe-gym/test_informed_reward/maj@16/std:0.336303 - val-aux/swe-gym/verifier/mean@16:0.500000 - val-aux/swe-gym/verifier/std@16:0.500000 - val-aux/swe-gym/verifier/best@2/mean:0.760000 - val-aux/swe-gym/verifier/best@2/std:0.427083 - val-aux/swe-gym/verifier/worst@2/mean:0.260000 - val-aux/swe-gym/verifier/worst@2/std:0.438634 - val-aux/swe-gym/verifier/maj@2/mean:0.517000 - val-aux/swe-gym/verifier/maj@2/std:0.499711 - val-aux/swe-gym/verifier/best@4/mean:0.940000 - val-aux/swe-gym/verifier/best@4/std:0.237487 - val-aux/swe-gym/verifier/worst@4/mean:0.059000 - val-aux/swe-gym/verifier/worst@4/std:0.235625 - val-aux/swe-gym/verifier/maj@4/mean:0.406000 - val-aux/swe-gym/verifier/maj@4/std:0.491085 - val-aux/swe-gym/verifier/best@8/mean:0.997000 - val-aux/swe-gym/verifier/best@8/std:0.054690 - val-aux/swe-gym/verifier/worst@8/mean:0.007000 - val-aux/swe-gym/verifier/worst@8/std:0.083373 - val-aux/swe-gym/verifier/maj@8/mean:0.307000 - val-aux/swe-gym/verifier/maj@8/std:0.461249 - val-aux/swe-gym/verifier/best@16/mean:1.000000 - val-aux/swe-gym/verifier/best@16/std:0.000000 - val-aux/swe-gym/verifier/worst@16/mean:0.000000 - val-aux/swe-gym/verifier/worst@16/std:0.000000 - val-aux/swe-gym/verifier/maj@16/mean:0.13
+Training Progress:   0%|          | 0/8 [00:00<?, ?it/s]
+STEP 1 TRAIN ROLLOUT SUMMARY
+trajectories=32 truncated=18/32 resolved=17 eval_error=8 patch_exists=25/32 reward_mean=0.5312
+task | traj | finish | trunc | turns | ctx | reward | eval | ftp | ptp | trace
+getmoto__moto-4950 | 6 | model_finish | no | 9 | - | 1.0000 | resolved | 1/1 | 6/6 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-4950_traj6.json
+getmoto__moto-6178 | 5 | context_limit | yes | 8 | 21940/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-6178_traj5.json
+getmoto__moto-6535 | 6 | context_limit | yes | 17 | 20173/20000 | 0.0000 | not_resolved | 0/5 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-6535_traj6.json
+getmoto__moto-6535 | 7 | context_limit | yes | 14 | 20032/20000 | 1.0000 | resolved | 5/5 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-6535_traj7.json
+getmoto__moto-7023 | 1 | model_finish | no | 5 | - | 0.0000 | not_resolved | 0/1 | 8/8 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-7023_traj1.json
+getmoto__moto-7023 | 2 | model_finish | no | 12 | - | 1.0000 | resolved | 1/1 | 8/8 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-7023_traj2.json
+getmoto__moto-7023 | 3 | context_limit | yes | 6 | 22319/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-7023_traj3.json
+getmoto__moto-7023 | 7 | context_limit | yes | 14 | 20001/20000 | 0.0000 | not_resolved | 0/1 | 8/8 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-7023_traj7.json
+getmoto__moto-4950 | 0 | model_finish | no | 13 | - | 0.0000 | not_resolved | 0/1 | 6/6 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-4950_traj0.json
+getmoto__moto-4950 | 1 | model_finish | no | 18 | - | 1.0000 | resolved | 1/1 | 6/6 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-4950_traj1.json
+getmoto__moto-6178 | 1 | context_limit | yes | 12 | 20092/20000 | 1.0000 | resolved | 2/2 | 19/19 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-6178_traj1.json
+getmoto__moto-6535 | 0 | context_limit | yes | 12 | 20181/20000 | 1.0000 | resolved | 5/5 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-6535_traj0.json
+getmoto__moto-6535 | 2 | context_limit | yes | 4 | 22098/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-6535_traj2.json
+getmoto__moto-7023 | 0 | model_finish | no | 13 | - | 1.0000 | resolved | 1/1 | 8/8 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-7023_traj0.json
+getmoto__moto-7023 | 5 | context_limit | yes | 6 | 22319/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-7023_traj5.json
+getmoto__moto-7023 | 6 | context_limit | yes | 9 | 20031/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-7023_traj6.json
+getmoto__moto-4950 | 4 | model_finish | no | 10 | - | 1.0000 | resolved | 1/1 | 6/6 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-4950_traj4.json
+getmoto__moto-4950 | 5 | unknown | no | 22 | - | 0.0000 | eval_error | 0/1 | 0/6 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-4950_traj5.json
+getmoto__moto-6178 | 2 | model_finish | no | 10 | - | 1.0000 | resolved | 2/2 | 19/19 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-6178_traj2.json
+getmoto__moto-6178 | 3 | context_limit | yes | 10 | 20140/20000 | 1.0000 | resolved | 2/2 | 19/19 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-6178_traj3.json
+getmoto__moto-6178 | 7 | model_finish | no | 7 | - | 1.0000 | resolved | 2/2 | 19/19 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-6178_traj7.json
+getmoto__moto-6535 | 1 | context_limit | yes | 11 | 21027/20000 | 0.0000 | not_resolved | 0/5 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-6535_traj1.json
+getmoto__moto-6535 | 3 | context_limit | yes | 17 | 25003/20000 | 1.0000 | resolved | 5/5 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-6535_traj3.json
+getmoto__moto-6535 | 4 | context_limit | yes | 11 | 20192/20000 | 0.0000 | not_resolved | 0/5 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-6535_traj4.json
+getmoto__moto-4950 | 2 | context_limit | yes | 16 | 20170/20000 | 0.0000 | not_resolved | 0/1 | 6/6 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-4950_traj2.json
+getmoto__moto-4950 | 3 | model_finish | no | 9 | - | 1.0000 | resolved | 1/1 | 6/6 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-4950_traj3.json
+getmoto__moto-4950 | 7 | context_limit | yes | 9 | 20614/20000 | 1.0000 | resolved | 1/1 | 6/6 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-4950_traj7.json
+getmoto__moto-6178 | 0 | model_finish | no | 7 | - | 1.0000 | resolved | 2/2 | 19/19 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-6178_traj0.json
+getmoto__moto-6178 | 4 | model_finish | no | 11 | - | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-6178_traj4.json
+getmoto__moto-6178 | 6 | context_limit | yes | 9 | 27767/20000 | 1.0000 | resolved | 2/2 | 19/19 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-6178_traj6.json
+getmoto__moto-6535 | 5 | model_finish | no | 13 | - | 1.0000 | resolved | 5/5 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-6535_traj5.json
+getmoto__moto-7023 | 4 | context_limit | yes | 12 | 20214/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0001/getmoto__moto-7023_traj4.json
+step:1 - global_seqlen/min:141427.000000 - global_seqlen/max:168344.000000 - global_seqlen/minmax_diff:26917.000000 - global_seqlen/balanced_min:157388.000000 - global_seqlen/balanced_max:157543.000000 - global_seqlen/mean:157461.500000 - train_reward/coding:0.531250 - train_reward/binary_reward:0.531250 - train_reward/test_informed_reward:0.531250 - train_reward/all:0.531250 - train_reward/verifier:0.531250 - train_reward/reward_all:0.531250 - rollout/train/trajectory_count:32.000000 - rollout/train/truncated_count:18.000000 - rollout/train/truncated_rate:0.562500 - rollout/train/patch_exists_count:25.000000 - rollout/train/patch_exists_rate:0.781250 - rollout/train/resolved_count:17.000000 - rollout/train/resolved_rate:0.531250 - rollout/train/eval_error_count:8.000000 - rollout/train/reward_mean:0.531250 - rollout/train/reward_nonzero_count:17.000000 - rollout/train/finish_reason/model_finish:13.000000 - rollout/train/finish_reason/context_limit:18.000000 - rollout/train/finish_reason/unknown:1.000000 - rollout/train/eval_status/resolved:17.000000 - rollout/train/eval_status/eval_error:8.000000 - rollout/train/eval_status/not_resolved:7.000000 - actor/entropy:0.000000 - actor/pg_loss:0.111387 - actor/pg_clipfrac:0.005317 - actor/ppo_kl:0.000319 - actor/pg_clipfrac_lower:0.000000 - actor/grad_norm:0.180666 - perf/mfu/actor:0.000000 - perf/max_memory_allocated_gb:33.088770 - perf/max_memory_reserved_gb:44.710938 - perf/cpu_memory_used_gb:20.912945 - actor/lr:0.000001 - critic/score/mean:0.531250 - critic/score/max:1.000000 - critic/score/min:0.000000 - critic/rewards/mean:0.531250 - critic/rewards/max:1.000000 - critic/rewards/min:0.000000 - critic/advantages/mean:-0.026799 - critic/advantages/max:1.620182 - critic/advantages/min:-1.620182 - critic/returns/mean:-0.026799 - critic/returns/max:1.620182 - critic/returns/min:-1.620182 - response_length/mean:14238.187500 - response_length/max:21024.000000 - response_length/min:10103.000000 - response_length/clip_ratio:0.031250 - prompt_length/mean:5444.500000 - prompt_length/max:6207.000000 - prompt_length/min:4811.000000 - prompt_length/clip_ratio:0.000000 - timing_s/gen:859.324372 - timing_s/old_log_prob:40.457504 - timing_s/adv:0.013633 - timing_s/update_actor:150.946218 - timing_s/step:1050.788683 - timing_per_token_ms/gen:1.886047 - timing_per_token_ms/update_actor:0.239656 - timing_per_token_ms/adv:0.000022 - perf/total_num_tokens:629846.000000 - perf/time_per_step:1050.788683 - perf/throughput:149.850776
+STEP 2 TRAIN ROLLOUT SUMMARY
+trajectories=32 truncated=16/32 resolved=5 eval_error=14 patch_exists=21/32 reward_mean=0.1873
+task | traj | finish | trunc | turns | ctx | reward | eval | ftp | ptp | trace
+getmoto__moto-7105 | 2 | context_limit | yes | 9 | 20264/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-7105_traj2.json
+getmoto__moto-4918 | 6 | context_limit | yes | 13 | 25300/20000 | 0.0000 | not_resolved | 0/1 | 83/83 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-4918_traj6.json
+getmoto__moto-6609 | 3 | model_finish | no | 12 | - | 0.0000 | not_resolved | 0/3 | 109/109 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-6609_traj3.json
+getmoto__moto-6609 | 5 | model_finish | no | 10 | - | 0.0000 | not_resolved | 0/3 | 109/109 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-6609_traj5.json
+getmoto__moto-7635 | 0 | unknown | no | 22 | - | 1.0000 | resolved | 1/1 | 20/20 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-7635_traj0.json
+getmoto__moto-7635 | 1 | context_limit | yes | 11 | 20482/20000 | 1.0000 | resolved | 1/1 | 20/20 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-7635_traj1.json
+getmoto__moto-7635 | 2 | unknown | no | 14 | - | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-7635_traj2.json
+getmoto__moto-7635 | 6 | context_limit | yes | 13 | 22148/20000 | 0.0000 | not_resolved | 0/1 | 20/20 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-7635_traj6.json
+getmoto__moto-7105 | 5 | model_finish | no | 11 | - | 1.0000 | resolved | 11/11 | 1/1 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-7105_traj5.json
+getmoto__moto-7105 | 7 | unknown | no | 22 | - | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-7105_traj7.json
+getmoto__moto-4918 | 0 | context_limit | yes | 19 | 22776/20000 | 0.0000 | not_resolved | 0/1 | 56/83 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-4918_traj0.json
+getmoto__moto-4918 | 3 | context_limit | yes | 13 | 23609/20000 | 0.0000 | not_resolved | 0/1 | 67/83 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-4918_traj3.json
+getmoto__moto-4918 | 5 | context_limit | yes | 12 | 20490/20000 | 0.0000 | not_resolved | 0/1 | 83/83 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-4918_traj5.json
+getmoto__moto-6609 | 6 | context_limit | yes | 19 | 20194/20000 | 1.0000 | resolved | 3/3 | 109/109 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-6609_traj6.json
+getmoto__moto-7635 | 3 | model_finish | no | 11 | - | 0.0000 | not_resolved | 0/1 | 19/20 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-7635_traj3.json
+getmoto__moto-7635 | 5 | unknown | no | 14 | - | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-7635_traj5.json
+getmoto__moto-7105 | 0 | context_limit | yes | 4 | 23370/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-7105_traj0.json
+getmoto__moto-7105 | 3 | context_limit | yes | 9 | 20312/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-7105_traj3.json
+getmoto__moto-7105 | 4 | context_limit | yes | 4 | 23370/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-7105_traj4.json
+getmoto__moto-7105 | 6 | context_limit | yes | 9 | 20312/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-7105_traj6.json
+getmoto__moto-4918 | 7 | unknown | no | 18 | - | 0.0000 | eval_error | 0/1 | 74/83 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-4918_traj7.json
+getmoto__moto-6609 | 1 | model_finish | no | 14 | - | 1.0000 | resolved | 3/3 | 109/109 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-6609_traj1.json
+getmoto__moto-7635 | 4 | unknown | no | 12 | - | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-7635_traj4.json
+getmoto__moto-7635 | 7 | unknown | no | 18 | - | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-7635_traj7.json
+getmoto__moto-7105 | 1 | context_limit | yes | 16 | 20513/20000 | 0.0000 | not_resolved | 0/11 | 0/1 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-7105_traj1.json
+getmoto__moto-4918 | 1 | unknown | no | 22 | - | 0.0000 | eval_error | 0/1 | 0/83 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-4918_traj1.json
+getmoto__moto-4918 | 2 | unknown | no | 15 | - | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-4918_traj2.json
+getmoto__moto-4918 | 4 | unknown | no | 22 | - | 0.0000 | eval_error | 0/1 | 0/83 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-4918_traj4.json
+getmoto__moto-6609 | 0 | context_limit | yes | 9 | 26276/20000 | 0.0000 | not_resolved | 0/3 | 108/109 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-6609_traj0.json
+getmoto__moto-6609 | 2 | model_finish | no | 9 | - | 0.0000 | not_resolved | 0/3 | 109/109 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-6609_traj2.json
+getmoto__moto-6609 | 4 | context_limit | yes | 22 | 20080/20000 | 0.9927 | not_resolved | 3/3 | 105/109 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-6609_traj4.json
+getmoto__moto-6609 | 7 | context_limit | yes | 6 | 20712/20000 | 0.0000 | not_resolved | 0/3 | 0/109 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0002/getmoto__moto-6609_traj7.json
+step:2 - global_seqlen/min:128330.000000 - global_seqlen/max:162753.000000 - global_seqlen/minmax_diff:34423.000000 - global_seqlen/balanced_min:148395.000000 - global_seqlen/balanced_max:148495.000000 - global_seqlen/mean:148440.250000 - train_reward/coding:0.187271 - train_reward/binary_reward:0.156250 - train_reward/test_informed_reward:0.187271 - train_reward/all:0.187271 - train_reward/verifier:0.187271 - train_reward/reward_all:0.187271 - rollout/train/trajectory_count:32.000000 - rollout/train/truncated_count:16.000000 - rollout/train/truncated_rate:0.500000 - rollout/train/patch_exists_count:21.000000 - rollout/train/patch_exists_rate:0.656250 - rollout/train/resolved_count:5.000000 - rollout/train/resolved_rate:0.156250 - rollout/train/eval_error_count:14.000000 - rollout/train/reward_mean:0.187271 - rollout/train/reward_nonzero_count:6.000000 - rollout/train/finish_reason/context_limit:16.000000 - rollout/train/finish_reason/model_finish:6.000000 - rollout/train/finish_reason/unknown:10.000000 - rollout/train/eval_status/eval_error:14.000000 - rollout/train/eval_status/not_resolved:13.000000 - rollout/train/eval_status/resolved:5.000000 - actor/entropy:0.000000 - actor/pg_loss:-0.044149 - actor/pg_clipfrac:0.002352 - actor/ppo_kl:0.000692 - actor/pg_clipfrac_lower:0.000000 - actor/grad_norm:0.151923 - perf/mfu/actor:0.000000 - perf/max_memory_allocated_gb:33.088770 - perf/max_memory_reserved_gb:44.710938 - perf/cpu_memory_used_gb:18.735989 - actor/lr:0.000001 - critic/score/mean:0.187271 - critic/score/max:1.000000 - critic/score/min:0.000000 - critic/rewards/mean:0.187271 - critic/rewards/max:1.000000 - critic/rewards/min:0.000000 - critic/advantages/mean:0.007025 - critic/advantages/max:2.474867 - critic/advantages/min:-0.724560 - critic/returns/mean:0.007025 - critic/returns/max:2.474867 - critic/returns/min:-0.724560 - response_length/mean:13555.781250 - response_length/max:21024.000000 - response_length/min:8189.000000 - response_length/clip_ratio:0.031250 - prompt_length/mean:4999.250000 - prompt_length/max:5860.000000 - prompt_length/min:4603.000000 - prompt_length/clip_ratio:0.000000 - timing_s/gen:793.505944 - timing_s/old_log_prob:49.442872 - timing_s/adv:0.014647 - timing_s/update_actor:151.881326 - timing_s/step:994.861081 - timing_per_token_ms/gen:1.829261 - timing_per_token_ms/update_actor:0.255795 - timing_per_token_ms/adv:0.000025 - perf/total_num_tokens:593761.000000 - perf/time_per_step:994.861081 - perf/throughput:149.207013
+STEP 3 TRAIN ROLLOUT SUMMARY
+trajectories=32 truncated=16/32 resolved=14 eval_error=15 patch_exists=19/32 reward_mean=0.4687
+task | traj | finish | trunc | turns | ctx | reward | eval | ftp | ptp | trace
+getmoto__moto-5794 | 0 | model_finish | no | 11 | - | 1.0000 | resolved | 1/1 | 183/183 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-5794_traj0.json
+getmoto__moto-5794 | 1 | context_limit | yes | 12 | 20130/20000 | 1.0000 | resolved | 1/1 | 183/183 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-5794_traj1.json
+getmoto__moto-6509 | 0 | context_limit | yes | 6 | 21511/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-6509_traj0.json
+getmoto__moto-6509 | 4 | context_limit | yes | 4 | 23862/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-6509_traj4.json
+getmoto__moto-6509 | 5 | unknown | no | 22 | - | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-6509_traj5.json
+getmoto__moto-5321 | 1 | context_limit | yes | 7 | 22245/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-5321_traj1.json
+getmoto__moto-6299 | 3 | model_finish | no | 15 | - | 1.0000 | resolved | 1/1 | 88/88 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-6299_traj3.json
+getmoto__moto-6299 | 5 | unknown | no | 22 | - | 1.0000 | resolved | 1/1 | 88/88 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-6299_traj5.json
+getmoto__moto-5794 | 2 | model_finish | no | 11 | - | 1.0000 | resolved | 1/1 | 183/183 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-5794_traj2.json
+getmoto__moto-6509 | 3 | context_limit | yes | 7 | 22656/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-6509_traj3.json
+getmoto__moto-6509 | 6 | unknown | no | 22 | - | 0.0000 | eval_error | 0/1 | 3/3 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-6509_traj6.json
+getmoto__moto-6509 | 7 | context_limit | yes | 6 | 21583/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-6509_traj7.json
+getmoto__moto-5321 | 0 | model_finish | no | 10 | - | 1.0000 | resolved | 1/1 | 30/30 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-5321_traj0.json
+getmoto__moto-5321 | 2 | context_limit | yes | 14 | 23334/20000 | 0.0000 | not_resolved | 0/1 | 30/30 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-5321_traj2.json
+getmoto__moto-5321 | 3 | model_finish | no | 11 | - | 1.0000 | resolved | 1/1 | 30/30 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-5321_traj3.json
+getmoto__moto-6299 | 6 | model_finish | no | 12 | - | 1.0000 | resolved | 1/1 | 88/88 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-6299_traj6.json
+getmoto__moto-5794 | 3 | context_limit | yes | 9 | 20149/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-5794_traj3.json
+getmoto__moto-5794 | 4 | context_limit | yes | 9 | 20480/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-5794_traj4.json
+getmoto__moto-5794 | 5 | model_finish | no | 12 | - | 1.0000 | resolved | 1/1 | 183/183 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-5794_traj5.json
+getmoto__moto-6509 | 1 | context_limit | yes | 4 | 23862/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-6509_traj1.json
+getmoto__moto-5321 | 5 | context_limit | yes | 8 | 22349/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-5321_traj5.json
+getmoto__moto-5321 | 6 | model_finish | no | 11 | - | 1.0000 | resolved | 1/1 | 30/30 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-5321_traj6.json
+getmoto__moto-6299 | 1 | error | no | 22 | - | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-6299_traj1.json
+getmoto__moto-6299 | 7 | model_finish | no | 13 | - | 1.0000 | resolved | 1/1 | 88/88 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-6299_traj7.json
+getmoto__moto-5794 | 6 | context_limit | yes | 14 | 20167/20000 | 0.9989 | not_resolved | 1/1 | 182/183 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-5794_traj6.json
+getmoto__moto-5794 | 7 | context_limit | yes | 15 | 20346/20000 | 0.0000 | not_resolved | 0/1 | 182/183 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-5794_traj7.json
+getmoto__moto-6509 | 2 | context_limit | yes | 7 | 23105/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-6509_traj2.json
+getmoto__moto-5321 | 4 | context_limit | yes | 7 | 22245/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-5321_traj4.json
+getmoto__moto-5321 | 7 | model_finish | no | 12 | - | 1.0000 | resolved | 1/1 | 30/30 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-5321_traj7.json
+getmoto__moto-6299 | 0 | unknown | no | 22 | - | 1.0000 | resolved | 1/1 | 88/88 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-6299_traj0.json
+getmoto__moto-6299 | 2 | unknown | no | 22 | - | 0.0000 | eval_error | 1/1 | 87/88 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-6299_traj2.json
+getmoto__moto-6299 | 4 | context_limit | yes | 12 | 20052/20000 | 1.0000 | resolved | 1/1 | 88/88 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0003/getmoto__moto-6299_traj4.json
+step:3 - global_seqlen/min:121208.000000 - global_seqlen/max:176021.000000 - global_seqlen/minmax_diff:54813.000000 - global_seqlen/balanced_min:155027.000000 - global_seqlen/balanced_max:155113.000000 - global_seqlen/mean:155066.750000 - train_reward/coding:0.468716 - train_reward/binary_reward:0.437500 - train_reward/test_informed_reward:0.468716 - train_reward/all:0.468716 - train_reward/verifier:0.468716 - train_reward/reward_all:0.468716 - rollout/train/trajectory_count:32.000000 - rollout/train/truncated_count:16.000000 - rollout/train/truncated_rate:0.500000 - rollout/train/patch_exists_count:19.000000 - rollout/train/patch_exists_rate:0.593750 - rollout/train/resolved_count:14.000000 - rollout/train/resolved_rate:0.437500 - rollout/train/eval_error_count:15.000000 - rollout/train/reward_mean:0.468716 - rollout/train/reward_nonzero_count:15.000000 - rollout/train/finish_reason/model_finish:10.000000 - rollout/train/finish_reason/context_limit:16.000000 - rollout/train/finish_reason/unknown:5.000000 - rollout/train/finish_reason/error:1.000000 - rollout/train/eval_status/resolved:14.000000 - rollout/train/eval_status/eval_error:15.000000 - rollout/train/eval_status/not_resolved:3.000000 - actor/entropy:0.000000 - actor/pg_loss:-0.199297 - actor/pg_clipfrac:0.001677 - actor/ppo_kl:0.000300 - actor/pg_clipfrac_lower:0.000000 - actor/grad_norm:0.116017 - perf/mfu/actor:0.000000 - perf/max_memory_allocated_gb:33.088770 - perf/max_memory_reserved_gb:44.710938 - perf/cpu_memory_used_gb:16.999874 - actor/lr:0.000001 - critic/score/mean:0.468716 - critic/score/max:1.000000 - critic/score/min:0.000000 - critic/rewards/mean:0.468716 - critic/rewards/max:1.000000 - critic/rewards/min:0.000000 - critic/advantages/mean:-0.040732 - critic/advantages/max:0.935413 - critic/advantages/min:-1.620182 - critic/returns/mean:-0.040732 - critic/returns/max:0.935413 - critic/returns/min:-1.620182 - response_length/mean:14215.593750 - response_length/max:18775.000000 - response_length/min:8575.000000 - response_length/clip_ratio:0.000000 - prompt_length/mean:5167.750000 - prompt_length/max:6559.000000 - prompt_length/min:4570.000000 - prompt_length/clip_ratio:0.000000 - timing_s/gen:847.706486 - timing_s/old_log_prob:37.915277 - timing_s/adv:0.026572 - timing_s/update_actor:148.236845 - timing_s/step:1033.901698 - timing_per_token_ms/gen:1.863505 - timing_per_token_ms/update_actor:0.238989 - timing_per_token_ms/adv:0.000043 - perf/total_num_tokens:620267.000000 - perf/time_per_step:1033.901698 - perf/throughput:149.982102
+STEP 4 TRAIN ROLLOUT SUMMARY
+trajectories=32 truncated=19/32 resolved=15 eval_error=4 patch_exists=30/32 reward_mean=0.4688
+task | traj | finish | trunc | turns | ctx | reward | eval | ftp | ptp | trace
+python__mypy-10392 | 0 | context_limit | yes | 17 | 20099/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/python__mypy-10392_traj0.json
+python__mypy-10392 | 6 | context_limit | yes | 14 | 20157/20000 | 0.0000 | not_resolved | 0/1 | 0/1 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/python__mypy-10392_traj6.json
+python__mypy-11972 | 2 | context_limit | yes | 14 | 25519/20000 | 1.0000 | resolved | 1/1 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/python__mypy-11972_traj2.json
+python__mypy-11972 | 5 | model_finish | no | 10 | - | 1.0000 | resolved | 1/1 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/python__mypy-11972_traj5.json
+conan-io__conan-15121 | 6 | context_limit | yes | 9 | 21220/20000 | 0.0000 | not_resolved | 0/1 | 1/3 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/conan-io__conan-15121_traj6.json
+conan-io__conan-15121 | 7 | model_finish | no | 6 | - | 0.0000 | not_resolved | 0/1 | 0/3 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/conan-io__conan-15121_traj7.json
+conan-io__conan-15422 | 1 | context_limit | yes | 5 | 20768/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/conan-io__conan-15422_traj1.json
+conan-io__conan-15422 | 4 | unknown | no | 22 | - | 1.0000 | resolved | 1/1 | 40/40 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/conan-io__conan-15422_traj4.json
+python__mypy-10392 | 7 | context_limit | yes | 22 | 20706/20000 | 0.0000 | not_resolved | 0/1 | 1/1 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/python__mypy-10392_traj7.json
+python__mypy-11972 | 4 | context_limit | yes | 9 | 24697/20000 | 1.0000 | resolved | 1/1 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/python__mypy-11972_traj4.json
+conan-io__conan-15121 | 0 | context_limit | yes | 14 | 20550/20000 | 0.0000 | not_resolved | 0/1 | 2/3 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/conan-io__conan-15121_traj0.json
+conan-io__conan-15121 | 1 | unknown | no | 22 | - | 0.0000 | eval_error | 0/1 | 0/3 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/conan-io__conan-15121_traj1.json
+conan-io__conan-15121 | 5 | model_finish | no | 11 | - | 1.0000 | resolved | 1/1 | 3/3 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/conan-io__conan-15121_traj5.json
+conan-io__conan-15422 | 5 | context_limit | yes | 22 | 20008/20000 | 0.0000 | not_resolved | 0/1 | 0/40 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/conan-io__conan-15422_traj5.json
+conan-io__conan-15422 | 6 | model_finish | no | 11 | - | 1.0000 | resolved | 1/1 | 40/40 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/conan-io__conan-15422_traj6.json
+conan-io__conan-15422 | 7 | context_limit | yes | 19 | 23239/20000 | 1.0000 | resolved | 1/1 | 40/40 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/conan-io__conan-15422_traj7.json
+python__mypy-10392 | 2 | context_limit | yes | 6 | 21217/20000 | 0.0000 | not_resolved | 0/1 | 1/1 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/python__mypy-10392_traj2.json
+python__mypy-10392 | 3 | context_limit | yes | 14 | 20931/20000 | 0.0000 | not_resolved | 0/1 | 1/1 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/python__mypy-10392_traj3.json
+python__mypy-10392 | 4 | context_limit | yes | 14 | 20266/20000 | 0.0000 | not_resolved | 0/1 | 0/1 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/python__mypy-10392_traj4.json
+python__mypy-11972 | 1 | context_limit | yes | 10 | 24685/20000 | 1.0000 | resolved | 1/1 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/python__mypy-11972_traj1.json
+python__mypy-11972 | 6 | context_limit | yes | 21 | 20034/20000 | 0.0000 | not_resolved | 0/1 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/python__mypy-11972_traj6.json
+python__mypy-11972 | 7 | model_finish | no | 11 | - | 1.0000 | resolved | 1/1 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/python__mypy-11972_traj7.json
+conan-io__conan-15121 | 2 | model_finish | no | 19 | - | 1.0000 | resolved | 1/1 | 3/3 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/conan-io__conan-15121_traj2.json
+conan-io__conan-15422 | 3 | model_finish | no | 9 | - | 1.0000 | resolved | 1/1 | 40/40 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/conan-io__conan-15422_traj3.json
+python__mypy-10392 | 1 | context_limit | yes | 14 | 20199/20000 | 1.0000 | resolved | 1/1 | 1/1 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/python__mypy-10392_traj1.json
+python__mypy-10392 | 5 | context_limit | yes | 11 | 20817/20000 | 0.0000 | not_resolved | 0/1 | 0/1 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/python__mypy-10392_traj5.json
+python__mypy-11972 | 0 | model_finish | no | 13 | - | 1.0000 | resolved | 1/1 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/python__mypy-11972_traj0.json
+python__mypy-11972 | 3 | context_limit | yes | 10 | 24504/20000 | 1.0000 | resolved | 1/1 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/python__mypy-11972_traj3.json
+conan-io__conan-15121 | 3 | context_limit | yes | 9 | 22708/20000 | 0.0000 | not_resolved | 0/1 | 0/3 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/conan-io__conan-15121_traj3.json
+conan-io__conan-15121 | 4 | model_finish | no | 10 | - | 0.0000 | not_resolved | 0/1 | 2/3 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/conan-io__conan-15121_traj4.json
+conan-io__conan-15422 | 0 | unknown | no | 22 | - | 1.0000 | resolved | 1/1 | 40/40 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/conan-io__conan-15422_traj0.json
+conan-io__conan-15422 | 2 | unknown | no | 22 | - | 0.0000 | eval_error | 0/1 | 2/40 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0004/conan-io__conan-15422_traj2.json
+step:4 - global_seqlen/min:140495.000000 - global_seqlen/max:166919.000000 - global_seqlen/minmax_diff:26424.000000 - global_seqlen/balanced_min:154672.000000 - global_seqlen/balanced_max:154785.000000 - global_seqlen/mean:154739.250000 - train_reward/coding:0.468750 - train_reward/binary_reward:0.468750 - train_reward/test_informed_reward:0.468750 - train_reward/all:0.468750 - train_reward/verifier:0.468750 - train_reward/reward_all:0.468750 - rollout/train/trajectory_count:32.000000 - rollout/train/truncated_count:19.000000 - rollout/train/truncated_rate:0.593750 - rollout/train/patch_exists_count:30.000000 - rollout/train/patch_exists_rate:0.937500 - rollout/train/resolved_count:15.000000 - rollout/train/resolved_rate:0.468750 - rollout/train/eval_error_count:4.000000 - rollout/train/reward_mean:0.468750 - rollout/train/reward_nonzero_count:15.000000 - rollout/train/finish_reason/context_limit:19.000000 - rollout/train/finish_reason/model_finish:9.000000 - rollout/train/finish_reason/unknown:4.000000 - rollout/train/eval_status/eval_error:4.000000 - rollout/train/eval_status/not_resolved:13.000000 - rollout/train/eval_status/resolved:15.000000 - actor/entropy:0.000000 - actor/pg_loss:0.196208 - actor/pg_clipfrac:0.002669 - actor/ppo_kl:-0.000208 - actor/pg_clipfrac_lower:0.000000 - actor/grad_norm:0.106567 - perf/mfu/actor:0.000000 - perf/max_memory_allocated_gb:33.088770 - perf/max_memory_reserved_gb:44.710938 - perf/cpu_memory_used_gb:17.867569 - actor/lr:0.000001 - critic/score/mean:0.468750 - critic/score/max:1.000000 - critic/score/min:0.000000 - critic/rewards/mean:0.468750 - critic/rewards/max:1.000000 - critic/rewards/min:0.000000 - critic/advantages/mean:-0.027655 - critic/advantages/max:2.474867 - critic/advantages/min:-2.474867 - critic/returns/mean:-0.027655 - critic/returns/max:2.474867 - critic/returns/min:-2.474867 - response_length/mean:14197.906250 - response_length/max:18652.000000 - response_length/min:8100.000000 - response_length/clip_ratio:0.000000 - prompt_length/mean:5144.500000 - prompt_length/max:6878.000000 - prompt_length/min:4440.000000 - prompt_length/clip_ratio:0.000000 - timing_s/gen:898.065456 - timing_s/old_log_prob:38.441353 - timing_s/adv:0.017310 - timing_s/update_actor:200.841351 - timing_s/step:1137.383374 - timing_per_token_ms/gen:1.976668 - timing_per_token_ms/update_actor:0.324484 - timing_per_token_ms/adv:0.000028 - perf/total_num_tokens:618957.000000 - perf/time_per_step:1137.383374 - perf/throughput:136.048454
+STEP 5 TRAIN ROLLOUT SUMMARY
+trajectories=32 truncated=12/32 resolved=13 eval_error=12 patch_exists=29/32 reward_mean=0.4062
+task | traj | finish | trunc | turns | ctx | reward | eval | ftp | ptp | trace
+iterative__dvc-4075 | 1 | unknown | no | 22 | - | 0.0000 | eval_error | 0/2 | 0/2 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/iterative__dvc-4075_traj1.json
+iterative__dvc-4075 | 5 | model_finish | no | 14 | - | 0.0000 | not_resolved | 0/2 | 2/2 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/iterative__dvc-4075_traj5.json
+dask__dask-10441 | 0 | model_finish | no | 10 | - | 1.0000 | resolved | 1/1 | 146/146 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-10441_traj0.json
+dask__dask-10441 | 6 | context_limit | yes | 13 | 20035/20000 | 1.0000 | resolved | 1/1 | 146/146 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-10441_traj6.json
+dask__dask-8484 | 3 | context_limit | yes | 19 | 20286/20000 | 0.0000 | not_resolved | 0/1 | 0/203 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-8484_traj3.json
+dask__dask-8484 | 6 | context_limit | yes | 20 | 20545/20000 | 0.0000 | not_resolved | 0/1 | 203/203 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-8484_traj6.json
+dask__dask-8484 | 7 | unknown | no | 22 | - | 0.0000 | eval_error | 0/1 | 203/203 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-8484_traj7.json
+dask__dask-8597 | 0 | model_finish | no | 14 | - | 1.0000 | resolved | 1/1 | 116/116 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-8597_traj0.json
+iterative__dvc-4075 | 0 | unknown | no | 22 | - | 0.0000 | eval_error | 0/2 | 0/2 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/iterative__dvc-4075_traj0.json
+iterative__dvc-4075 | 6 | unknown | no | 22 | - | 0.0000 | eval_error | 0/2 | 0/2 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/iterative__dvc-4075_traj6.json
+dask__dask-10441 | 1 | unknown | no | 22 | - | 1.0000 | resolved | 1/1 | 146/146 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-10441_traj1.json
+dask__dask-8484 | 0 | context_limit | yes | 13 | 24219/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-8484_traj0.json
+dask__dask-8484 | 5 | context_limit | yes | 14 | 20070/20000 | 0.0000 | not_resolved | 0/1 | 198/203 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-8484_traj5.json
+dask__dask-8597 | 2 | model_finish | no | 10 | - | 1.0000 | resolved | 1/1 | 116/116 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-8597_traj2.json
+dask__dask-8597 | 3 | context_limit | yes | 9 | 20325/20000 | 1.0000 | resolved | 1/1 | 116/116 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-8597_traj3.json
+dask__dask-8597 | 7 | unknown | no | 22 | - | 1.0000 | resolved | 1/1 | 116/116 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-8597_traj7.json
+iterative__dvc-4075 | 2 | unknown | no | 22 | - | 1.0000 | resolved | 2/2 | 2/2 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/iterative__dvc-4075_traj2.json
+iterative__dvc-4075 | 3 | unknown | no | 22 | - | 0.0000 | eval_error | 0/2 | 0/2 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/iterative__dvc-4075_traj3.json
+dask__dask-10441 | 2 | error | no | 11 | - | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-10441_traj2.json
+dask__dask-10441 | 4 | context_limit | yes | 12 | 20272/20000 | 1.0000 | resolved | 1/1 | 146/146 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-10441_traj4.json
+dask__dask-10441 | 5 | unknown | no | 22 | - | 0.0000 | eval_error | 0/1 | 0/146 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-10441_traj5.json
+dask__dask-8484 | 1 | context_limit | yes | 16 | 20478/20000 | 0.0000 | not_resolved | 0/1 | 203/203 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-8484_traj1.json
+dask__dask-8484 | 4 | context_limit | yes | 17 | 20806/20000 | 0.0000 | not_resolved | 0/1 | 198/203 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-8484_traj4.json
+dask__dask-8597 | 1 | model_finish | no | 11 | - | 1.0000 | resolved | 1/1 | 116/116 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-8597_traj1.json
+iterative__dvc-4075 | 4 | unknown | no | 22 | - | 0.0000 | eval_error | 0/2 | 0/2 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/iterative__dvc-4075_traj4.json
+iterative__dvc-4075 | 7 | unknown | no | 22 | - | 0.0000 | eval_error | 0/2 | 0/2 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/iterative__dvc-4075_traj7.json
+dask__dask-10441 | 3 | model_finish | no | 11 | - | 1.0000 | resolved | 1/1 | 146/146 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-10441_traj3.json
+dask__dask-10441 | 7 | context_limit | yes | 8 | 21446/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-10441_traj7.json
+dask__dask-8484 | 2 | model_finish | no | 16 | - | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-8484_traj2.json
+dask__dask-8597 | 4 | context_limit | yes | 12 | 20414/20000 | 1.0000 | resolved | 1/1 | 116/116 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-8597_traj4.json
+dask__dask-8597 | 5 | model_finish | no | 11 | - | 1.0000 | resolved | 1/1 | 116/116 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-8597_traj5.json
+dask__dask-8597 | 6 | context_limit | yes | 13 | 20243/20000 | 0.0000 | not_resolved | 0/1 | 116/116 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0005/dask__dask-8597_traj6.json
+step:5 - global_seqlen/min:110851.000000 - global_seqlen/max:164731.000000 - global_seqlen/minmax_diff:53880.000000 - global_seqlen/balanced_min:142284.000000 - global_seqlen/balanced_max:142351.000000 - global_seqlen/mean:142315.250000 - train_reward/coding:0.406250 - train_reward/binary_reward:0.406250 - train_reward/test_informed_reward:0.406250 - train_reward/all:0.406250 - train_reward/verifier:0.406250 - train_reward/reward_all:0.406250 - rollout/train/trajectory_count:32.000000 - rollout/train/truncated_count:12.000000 - rollout/train/truncated_rate:0.375000 - rollout/train/patch_exists_count:29.000000 - rollout/train/patch_exists_rate:0.906250 - rollout/train/resolved_count:13.000000 - rollout/train/resolved_rate:0.406250 - rollout/train/eval_error_count:12.000000 - rollout/train/reward_mean:0.406250 - rollout/train/reward_nonzero_count:13.000000 - rollout/train/finish_reason/unknown:11.000000 - rollout/train/finish_reason/model_finish:8.000000 - rollout/train/finish_reason/context_limit:12.000000 - rollout/train/finish_reason/error:1.000000 - rollout/train/eval_status/eval_error:12.000000 - rollout/train/eval_status/not_resolved:7.000000 - rollout/train/eval_status/resolved:13.000000 - actor/entropy:0.000000 - actor/pg_loss:-0.136865 - actor/pg_clipfrac:0.001905 - actor/ppo_kl:0.000281 - actor/pg_clipfrac_lower:0.000000 - actor/grad_norm:0.186295 - perf/mfu/actor:0.000000 - perf/max_memory_allocated_gb:33.088770 - perf/max_memory_reserved_gb:45.156250 - perf/cpu_memory_used_gb:18.252911 - actor/lr:0.000001 - critic/score/mean:0.406250 - critic/score/max:1.000000 - critic/score/min:0.000000 - critic/rewards/mean:0.406250 - critic/rewards/max:1.000000 - critic/rewards/min:0.000000 - critic/advantages/mean:-0.027805 - critic/advantages/max:2.474867 - critic/advantages/min:-2.474867 - critic/returns/mean:-0.027805 - critic/returns/max:2.474867 - critic/returns/min:-2.474867 - response_length/mean:12416.906250 - response_length/max:19507.000000 - response_length/min:6416.000000 - response_length/clip_ratio:0.000000 - prompt_length/mean:5372.500000 - prompt_length/max:6605.000000 - prompt_length/min:4524.000000 - prompt_length/clip_ratio:0.000000 - timing_s/gen:1243.065847 - timing_s/old_log_prob:37.156028 - timing_s/adv:0.014406 - timing_s/update_actor:164.738204 - timing_s/step:1444.989563 - timing_per_token_ms/gen:3.128461 - timing_per_token_ms/update_actor:0.289390 - timing_per_token_ms/adv:0.000025 - perf/total_num_tokens:569261.000000 - perf/time_per_step:1444.989563 - perf/throughput:98.488774
+STEP 6 TRAIN ROLLOUT SUMMARY
+trajectories=32 truncated=18/32 resolved=10 eval_error=10 patch_exists=26/32 reward_mean=0.3125
+task | traj | finish | trunc | turns | ctx | reward | eval | ftp | ptp | trace
+dask__dask-7894 | 4 | context_limit | yes | 11 | 20594/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/dask__dask-7894_traj4.json
+dask__dask-7894 | 5 | context_limit | yes | 11 | 20595/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/dask__dask-7894_traj5.json
+pydantic__pydantic-8316 | 0 | context_limit | yes | 22 | 20404/20000 | 0.0000 | not_resolved | 0/1 | 0/143 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pydantic__pydantic-8316_traj0.json
+pydantic__pydantic-8316 | 5 | unknown | no | 22 | - | 0.0000 | eval_error | 0/1 | 143/143 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pydantic__pydantic-8316_traj5.json
+pydantic__pydantic-8316 | 6 | unknown | no | 22 | - | 0.0000 | eval_error | 0/1 | 143/143 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pydantic__pydantic-8316_traj6.json
+pandas-dev__pandas-58335 | 0 | model_finish | no | 10 | - | 1.0000 | resolved | 1/1 | 101/101 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pandas-dev__pandas-58335_traj0.json
+pandas-dev__pandas-58335 | 1 | model_finish | no | 9 | - | 1.0000 | resolved | 1/1 | 101/101 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pandas-dev__pandas-58335_traj1.json
+pandas-dev__pandas-57175 | 4 | context_limit | yes | 11 | 22557/20000 | 0.0000 | not_resolved | 0/1 | 41/41 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pandas-dev__pandas-57175_traj4.json
+dask__dask-7894 | 0 | context_limit | yes | 15 | 21050/20000 | 0.0000 | not_resolved | 0/5 | 75/75 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/dask__dask-7894_traj0.json
+dask__dask-7894 | 1 | context_limit | yes | 15 | 20050/20000 | 0.0000 | not_resolved | 0/5 | 75/75 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/dask__dask-7894_traj1.json
+dask__dask-7894 | 3 | context_limit | yes | 13 | 20484/20000 | 0.0000 | not_resolved | 0/5 | 37/75 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/dask__dask-7894_traj3.json
+dask__dask-7894 | 6 | context_limit | yes | 11 | 20594/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/dask__dask-7894_traj6.json
+pandas-dev__pandas-58335 | 3 | model_finish | no | 8 | - | 1.0000 | resolved | 1/1 | 101/101 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pandas-dev__pandas-58335_traj3.json
+pandas-dev__pandas-58335 | 4 | model_finish | no | 5 | - | 1.0000 | resolved | 1/1 | 101/101 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pandas-dev__pandas-58335_traj4.json
+pandas-dev__pandas-58335 | 5 | model_finish | no | 9 | - | 1.0000 | resolved | 1/1 | 101/101 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pandas-dev__pandas-58335_traj5.json
+pandas-dev__pandas-57175 | 0 | context_limit | yes | 18 | 20167/20000 | 1.0000 | resolved | 1/1 | 41/41 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pandas-dev__pandas-57175_traj0.json
+dask__dask-7894 | 2 | context_limit | yes | 11 | 20570/20000 | 0.0000 | not_resolved | 0/5 | 0/75 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/dask__dask-7894_traj2.json
+dask__dask-7894 | 7 | context_limit | yes | 11 | 20642/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/dask__dask-7894_traj7.json
+pydantic__pydantic-8316 | 2 | unknown | no | 22 | - | 0.0000 | eval_error | 0/1 | 143/143 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pydantic__pydantic-8316_traj2.json
+pydantic__pydantic-8316 | 4 | context_limit | yes | 16 | 20237/20000 | 0.0000 | not_resolved | 0/1 | 0/143 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pydantic__pydantic-8316_traj4.json
+pandas-dev__pandas-58335 | 6 | model_finish | no | 8 | - | 1.0000 | resolved | 1/1 | 101/101 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pandas-dev__pandas-58335_traj6.json
+pandas-dev__pandas-57175 | 2 | model_finish | no | 9 | - | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pandas-dev__pandas-57175_traj2.json
+pandas-dev__pandas-57175 | 5 | context_limit | yes | 15 | 26263/20000 | 0.0000 | not_resolved | 0/1 | 41/41 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pandas-dev__pandas-57175_traj5.json
+pandas-dev__pandas-57175 | 7 | context_limit | yes | 15 | 20142/20000 | 0.0000 | not_resolved | 0/1 | 0/41 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pandas-dev__pandas-57175_traj7.json
+pydantic__pydantic-8316 | 1 | model_finish | no | 10 | - | 1.0000 | resolved | 1/1 | 143/143 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pydantic__pydantic-8316_traj1.json
+pydantic__pydantic-8316 | 3 | context_limit | yes | 22 | 20728/20000 | 0.0000 | not_resolved | 0/1 | 143/143 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pydantic__pydantic-8316_traj3.json
+pydantic__pydantic-8316 | 7 | context_limit | yes | 21 | 20481/20000 | 0.0000 | not_resolved | 0/1 | 127/143 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pydantic__pydantic-8316_traj7.json
+pandas-dev__pandas-58335 | 2 | model_finish | no | 8 | - | 1.0000 | resolved | 1/1 | 101/101 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pandas-dev__pandas-58335_traj2.json
+pandas-dev__pandas-58335 | 7 | model_finish | no | 13 | - | 1.0000 | resolved | 1/1 | 101/101 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pandas-dev__pandas-58335_traj7.json
+pandas-dev__pandas-57175 | 1 | context_limit | yes | 13 | 24381/20000 | 0.0000 | not_resolved | 0/1 | 41/41 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pandas-dev__pandas-57175_traj1.json
+pandas-dev__pandas-57175 | 3 | unknown | no | 22 | - | 0.0000 | eval_error | 0/1 | 0/41 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pandas-dev__pandas-57175_traj3.json
+pandas-dev__pandas-57175 | 6 | context_limit | yes | 11 | 20512/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0006/pandas-dev__pandas-57175_traj6.json
+step:6 - global_seqlen/min:128252.000000 - global_seqlen/max:164667.000000 - global_seqlen/minmax_diff:36415.000000 - global_seqlen/balanced_min:149368.000000 - global_seqlen/balanced_max:149415.000000 - global_seqlen/mean:149400.000000 - train_reward/coding:0.312500 - train_reward/binary_reward:0.312500 - train_reward/test_informed_reward:0.312500 - train_reward/all:0.312500 - train_reward/verifier:0.312500 - train_reward/reward_all:0.312500 - rollout/train/trajectory_count:32.000000 - rollout/train/truncated_count:18.000000 - rollout/train/truncated_rate:0.562500 - rollout/train/patch_exists_count:26.000000 - rollout/train/patch_exists_rate:0.812500 - rollout/train/resolved_count:10.000000 - rollout/train/resolved_rate:0.312500 - rollout/train/eval_error_count:10.000000 - rollout/train/reward_mean:0.312500 - rollout/train/reward_nonzero_count:10.000000 - rollout/train/finish_reason/context_limit:18.000000 - rollout/train/finish_reason/unknown:4.000000 - rollout/train/finish_reason/model_finish:10.000000 - rollout/train/eval_status/eval_error:10.000000 - rollout/train/eval_status/not_resolved:12.000000 - rollout/train/eval_status/resolved:10.000000 - actor/entropy:0.000000 - actor/pg_loss:0.176954 - actor/pg_clipfrac:0.000543 - actor/ppo_kl:-0.000269 - actor/pg_clipfrac_lower:0.000000 - actor/grad_norm:0.232474 - perf/mfu/actor:0.000000 - perf/max_memory_allocated_gb:33.088770 - perf/max_memory_reserved_gb:45.156250 - perf/cpu_memory_used_gb:17.476677 - actor/lr:0.000001 - critic/score/mean:0.312500 - critic/score/max:1.000000 - critic/score/min:0.000000 - critic/rewards/mean:0.312500 - critic/rewards/max:1.000000 - critic/rewards/min:0.000000 - critic/advantages/mean:-0.048844 - critic/advantages/max:2.474867 - critic/advantages/min:-0.353552 - critic/returns/mean:-0.048844 - critic/returns/max:2.474867 - critic/returns/min:-0.353552 - response_length/mean:13516.250000 - response_length/max:21024.000000 - response_length/min:4166.000000 - response_length/clip_ratio:0.031250 - prompt_length/mean:5158.750000 - prompt_length/max:5490.000000 - prompt_length/min:4806.000000 - prompt_length/clip_ratio:0.000000 - timing_s/gen:1388.299193 - timing_s/old_log_prob:38.243067 - timing_s/adv:0.019415 - timing_s/update_actor:170.236162 - timing_s/step:1596.815223 - timing_per_token_ms/gen:3.209792 - timing_per_token_ms/update_actor:0.284866 - timing_per_token_ms/adv:0.000032 - perf/total_num_tokens:597600.000000 - perf/time_per_step:1596.815223 - perf/throughput:93.561232
+STEP 7 TRAIN ROLLOUT SUMMARY
+trajectories=32 truncated=13/32 resolved=7 eval_error=8 patch_exists=27/32 reward_mean=0.2188
+task | traj | finish | trunc | turns | ctx | reward | eval | ftp | ptp | trace
+pandas-dev__pandas-52528 | 2 | model_finish | no | 12 | - | 0.0000 | not_resolved | 0/17 | 792/797 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-52528_traj2.json
+pandas-dev__pandas-50713 | 1 | context_limit | yes | 7 | 20054/20000 | 0.0000 | not_resolved | 0/1 | 58/58 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-50713_traj1.json
+pandas-dev__pandas-50713 | 4 | model_finish | no | 8 | - | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-50713_traj4.json
+pandas-dev__pandas-57323 | 2 | context_limit | yes | 22 | 20274/20000 | 0.0000 | not_resolved | 0/1 | 0/244 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-57323_traj2.json
+pandas-dev__pandas-57323 | 3 | context_limit | yes | 19 | 20654/20000 | 1.0000 | resolved | 1/1 | 244/244 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-57323_traj3.json
+facebookresearch__hydra-1560 | 0 | model_finish | no | 7 | - | 0.0000 | not_resolved | 0/1 | 2/2 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/facebookresearch__hydra-1560_traj0.json
+facebookresearch__hydra-1560 | 3 | context_limit | yes | 11 | 20006/20000 | 0.0000 | not_resolved | 0/1 | 0/2 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/facebookresearch__hydra-1560_traj3.json
+facebookresearch__hydra-1560 | 5 | model_finish | no | 8 | - | 0.0000 | not_resolved | 0/1 | 2/2 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/facebookresearch__hydra-1560_traj5.json
+pandas-dev__pandas-52528 | 3 | model_finish | no | 12 | - | 0.0000 | not_resolved | 0/17 | 792/797 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-52528_traj3.json
+pandas-dev__pandas-50713 | 3 | context_limit | yes | 18 | 20339/20000 | 0.0000 | not_resolved | 0/1 | 58/58 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-50713_traj3.json
+pandas-dev__pandas-50713 | 6 | context_limit | yes | 16 | 20143/20000 | 1.0000 | resolved | 1/1 | 58/58 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-50713_traj6.json
+pandas-dev__pandas-57323 | 1 | unknown | no | 22 | - | 0.0000 | eval_error | 0/1 | 244/244 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-57323_traj1.json
+pandas-dev__pandas-57323 | 6 | unknown | no | 18 | - | 0.0000 | eval_error | 0/1 | 0/244 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-57323_traj6.json
+pandas-dev__pandas-57323 | 7 | context_limit | yes | 12 | 21769/20000 | 0.0000 | not_resolved | 0/1 | 0/244 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-57323_traj7.json
+facebookresearch__hydra-1560 | 4 | model_finish | no | 9 | - | 0.0000 | not_resolved | 0/1 | 0/2 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/facebookresearch__hydra-1560_traj4.json
+facebookresearch__hydra-1560 | 7 | model_finish | no | 9 | - | 0.0000 | not_resolved | 0/1 | 2/2 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/facebookresearch__hydra-1560_traj7.json
+pandas-dev__pandas-52528 | 0 | model_finish | no | 6 | - | 0.0000 | not_resolved | 0/17 | 793/797 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-52528_traj0.json
+pandas-dev__pandas-52528 | 1 | model_finish | no | 8 | - | 0.0000 | not_resolved | 0/17 | 792/797 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-52528_traj1.json
+pandas-dev__pandas-52528 | 6 | model_finish | no | 16 | - | 1.0000 | resolved | 17/17 | 797/797 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-52528_traj6.json
+pandas-dev__pandas-50713 | 2 | context_limit | yes | 8 | 21394/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-50713_traj2.json
+pandas-dev__pandas-50713 | 5 | context_limit | yes | 6 | 20187/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-50713_traj5.json
+pandas-dev__pandas-50713 | 7 | context_limit | yes | 7 | 20623/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-50713_traj7.json
+pandas-dev__pandas-57323 | 0 | model_finish | no | 16 | - | 1.0000 | resolved | 1/1 | 244/244 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-57323_traj0.json
+facebookresearch__hydra-1560 | 2 | model_finish | no | 10 | - | 1.0000 | resolved | 1/1 | 2/2 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/facebookresearch__hydra-1560_traj2.json
+pandas-dev__pandas-52528 | 4 | model_finish | no | 5 | - | 0.0000 | not_resolved | 0/17 | 792/797 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-52528_traj4.json
+pandas-dev__pandas-52528 | 5 | model_finish | no | 12 | - | 1.0000 | resolved | 17/17 | 797/797 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-52528_traj5.json
+pandas-dev__pandas-52528 | 7 | context_limit | yes | 22 | 20210/20000 | 0.0000 | not_resolved | 0/17 | 792/797 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-52528_traj7.json
+pandas-dev__pandas-50713 | 0 | context_limit | yes | 12 | 20361/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-50713_traj0.json
+pandas-dev__pandas-57323 | 4 | unknown | no | 22 | - | 0.0000 | eval_error | 0/1 | 244/244 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-57323_traj4.json
+pandas-dev__pandas-57323 | 5 | context_limit | yes | 13 | 26416/20000 | 1.0000 | resolved | 1/1 | 244/244 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/pandas-dev__pandas-57323_traj5.json
+facebookresearch__hydra-1560 | 1 | model_finish | no | 9 | - | 0.0000 | not_resolved | 0/1 | 2/2 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/facebookresearch__hydra-1560_traj1.json
+facebookresearch__hydra-1560 | 6 | model_finish | no | 9 | - | 0.0000 | not_resolved | 0/1 | 0/2 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0007/facebookresearch__hydra-1560_traj6.json
+step:7 - global_seqlen/min:102951.000000 - global_seqlen/max:165397.000000 - global_seqlen/minmax_diff:62446.000000 - global_seqlen/balanced_min:136481.000000 - global_seqlen/balanced_max:136751.000000 - global_seqlen/mean:136573.000000 - train_reward/coding:0.218750 - train_reward/binary_reward:0.218750 - train_reward/test_informed_reward:0.218750 - train_reward/all:0.218750 - train_reward/verifier:0.218750 - train_reward/reward_all:0.218750 - rollout/train/trajectory_count:32.000000 - rollout/train/truncated_count:13.000000 - rollout/train/truncated_rate:0.406250 - rollout/train/patch_exists_count:27.000000 - rollout/train/patch_exists_rate:0.843750 - rollout/train/resolved_count:7.000000 - rollout/train/resolved_rate:0.218750 - rollout/train/eval_error_count:8.000000 - rollout/train/reward_mean:0.218750 - rollout/train/reward_nonzero_count:7.000000 - rollout/train/finish_reason/model_finish:16.000000 - rollout/train/finish_reason/context_limit:13.000000 - rollout/train/finish_reason/unknown:3.000000 - rollout/train/eval_status/not_resolved:17.000000 - rollout/train/eval_status/eval_error:8.000000 - rollout/train/eval_status/resolved:7.000000 - actor/entropy:0.000000 - actor/pg_loss:0.228447 - actor/pg_clipfrac:0.002486 - actor/ppo_kl:-0.000403 - actor/pg_clipfrac_lower:0.000000 - actor/grad_norm:0.167064 - perf/mfu/actor:0.000000 - perf/max_memory_allocated_gb:33.088770 - perf/max_memory_reserved_gb:45.156250 - perf/cpu_memory_used_gb:17.519939 - actor/lr:0.000001 - critic/score/mean:0.218750 - critic/score/max:1.000000 - critic/score/min:0.000000 - critic/rewards/mean:0.218750 - critic/rewards/max:1.000000 - critic/rewards/min:0.000000 - critic/advantages/mean:0.043259 - critic/advantages/max:2.474867 - critic/advantages/min:-0.724567 - critic/returns/mean:0.043259 - critic/returns/max:2.474867 - critic/returns/min:-0.724567 - response_length/mean:11644.875000 - response_length/max:20299.000000 - response_length/min:3368.000000 - response_length/clip_ratio:0.000000 - prompt_length/mean:5426.750000 - prompt_length/max:6128.000000 - prompt_length/min:4349.000000 - prompt_length/clip_ratio:0.000000 - timing_s/gen:2784.398703 - timing_s/old_log_prob:37.974475 - timing_s/adv:0.012802 - timing_s/update_actor:149.168395 - timing_s/step:2971.569227 - timing_per_token_ms/gen:7.472168 - timing_per_token_ms/update_actor:0.273056 - timing_per_token_ms/adv:0.000023 - perf/total_num_tokens:546292.000000 - perf/time_per_step:2971.569227 - perf/throughput:45.959892
+STEP 8 TRAIN ROLLOUT SUMMARY
+trajectories=32 truncated=9/32 resolved=13 eval_error=8 patch_exists=24/32 reward_mean=0.5262
+task | traj | finish | trunc | turns | ctx | reward | eval | ftp | ptp | trace
+Project-MONAI__MONAI-2238 | 3 | model_finish | no | 9 | - | 0.4800 | not_resolved | 1/2 | 4/5 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-2238_traj3.json
+Project-MONAI__MONAI-4186 | 2 | model_finish | no | 4 | - | 1.0000 | resolved | 1/1 | 4/4 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-4186_traj2.json
+Project-MONAI__MONAI-4186 | 5 | model_finish | no | 5 | - | 1.0000 | resolved | 1/1 | 4/4 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-4186_traj5.json
+Project-MONAI__MONAI-5183 | 0 | model_finish | no | 10 | - | 1.0000 | resolved | 12/12 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-5183_traj0.json
+Project-MONAI__MONAI-5183 | 5 | model_finish | no | 10 | - | 1.0000 | resolved | 12/12 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-5183_traj5.json
+Project-MONAI__MONAI-5183 | 7 | error | no | 21 | - | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-5183_traj7.json
+modin-project__modin-6267 | 2 | context_limit | yes | 13 | 28381/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/modin-project__modin-6267_traj2.json
+modin-project__modin-6267 | 4 | context_limit | yes | 10 | 20123/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/modin-project__modin-6267_traj4.json
+Project-MONAI__MONAI-2238 | 2 | model_finish | no | 9 | - | 0.4800 | not_resolved | 1/2 | 4/5 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-2238_traj2.json
+Project-MONAI__MONAI-2238 | 7 | model_finish | no | 10 | - | 0.4800 | not_resolved | 1/2 | 4/5 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-2238_traj7.json
+Project-MONAI__MONAI-4186 | 1 | model_finish | no | 5 | - | 1.0000 | resolved | 1/1 | 4/4 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-4186_traj1.json
+Project-MONAI__MONAI-4186 | 6 | model_finish | no | 5 | - | 1.0000 | resolved | 1/1 | 4/4 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-4186_traj6.json
+Project-MONAI__MONAI-5183 | 2 | model_finish | no | 11 | - | 1.0000 | resolved | 12/12 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-5183_traj2.json
+Project-MONAI__MONAI-5183 | 6 | model_finish | no | 10 | - | 1.0000 | resolved | 12/12 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-5183_traj6.json
+modin-project__modin-6267 | 1 | context_limit | yes | 11 | 20503/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/modin-project__modin-6267_traj1.json
+modin-project__modin-6267 | 3 | context_limit | yes | 9 | 21267/20000 | 0.0000 | not_resolved | 0/1 | 688/688 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/modin-project__modin-6267_traj3.json
+Project-MONAI__MONAI-2238 | 4 | model_finish | no | 10 | - | 0.4800 | not_resolved | 1/2 | 4/5 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-2238_traj4.json
+Project-MONAI__MONAI-2238 | 5 | model_finish | no | 9 | - | 0.4800 | not_resolved | 1/2 | 4/5 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-2238_traj5.json
+Project-MONAI__MONAI-4186 | 3 | model_finish | no | 5 | - | 1.0000 | resolved | 1/1 | 4/4 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-4186_traj3.json
+Project-MONAI__MONAI-4186 | 4 | model_finish | no | 5 | - | 1.0000 | resolved | 1/1 | 4/4 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-4186_traj4.json
+Project-MONAI__MONAI-5183 | 4 | model_finish | no | 10 | - | 0.0000 | not_resolved | 0/12 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-5183_traj4.json
+modin-project__modin-6267 | 5 | context_limit | yes | 6 | 20231/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/modin-project__modin-6267_traj5.json
+modin-project__modin-6267 | 7 | context_limit | yes | 14 | 20043/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/modin-project__modin-6267_traj7.json
+modin-project__modin-6267 | 6 | context_limit | yes | 9 | 20983/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/modin-project__modin-6267_traj6.json
+Project-MONAI__MONAI-2238 | 0 | context_limit | yes | 10 | 21273/20000 | 0.4800 | not_resolved | 1/2 | 4/5 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-2238_traj0.json
+Project-MONAI__MONAI-2238 | 1 | model_finish | no | 9 | - | 0.4800 | not_resolved | 1/2 | 4/5 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-2238_traj1.json
+Project-MONAI__MONAI-2238 | 6 | model_finish | no | 10 | - | 0.4800 | not_resolved | 1/2 | 4/5 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-2238_traj6.json
+Project-MONAI__MONAI-4186 | 0 | model_finish | no | 5 | - | 1.0000 | resolved | 1/1 | 4/4 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-4186_traj0.json
+Project-MONAI__MONAI-4186 | 7 | model_finish | no | 6 | - | 1.0000 | resolved | 1/1 | 4/4 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-4186_traj7.json
+Project-MONAI__MONAI-5183 | 1 | model_finish | no | 11 | - | 1.0000 | resolved | 12/12 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-5183_traj1.json
+Project-MONAI__MONAI-5183 | 3 | model_finish | no | 12 | - | 0.0000 | not_resolved | 0/12 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-5183_traj3.json
+modin-project__modin-6267 | 0 | context_limit | yes | 11 | 20522/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/modin-project__modin-6267_traj0.json
+test_gen_batch meta info: {'eos_token_id': 151645, 'pad_token_id': 151643, 'recompute_log_prob': False, 'do_sample': False, 'validate': True, 'rollout_step': 8, 'rollout_phase': 'validation', 'n_trajectories': 1}
+validation generation end
+STEP 8 VALIDATION ROLLOUT SUMMARY
+trajectories=16 truncated=8/16 resolved=6 eval_error=8 patch_exists=9/16 reward_mean=0.4995
+task | traj | finish | trunc | turns | ctx | reward | eval | ftp | ptp | trace
+getmoto__moto-7167 | 0 | context_limit | yes | 13 | 20043/20000 | 1.0000 | resolved | 1/1 | 193/193 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/getmoto__moto-7167_traj0.json
+getmoto__moto-7335 | 0 | context_limit | yes | 7 | 22361/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/getmoto__moto-7335_traj0.json
+getmoto__moto-5200 | 0 | model_finish | no | 10 | - | 1.0000 | resolved | 1/1 | 84/84 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/getmoto__moto-5200_traj0.json
+getmoto__moto-5058 | 0 | context_limit | yes | 10 | 20381/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/getmoto__moto-5058_traj0.json
+getmoto__moto-6585 | 0 | context_limit | yes | 6 | 21883/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/getmoto__moto-6585_traj0.json
+python__mypy-16203 | 0 | unknown | no | 22 | - | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/python__mypy-16203_traj0.json
+conan-io__conan-13403 | 0 | unknown | no | 22 | - | 0.0000 | eval_error | 0/1 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/conan-io__conan-13403_traj0.json
+iterative__dvc-6600 | 0 | model_finish | no | 12 | - | 0.9926 | not_resolved | 1/1 | 26/27 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/iterative__dvc-6600_traj0.json
+dask__dask-10395 | 0 | model_finish | no | 17 | - | 0.9997 | not_resolved | 1/1 | 628/629 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/dask__dask-10395_traj0.json
+dask__dask-9213 | 0 | model_finish | no | 10 | - | 1.0000 | resolved | 1/1 | 105/105 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/dask__dask-9213_traj0.json
+pandas-dev__pandas-49120 | 0 | model_finish | no | 9 | - | 1.0000 | resolved | 2/2 | 635/635 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/pandas-dev__pandas-49120_traj0.json
+pandas-dev__pandas-48176 | 0 | context_limit | yes | 11 | 20291/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/pandas-dev__pandas-48176_traj0.json
+pandas-dev__pandas-56688 | 0 | context_limit | yes | 10 | 25001/20000 | 1.0000 | resolved | 1/1 | 7/7 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/pandas-dev__pandas-56688_traj0.json
+Project-MONAI__MONAI-6912 | 0 | context_limit | yes | 4 | 20948/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-6912_traj0.json
+Project-MONAI__MONAI-2696 | 0 | model_finish | no | 10 | - | 1.0000 | resolved | 8/8 | 10/10 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-2696_traj0.json
+Project-MONAI__MONAI-4725 | 0 | context_limit | yes | 5 | 20902/20000 | 0.0000 | eval_error | 0/0 | 0/0 | /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces/step_0008/Project-MONAI__MONAI-4725_traj0.json
+step:8 - global_seqlen/min:80941.000000 - global_seqlen/max:172141.000000 - global_seqlen/minmax_diff:91200.000000 - global_seqlen/balanced_min:122239.000000 - global_seqlen/balanced_max:126568.000000 - global_seqlen/mean:124447.750000 - train_reward/coding:0.526250 - train_reward/binary_reward:0.406250 - train_reward/test_informed_reward:0.526250 - train_reward/all:0.526250 - train_reward/verifier:0.526250 - train_reward/reward_all:0.526250 - rollout/train/trajectory_count:32.000000 - rollout/train/truncated_count:9.000000 - rollout/train/truncated_rate:0.281250 - rollout/train/patch_exists_count:24.000000 - rollout/train/patch_exists_rate:0.750000 - rollout/train/resolved_count:13.000000 - rollout/train/resolved_rate:0.406250 - rollout/train/eval_error_count:8.000000 - rollout/train/reward_mean:0.526250 - rollout/train/reward_nonzero_count:21.000000 - rollout/train/finish_reason/model_finish:22.000000 - rollout/train/finish_reason/error:1.000000 - rollout/train/finish_reason/context_limit:9.000000 - rollout/train/eval_status/not_resolved:11.000000 - rollout/train/eval_status/resolved:13.000000 - rollout/train/eval_status/eval_error:8.000000 - actor/entropy:0.000000 - actor/pg_loss:-0.030208 - actor/pg_clipfrac:0.002007 - actor/ppo_kl:-0.001170 - actor/pg_clipfrac_lower:0.000000 - actor/grad_norm:0.000000 - perf/mfu/actor:0.000000 - perf/max_memory_allocated_gb:33.088770 - perf/max_memory_reserved_gb:45.169922 - perf/cpu_memory_used_gb:17.567432 - actor/lr:0.000001 - val-aux/swe-gym/binary_reward/mean@16:0.375000 - val-aux/swe-gym/binary_reward/std@16:0.484123 - val-aux/swe-gym/binary_reward/best@2/mean:0.635000 - val-aux/swe-gym/binary_reward/best@2/std:0.481430 - val-aux/swe-gym/binary_reward/worst@2/mean:0.136000 - val-aux/swe-gym/binary_reward/worst@2/std:0.342789 - val-aux/swe-gym/binary_reward/maj@2/mean:0.372000 - val-aux/swe-gym/binary_reward/maj@2/std:0.483338 - val-aux/swe-gym/binary_reward/best@4/mean:0.855000 - val-aux/swe-gym/binary_reward/best@4/std:0.352101 - val-aux/swe-gym/binary_reward/worst@4/mean:0.017000 - val-aux/swe-gym/binary_reward/worst@4/std:0.129271 - val-aux/swe-gym/binary_reward/maj@4/mean:0.255000 - val-aux/swe-gym/binary_reward/maj@4/std:0.435861 - val-aux/swe-gym/binary_reward/best@8/mean:0.985000 - val-aux/swe-gym/binary_reward/best@8/std:0.121552 - val-aux/swe-gym/binary_reward/worst@8/mean:0.000000 - val-aux/swe-gym/binary_reward/worst@8/std:0.000000 - val-aux/swe-gym/binary_reward/maj@8/mean:0.146000 - val-aux/swe-gym/binary_reward/maj@8/std:0.353106 - val-aux/swe-gym/binary_reward/best@16/mean:0.999000 - val-aux/swe-gym/binary_reward/best@16/std:0.031607 - val-aux/swe-gym/binary_reward/worst@16/mean:0.000000 - val-aux/swe-gym/binary_reward/worst@16/std:0.000000 - val-aux/swe-gym/binary_reward/maj@16/mean:0.025000 - val-aux/swe-gym/binary_reward/maj@16/std:0.156125 - val-aux/swe-gym/test_informed_reward/mean@16:0.499517 - val-aux/swe-gym/test_informed_reward/std@16:0.499520 - val-aux/swe-gym/test_informed_reward/best@2/mean:0.766547 - val-aux/swe-gym/test_informed_reward/best@2/std:0.422496 - val-aux/swe-gym/test_informed_reward/worst@2/mean:0.247475 - val-aux/swe-gym/test_informed_reward/worst@2/std:0.430941 - val-aux/swe-gym/test_informed_reward/maj@2/mean:0.496492 - val-aux/swe-gym/test_informed_reward/maj@2/std:0.499483 - val-aux/swe-gym/test_informed_reward/best@4/mean:0.929693 - val-aux/swe-gym/test_informed_reward/best@4/std:0.255067 - val-aux/swe-gym/test_informed_reward/worst@4/mean:0.061780 - val-aux/swe-gym/test_informed_reward/worst@4/std:0.240302 - val-aux/swe-gym/test_informed_reward/maj@4/mean:0.336690 - val-aux/swe-gym/test_informed_reward/maj@4/std:0.472253 - val-aux/swe-gym/test_informed_reward/best@8/mean:0.995954 - val-aux/swe-gym/test_informed_reward/best@8/std:0.063119 - val-aux/swe-gym/test_informed_reward/worst@8/mean:0.006962 - val-aux/swe-gym/test_informed_reward/worst@8/std:0.082924 - val-aux/swe-gym/test_informed_reward/maj@8/mean:0.180854 - val-aux/swe-gym/test_informed_reward/maj@8/std:0.384709 - val-aux/swe-gym/test_informed_reward/best@16/mean:1.000000
+("Final validation metrics: {'val-aux/swe-gym/binary_reward/mean@16': 0.375, "
+ "'val-aux/swe-gym/binary_reward/std@16': 0.4841229182759271, "
+ "'val-aux/swe-gym/binary_reward/best@2/mean': 0.635, "
+ "'val-aux/swe-gym/binary_reward/best@2/std': 0.4814301610825811, "
+ "'val-aux/swe-gym/binary_reward/worst@2/mean': 0.136, "
+ "'val-aux/swe-gym/binary_reward/worst@2/std': 0.34278856457005674, "
+ "'val-aux/swe-gym/binary_reward/maj@2/mean': 0.372, "
+ "'val-aux/swe-gym/binary_reward/maj@2/std': 0.48333839077813795, "
+ "'val-aux/swe-gym/binary_reward/best@4/mean': 0.855, "
+ "'val-aux/swe-gym/binary_reward/best@4/std': 0.352100837829165, "
+ "'val-aux/swe-gym/binary_reward/worst@4/mean': 0.017, "
+ "'val-aux/swe-gym/binary_reward/worst@4/std': 0.12927103310486848, "
+ "'val-aux/swe-gym/binary_reward/maj@4/mean': 0.255, "
+ "'val-aux/swe-gym/binary_reward/maj@4/std': 0.43586121644395015, "
+ "'val-aux/swe-gym/binary_reward/best@8/mean': 0.985, "
+ "'val-aux/swe-gym/binary_reward/best@8/std': 0.12155245781143219, "
+ "'val-aux/swe-gym/binary_reward/worst@8/mean': 0.0, "
+ "'val-aux/swe-gym/binary_reward/worst@8/std': 0.0, "
+ "'val-aux/swe-gym/binary_reward/maj@8/mean': 0.146, "
+ "'val-aux/swe-gym/binary_reward/maj@8/std': 0.35310621631458144, "
+ "'val-aux/swe-gym/binary_reward/best@16/mean': 0.999, "
+ "'val-aux/swe-gym/binary_reward/best@16/std': 0.03160696125855822, "
+ "'val-aux/swe-gym/binary_reward/worst@16/mean': 0.0, "
+ "'val-aux/swe-gym/binary_reward/worst@16/std': 0.0, "
+ "'val-aux/swe-gym/binary_reward/maj@16/mean': 0.025, "
+ "'val-aux/swe-gym/binary_reward/maj@16/std': 0.15612494995995996, "
+ "'val-aux/swe-gym/test_informed_reward/mean@16': 0.4995171642230466, "
+ "'val-aux/swe-gym/test_informed_reward/std@16': 0.49952013649781934, "
+ "'val-aux/swe-gym/test_informed_reward/best@2/mean': 0.7665468409586057, "
+ "'val-aux/swe-gym/test_informed_reward/best@2/std': 0.42249593188198203, "
+ "'val-aux/swe-gym/test_informed_reward/worst@2/mean': 0.24747521639286346, "
+ "'val-aux/swe-gym/test_informed_reward/worst@2/std': 0.43094111014457454, "
+ "'val-aux/swe-gym/test_informed_reward/maj@2/mean': 0.4964923511747041, "
+ "'val-aux/swe-gym/test_informed_reward/maj@2/std': 0.4994834080713823, "
+ "'val-aux/swe-gym/test_informed_reward/best@4/mean': 0.9296925749278692, "
+ "'val-aux/swe-gym/test_informed_reward/best@4/std': 0.2550667840109098, "
+ "'val-aux/swe-gym/test_informed_reward/worst@4/mean': 0.061780097744803635, "
+ "'val-aux/swe-gym/test_informed_reward/worst@4/std': 0.2403019097941761, "
+ "'val-aux/swe-gym/test_informed_reward/maj@4/mean': 0.33669034917270213, "
+ "'val-aux/swe-gym/test_informed_reward/maj@4/std': 0.4722525872380393, "
+ "'val-aux/swe-gym/test_informed_reward/best@8/mean': 0.9959539657304363, "
+ "'val-aux/swe-gym/test_informed_reward/best@8/std': 0.06311861318426834, "
+ "'val-aux/swe-gym/test_informed_reward/worst@8/mean': 0.0069623270329152685, "
+ "'val-aux/swe-gym/test_informed_reward/worst@8/std': 0.08292439097601671, "
+ "'val-aux/swe-gym/test_informed_reward/maj@8/mean': 0.1808541718188777, "
+ "'val-aux/swe-gym/test_informed_reward/maj@8/std': 0.3847091840794769, "
+ "'val-aux/swe-gym/test_informed_reward/best@16/mean': 0.9999996820349761, "
+ "'val-aux/swe-gym/test_informed_reward/best@16/std': 1.0049908190317792e-05, "
+ "'val-aux/swe-gym/test_informed_reward/worst@16/mean': 0.0, "
+ "'val-aux/swe-gym/test_informed_reward/worst@16/std': 0.0, "
+ "'val-aux/swe-gym/test_informed_reward/maj@16/mean': 0.039924336100806694, "
+ "'val-aux/swe-gym/test_informed_reward/maj@16/std': 0.19558954161937434, "
+ "'val-aux/swe-gym/verifier/mean@16': 0.4995171642230466, "
+ "'val-aux/swe-gym/verifier/std@16': 0.49952013649781934, "
+ "'val-aux/swe-gym/verifier/best@2/mean': 0.7665468409586057, "
+ "'val-aux/swe-gym/verifier/best@2/std': 0.42249593188198203, "
+ "'val-aux/swe-gym/verifier/worst@2/mean': 0.24747521639286346, "
+ "'val-aux/swe-gym/verifier/worst@2/std': 0.43094111014457454, "
+ "'val-aux/swe-gym/verifier/maj@2/mean': 0.4964923511747041, "
+ "'val-aux/swe-gym/verifier/maj@2/std': 0.4994834080713823, "
+ "'val-aux/swe-gym/verifier/best@4/mean': 0.9296925749278692, "
+ "'val-aux/swe-gym/verifier/best@4/std': 0.2550667840109098, "
+ "'val-aux/swe-gym/verifier/worst@4/mean': 0.061780097744803635, "
+ "'val-aux/swe-gym/verifier/worst@4/std': 0.2403019097941761, "
+ "'val-aux/swe-gym/verifier/maj@4/mean': 0.33669034917270213, "
+ "'val-aux/swe-gym/verifier/maj@4/std': 0.4722525872380393, "
+ "'val-aux/swe-gym/verifier/best@8/mean': 0.9959539657304363, "
+ "'val-aux/swe-gym/verifier/best@8/std': 0.06311861318426834, "
+ "'val-aux/swe-gym/verifier/worst@8/mean': 0.0069623270329152685, "
+ "'val-aux/swe-gym/verifier/worst@8/std': 0.08292439097601671, "
+ "'val-aux/swe-gym/verifier/maj@8/mean': 0.1808541718188777, "
+ "'val-aux/swe-gym/verifier/maj@8/std': 0.3847091840794769, "
+ "'val-aux/swe-gym/verifier/best@16/mean': 0.9999996820349761, "
+ "'val-aux/swe-gym/verifier/best@16/std': 1.0049908190317792e-05, "
+ "'val-aux/swe-gym/verifier/worst@16/mean': 0.0, "
+ "'val-aux/swe-gym/verifier/worst@16/std': 0.0, "
+ "'val-aux/swe-gym/verifier/maj@16/mean': 0.039924336100806694, "
+ "'val-aux/swe-gym/verifier/maj@16/std': 0.19558954161937434, "
+ "'rollout/validation/trajectory_count': 16.0, "
+ "'rollout/validation/truncated_count': 8.0, "
+ "'rollout/validation/truncated_rate': 0.5, "
+ "'rollout/validation/patch_exists_count': 9.0, "
+ "'rollout/validation/patch_exists_rate': 0.5625, "
+ "'rollout/validation/resolved_count': 6.0, "
+ "'rollout/validation/resolved_rate': 0.375, "
+ "'rollout/validation/eval_error_count': 8.0, "
+ "'rollout/validation/reward_mean': 0.4995171642230466, "
+ "'rollout/validation/reward_nonzero_count': 8.0, "
+ "'rollout/validation/finish_reason/context_limit': 8.0, "
+ "'rollout/validation/finish_reason/model_finish': 6.0, "
+ "'rollout/validation/finish_reason/unknown': 2.0, "
+ "'rollout/validation/eval_status/resolved': 6.0, "
+ "'rollout/validation/eval_status/eval_error': 8.0, "
+ "'rollout/validation/eval_status/not_resolved': 2.0}")

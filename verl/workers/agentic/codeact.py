@@ -1,5 +1,4 @@
 import numpy as np
-import json
 import asyncio
 import uuid
 from collections import deque
@@ -20,15 +19,19 @@ from transformers import AutoTokenizer
 
 import openhands
 import openhands.agenthub.codeact_agent.function_calling as codeact_function_calling
+from openhands.agenthub.codeact_agent.tools import (
+    FinishTool,
+    ThinkTool,
+    create_cmd_run_tool,
+    create_search_files_tool,
+    create_str_replace_editor_tool,
+)
 from openhands.controller.agent import Agent
 from openhands.controller.state.state import State, AgentState
 from openhands.core.config import LLMConfig, AgentConfig, SandboxConfig, AppConfig
 from openhands.core.main import create_runtime, run_controller
 from openhands.core.logger import openhands_logger as logger
 from openhands.core.message import Message, TextContent
-from openhands.core.message_utils import (
-    events_to_messages,
-)
 from openhands.core.exceptions import (
     AgentStuckInLoopError,
     FunctionCallNotExistsError,
@@ -45,6 +48,7 @@ from openhands.events.action import (
 )
 from openhands.events.event import EventSource
 from openhands.memory.condenser import Condenser
+from openhands.memory.conversation_memory import ConversationMemory
 from openhands.core.config.condenser_config import (
     NoOpCondenserConfig,
 )
@@ -67,6 +71,7 @@ from openhands.events.observation import CmdOutputObservation
 from .utils import process_git_patch
 from .result_normalization import fill_empty_trajectory_messages
 from .runtime_backend import openhands_runtime_backend, prepare_sandbox_for_runtime
+from .rollout_logging import write_trajectory_trace
 from verl.workers.reward_manager.swebench_report import trajectory_reward_fields
 
 DOCKER_IMAGE_PREFIX = os.environ.get('EVAL_DOCKER_IMAGE_PREFIX', 'docker.io/xingyaoww/')
@@ -297,7 +302,14 @@ class OnlineCodeActAgent(Agent):
         # dummy value to let openhands tracks the name
         llm = LLM(LLMConfig(model="dummy"))
 
-        super().__init__(llm, AgentConfig())
+        agent_config = AgentConfig(
+            enable_browsing=False,
+            enable_jupyter=False,
+            enable_llm_editor=False,
+            enable_prompt_extensions=False,
+            disabled_microagents=['github'],
+        )
+        super().__init__(llm, agent_config)
         
         self.tokenizer = tokenizer
         self.max_prompt_length = max_prompt_length
@@ -309,22 +321,21 @@ class OnlineCodeActAgent(Agent):
         # Store instance and trajectory IDs separately
         self.instance_id = instance_id
         self.trajectory_id = trajectory_id
+        self.finish_reason = None
+        self.truncated = False
+        self.context_tokens = None
+        self.context_limit = self.max_prompt_length
+        self.action_counts = {}
         
-        # Initialize tools
-        self.tools = codeact_function_calling.get_tools(
-            codeact_enable_browsing=False,
-            codeact_enable_jupyter=False,
-            codeact_enable_llm_editor=False,
-        )
+        # Initialize tools using the current OpenHands CodeAct tool API.
+        self.tools = self._get_tools()
         
-        # Initialize prompt manager
-        self.prompt_manager = PromptManager(
-            microagent_dir=os.path.join(
-                os.path.dirname(os.path.dirname(openhands.__file__)),
-                'microagents',
+        # Initialize prompt manager.
+        self._prompt_manager = PromptManager(
+            prompt_dir=os.path.join(
+                os.path.dirname(openhands.agenthub.codeact_agent.__file__),
+                'prompts',
             ),
-            prompt_dir=os.path.join(os.path.dirname(openhands.agenthub.codeact_agent.__file__), 'prompts'),
-            disabled_microagents=['github'],
         )
         
         # Initialize condenser
@@ -339,6 +350,20 @@ class OnlineCodeActAgent(Agent):
         self.config = None
 
         self.qwen3_enable_thinking = qwen3_enable_thinking
+
+    def _get_tools(self) -> list[dict]:
+        tools = []
+        if self.config.enable_cmd:
+            tools.append(create_cmd_run_tool())
+        if self.config.enable_think:
+            tools.append(ThinkTool)
+        if self.config.enable_finish:
+            tools.append(FinishTool)
+        if self.config.enable_search:
+            tools.append(create_search_files_tool())
+        if self.config.enable_editor:
+            tools.append(create_str_replace_editor_tool())
+        return tools
 
     def close(self):
         """Close the agent runtime."""
@@ -373,14 +398,18 @@ class OnlineCodeActAgent(Agent):
             if msg.role == 'user' and not is_first_message_handled:
                 is_first_message_handled = True
                 # Compose the first user message with examples
-                self.prompt_manager.add_examples_to_initial_message(msg)
+                if hasattr(self.prompt_manager, 'add_examples_to_initial_message'):
+                    self.prompt_manager.add_examples_to_initial_message(msg)
 
                 # Add repo/runtime info if enabled
-                if self.config.get_agent_config().enable_prompt_extensions:
+                if (
+                    self.config.get_agent_config().enable_prompt_extensions
+                    and hasattr(self.prompt_manager, 'add_info_to_initial_message')
+                ):
                     self.prompt_manager.add_info_to_initial_message(msg)
 
             # Enhance the user message with additional context based on keywords matched
-            if msg.role == 'user':
+            if msg.role == 'user' and hasattr(self.prompt_manager, 'enhance_message'):
                 self.prompt_manager.enhance_message(msg)
 
             results.append(msg)
@@ -389,18 +418,27 @@ class OnlineCodeActAgent(Agent):
         
     def _get_messages(self, state: State) -> List[Message]:
         """Get the message history for this agent."""
-        # Start with initial messages (system prompt)
-        messages = self._initial_messages()
-        
         # If using a condenser, condense the history
         events = self.condenser.condensed_history(state)
-        
-        # Convert history events to messages
-        messages += events_to_messages(
-            events,
-            max_message_chars=32768,  # Default value, adjust as needed
-            vision_is_active=False,  # Assuming vision is not active
-            enable_som_visual_browsing=False,  # Assuming SOM visual browsing is not enabled
+
+        initial_user_message = next(
+            (
+                event
+                for event in state.history
+                if isinstance(event, MessageAction) and event.source == 'user'
+            ),
+            None,
+        )
+        if initial_user_message is None:
+            raise ValueError('Initial user message not found in state history.')
+
+        agent_config = self.config.get_agent_config()
+        conversation_memory = ConversationMemory(agent_config, self.prompt_manager)
+        messages = conversation_memory.process_events(
+            condensed_history=events,
+            initial_user_action=initial_user_message,
+            max_message_chars=32768,
+            vision_is_active=False,
         )
         
         messages = self._enhance_messages(messages)
@@ -451,6 +489,7 @@ class OnlineCodeActAgent(Agent):
                 f"FINISH_REASON=user_exit instance={self.instance_id} "
                 f"trajectory={self.trajectory_id} step={self.step_count}"
             )
+            self.finish_reason = "user_exit"
             return AgentFinishAction()
 
         # prepare what we want to send to the LLM
@@ -471,6 +510,10 @@ class OnlineCodeActAgent(Agent):
                     f"context_tokens={len(input_ids)} "
                     f"context_limit={self.max_prompt_length}"
                 )
+                self.finish_reason = "context_limit"
+                self.truncated = True
+                self.context_tokens = len(input_ids)
+                self.context_limit = self.max_prompt_length
                 return AgentFinishAction(thought="The context is too long. Exit now.")
 
             response_str = call_async_from_sync(self.generate, input_ids=input_ids, sampling_params=self.sampling_params)
@@ -497,6 +540,8 @@ class OnlineCodeActAgent(Agent):
                     self.convert_str_to_completion_format(fn_call_messages)
                 )
                 action_names = [type(action).__name__ for action in actions]
+                for action_name in action_names:
+                    self.action_counts[action_name] = self.action_counts.get(action_name, 0) + 1
                 logger.info(
                     f"ACTION_TYPES instance={self.instance_id} "
                     f"trajectory={self.trajectory_id} step={self.step_count} "
@@ -508,6 +553,7 @@ class OnlineCodeActAgent(Agent):
                         f"FINISH_REASON=model_finish instance={self.instance_id} "
                         f"trajectory={self.trajectory_id} step={self.step_count}"
                     )
+                    self.finish_reason = "model_finish"
 
                 for action in actions:
                     self.pending_actions.append(action)
@@ -646,6 +692,24 @@ class CodeActAgentGroup:
         self.remove_think_tokens = remove_think_tokens
         if self.remove_think_tokens:
             logger.info("Removing think tokens....")
+
+    def _rollout_step(self) -> int | None:
+        step = self.batch.meta_info.get("rollout_step")
+        if step is None:
+            return None
+        return int(step)
+
+    def _write_trajectory_trace(
+        self,
+        instance_id: str,
+        trajectory_id: int,
+        result: dict[str, Any],
+    ) -> str | None:
+        return write_trajectory_trace(
+            self.log_messages_dir,
+            step=self._rollout_step(),
+            result=result,
+        )
     
 
     def _convert_results_to_dataproto(self) -> DataProto:
@@ -663,10 +727,19 @@ class CodeActAgentGroup:
 
         # Non-tensor data
         git_patch_list = []
+        instance_id_list = []
+        trajectory_id_list = []
         success_list = []
         error_list = []
         resolved_list = []
         has_finish_action_list = []
+        finish_reason_list = []
+        truncated_list = []
+        turns_list = []
+        context_tokens_list = []
+        context_limit_list = []
+        action_counts_list = []
+        trace_path_list = []
         target_tests_total_list = []
         target_tests_passed_list = []
         target_tests_failed_list = []
@@ -719,6 +792,13 @@ class CodeActAgentGroup:
         all_prompts = []
         all_responses = []
         for result in matched_results:
+            trace_path = self._write_trajectory_trace(
+                result.get("instance_id", "unknown"),
+                result.get("trajectory_id", 0),
+                result,
+            )
+            if trace_path:
+                result["trace_path"] = trace_path
             messages = result.get('messages', [])
             all_messages.append(messages)
             # get the response: starting from the first assistant message
@@ -742,11 +822,20 @@ class CodeActAgentGroup:
                 evaluation_report=result.get('evaluation_report', None),
                 evaluation_error=result.get('evaluation_error', result.get('eval_error', None)),
             )
+            instance_id_list.append(result.get('instance_id', None))
+            trajectory_id_list.append(result.get('trajectory_id', None))
             git_patch_list.append(result.get('git_patch', None))
             success_list.append(result.get('success', False))
             error_list.append(result.get('error', None))
             resolved_list.append(reward_fields['resolved'])
             has_finish_action_list.append(result.get('finish', False))
+            finish_reason_list.append(result.get('finish_reason', None))
+            truncated_list.append(result.get('truncated', False))
+            turns_list.append(result.get('turns', 0))
+            context_tokens_list.append(result.get('context_tokens', None))
+            context_limit_list.append(result.get('context_limit', None))
+            action_counts_list.append(result.get('action_counts', {}))
+            trace_path_list.append(result.get('trace_path', None))
             target_tests_total_list.append(reward_fields['target_tests_total'])
             target_tests_passed_list.append(reward_fields['target_tests_passed'])
             target_tests_failed_list.append(reward_fields['target_tests_failed'])
@@ -809,12 +898,20 @@ class CodeActAgentGroup:
         assert failure_flags_array.ndim == 1
         # Create non-tensor dictionary
         non_tensor_dict = {
+            'instance_id': instance_id_list,
+            'trajectory_id': trajectory_id_list,
             'git_patch': git_patch_list,
             'success': success_list,
             'error': error_list,
             'instance': instance_list,
             'resolved': resolved_list,
             'finish': has_finish_action_list,
+            'finish_reason': finish_reason_list,
+            'truncated': truncated_list,
+            'turns': turns_list,
+            'context_tokens': context_tokens_list,
+            'context_limit': context_limit_list,
+            'action_counts': action_counts_list,
             'target_tests_total': target_tests_total_list,
             'target_tests_passed': target_tests_passed_list,
             'target_tests_failed': target_tests_failed_list,
@@ -828,6 +925,7 @@ class CodeActAgentGroup:
             'binary_reward': binary_reward_list,
             'test_informed_reward': test_informed_reward_list,
             'selected_training_reward': selected_training_reward_list,
+            'trace_path': trace_path_list,
         }
         
         # Create and return DataProto
@@ -916,9 +1014,9 @@ class CodeActAgentGroup:
                 workspace_mount_path=None,
             )
             agent_config = AgentConfig(
-                codeact_enable_jupyter=False,
-                codeact_enable_browsing=False,
-                codeact_enable_llm_editor=False,
+                enable_jupyter=False,
+                enable_browsing=False,
+                enable_llm_editor=False,
                 condenser=NoOpCondenserConfig(),
                 enable_prompt_extensions=False,
             )
@@ -959,7 +1057,7 @@ class CodeActAgentGroup:
         assert agent is not None
         instance = pd.Series(self.batch[batch_id].non_tensor_batch['instance'])
         runtime = agent.runtime
-        
+        state = None
         try:
             # Run the agent controller
             state = await run_controller(
@@ -998,7 +1096,13 @@ class CodeActAgentGroup:
                 'messages': final_messages,
                 'success': not bool(state.last_error if state else True),
                 'error': state.last_error if state and state.last_error else None,
-                'finish': agent._is_last_action_finish(state)
+                'finish': agent._is_last_action_finish(state),
+                'finish_reason': agent.finish_reason or "unknown",
+                'truncated': agent.truncated,
+                'turns': agent.step_count,
+                'context_tokens': agent.context_tokens,
+                'context_limit': agent.context_limit,
+                'action_counts': agent.action_counts,
             }
         except Exception as e:
             logger.error(f"Error running agent {instance_id}: {str(e)}")
@@ -1023,7 +1127,13 @@ class CodeActAgentGroup:
                 'git_patch': None,
                 'success': False,
                 'error': str(e),
-                'finish': agent._is_last_action_finish(state)
+                'finish': agent._is_last_action_finish(state),
+                'finish_reason': agent.finish_reason or "error",
+                'truncated': agent.truncated,
+                'turns': agent.step_count,
+                'context_tokens': agent.context_tokens,
+                'context_limit': agent.context_limit,
+                'action_counts': agent.action_counts,
             }
         finally:
             # cleanup agent resources
@@ -1242,14 +1352,6 @@ class CodeActAgentGroup:
                 runtime.event_stream.close()
                 runtime.close()
 
-        if self.log_messages_dir:
-            result = self.results[instance_id][trajectory_id]
-            instance_dir  = self.log_messages_dir / str(instance_id) 
-            instance_dir.mkdir(exist_ok=True, parents=True)
-            with open(instance_dir / f"{trajectory_id}.json", "w") as f: 
-                result_json = json.dumps(result, default=lambda x: str(x))
-                f.write(result_json)
-    
     async def generate_trajectories_pipeline(self) -> Dict[int, Dict[int, Dict[str, Any]]]:
         """
         Generate trajectories with pipelined runtime initialization to improve efficiency.
@@ -1306,7 +1408,13 @@ class CodeActAgentGroup:
                     'success': False,
                     'error': str(e),
                     'finish': False,
-                    'resolved': False
+                    'resolved': False,
+                    'finish_reason': 'init_error',
+                    'truncated': False,
+                    'turns': 0,
+                    'context_tokens': None,
+                    'context_limit': self.max_prompt_length,
+                    'action_counts': {},
                 }
             finally:
                 init_queue.task_done()
@@ -1327,6 +1435,7 @@ class CodeActAgentGroup:
                 logger.info(f"Running agent for instance {instance_id}, trajectory {trajectory_id}")
                 result = await self._run_agent(batch_idx, trajectory_id, pos_id)
                 elapsed = time.time() - start_time
+                result['wall_time_sec'] = elapsed
                 
                 # Store the result
                 if instance_id not in self.results:
@@ -1352,7 +1461,13 @@ class CodeActAgentGroup:
                     'success': False,
                     'error': str(e),
                     'finish': False,
-                    'resolved': False
+                    'resolved': False,
+                    'finish_reason': 'run_error',
+                    'truncated': False,
+                    'turns': 0,
+                    'context_tokens': None,
+                    'context_limit': self.max_prompt_length,
+                    'action_counts': {},
                 }
             finally:
                 run_queue.task_done()
@@ -1373,12 +1488,14 @@ class CodeActAgentGroup:
                 logger.info(f"Evaluating agent for instance {instance_id}, trajectory {trajectory_id}")
                 await self._evaluate_agent(batch_idx, trajectory_id)
                 elapsed = time.time() - start_time
+                self.results[instance_id][trajectory_id]['eval_wall_time_sec'] = elapsed
                 
                 print(f"Successfully completed evaluating instance {instance_id}, trajectory {trajectory_id} in {elapsed:.2f}s")
             except Exception as e:
                 logger.error(f"Error evaluating agent for {instance_id}, trajectory {trajectory_id}: {str(e)}")
                 # Store error result
                 self.results[instance_id][trajectory_id]['resolved'] = False
+                self.results[instance_id][trajectory_id]['evaluation_error'] = str(e)
             finally:
                 eval_queue.task_done()
                 nonlocal needed_eval_tasks

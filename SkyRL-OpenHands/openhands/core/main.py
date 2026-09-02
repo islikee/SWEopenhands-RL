@@ -2,7 +2,7 @@ import asyncio
 import json
 import os
 from pathlib import Path
-from typing import Callable, Protocol
+from typing import Any, Callable, Protocol
 
 import openhands.agenthub  # noqa F401 (we import this to get the agents registered)
 from openhands.controller.agent import Agent
@@ -30,7 +30,6 @@ from openhands.events.action.action import Action
 from openhands.events.event import Event
 from openhands.events.observation import AgentStateChangedObservation
 from openhands.io import read_input, read_task
-from openhands.mcp import add_mcp_tools_to_agent
 from openhands.memory.memory import Memory
 from openhands.runtime.base import Runtime
 from openhands.utils.async_utils import call_async_from_sync
@@ -43,6 +42,19 @@ class FakeUserResponseFunc(Protocol):
         encapsulate_solution: bool = False,
         try_parse: Callable[[Action | None], str] | None = None,
     ) -> str: ...
+
+
+async def _add_mcp_tools_to_agent_if_configured(
+    agent: Agent,
+    runtime: Runtime,
+    mcp_config: Any,
+) -> None:
+    if not mcp_config.sse_servers and not mcp_config.stdio_servers:
+        return
+
+    from openhands.mcp import add_mcp_tools_to_agent
+
+    await add_mcp_tools_to_agent(agent, runtime, mcp_config)
 
 
 async def run_controller(
@@ -116,7 +128,7 @@ async def run_controller(
                 selected_repository=config.sandbox.selected_repo,
             )
 
-    await add_mcp_tools_to_agent(agent, runtime, config.mcp)
+    await _add_mcp_tools_to_agent_if_configured(agent, runtime, config.mcp)
 
     event_stream = runtime.event_stream
 

@@ -21,6 +21,7 @@ import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from pprint import pprint
 from typing import Type, Dict
 from copy import deepcopy
@@ -44,6 +45,12 @@ from verl.utils.seqlen_balancing import get_seqlen_balanced_partitions, log_seql
 from verl.utils.checkpoint.checkpoint_manager import find_latest_ckpt_path
 from verl.utils.dataset.rl_dataset import RLHFDataset, collate_fn
 from verl.utils.tracking import ValidationGenerationsLogger
+from verl.workers.agentic.rollout_logging import (
+    aggregate_rollout_records,
+    format_rollout_summary,
+    make_rollout_record,
+    write_rollout_jsonl,
+)
 from torch.utils.data import RandomSampler, SequentialSampler
 from torchdata.stateful_dataloader import StatefulDataLoader
 
@@ -176,6 +183,27 @@ def compute_response_mask(data: DataProto):
     response_length = responses.size(1)
     attention_mask = data.batch['attention_mask']
     return attention_mask[:, -response_length:]
+
+
+def rollout_records_from_batch(data: DataProto, *, step: int, phase: str) -> list[dict]:
+    records = []
+    non_tensor = data.non_tensor_batch
+    for index in range(len(data)):
+        result = {}
+        for key, values in non_tensor.items():
+            if index < len(values):
+                result[key] = values[index]
+        if "instance_id" not in result and isinstance(result.get("instance"), dict):
+            result["instance_id"] = result["instance"].get("instance_id")
+        records.append(
+            make_rollout_record(
+                result,
+                step=step,
+                phase=phase,
+                trace_path=result.get("trace_path"),
+            )
+        )
+    return records
 
 
 def compute_advantage(data: DataProto, adv_estimator, gamma=1.0, lam=1.0, num_repeat=1):
@@ -521,6 +549,29 @@ class RayPPOTrainer(object):
         # Log to each configured logger
         self.validation_generations_logger.log(self.config.trainer.logger, samples, self.global_steps)
 
+    def _log_rollout_batch(self, batch: DataProto, *, step: int, phase: str) -> dict:
+        rollout_log_dir = self.config.trainer.get("rollout_log_dir", None)
+        if not rollout_log_dir:
+            return {}
+
+        records = rollout_records_from_batch(batch, step=step, phase=phase)
+        aggregate = aggregate_rollout_records(records)
+        log_dir = Path(rollout_log_dir)
+        write_rollout_jsonl(log_dir / "rollout_summary.jsonl", records)
+        summary = format_rollout_summary(
+            step=step,
+            phase=phase,
+            records=records,
+            aggregate=aggregate,
+        )
+        summary_path = log_dir / f"step_{step:04d}_{phase}_summary.txt"
+        summary_path.write_text(summary + "\n", encoding="utf-8")
+        print(summary)
+        return {
+            key.replace("rollout/", f"rollout/{phase}/", 1): value
+            for key, value in aggregate.items()
+        }
+
     def _validate(self):
         reward_tensor_lst = []
         data_source_lst = []
@@ -530,13 +581,14 @@ class RayPPOTrainer(object):
         sample_inputs = []
         sample_outputs = []
         sample_scores = []
+        rollout_metric_dict = {}
 
         for test_data in self.val_dataloader:
             test_batch = DataProto.from_single_dict(test_data)
+            val_n_trajectories = self.config.actor_rollout_ref.rollout.val_kwargs.n
 
             # repeat test batch
-            test_batch = test_batch.repeat(repeat_times=self.config.actor_rollout_ref.rollout.val_kwargs.n,
-                                           interleave=True)
+            test_batch = test_batch.repeat(repeat_times=val_n_trajectories, interleave=True)
 
             # we only do validation on rule-based rm
             if self.config.reward_model.enable and test_batch[0].non_tensor_batch['reward_model']['style'] == 'model':
@@ -570,6 +622,9 @@ class RayPPOTrainer(object):
                 'recompute_log_prob': False,
                 'do_sample': self.config.actor_rollout_ref.rollout.val_kwargs.do_sample,
                 'validate': True,
+                'rollout_step': self.global_steps,
+                'rollout_phase': 'validation',
+                'n_trajectories': self.config.actor_rollout_ref.rollout.val_kwargs.n,
             }
             print(f'test_gen_batch meta info: {test_gen_batch.meta_info}')
 
@@ -588,7 +643,7 @@ class RayPPOTrainer(object):
             sample_outputs.extend(output_texts)
 
             # repeat to align with repeated responses in rollout
-            test_batch = test_batch.repeat(repeat_times=self.config.actor_rollout_ref.rollout.n_trajectories, interleave=True)
+            test_batch = test_batch.repeat(repeat_times=val_n_trajectories, interleave=True)
             test_batch = test_batch.union(test_output_gen_batch)
 
             result = self.val_reward_fn(test_batch, return_dict=True)
@@ -601,6 +656,13 @@ class RayPPOTrainer(object):
                     reward_extra_infos_dict[key].extend(lst)
 
             data_source_lst.append(test_batch.non_tensor_batch.get('data_source', ['unknown'] * reward_tensor.shape[0]))
+            rollout_metric_dict.update(
+                self._log_rollout_batch(
+                    test_batch,
+                    step=self.global_steps,
+                    phase="validation",
+                )
+            )
 
         self._maybe_log_val_generations(inputs=sample_inputs, outputs=sample_outputs, scores=sample_scores)
 
@@ -626,6 +688,7 @@ class RayPPOTrainer(object):
                     pfx = f"{metric_sec}/{data_source}/{var_name}/{metric_name}"
                     metric_dict[pfx] = metric_val
 
+        metric_dict.update(rollout_metric_dict)
         return metric_dict
 
     def init_workers(self):
@@ -948,6 +1011,10 @@ class RayPPOTrainer(object):
                     else:
                         gen_batch = batch.pop(batch_keys=batch_keys,
                                                 non_tensor_batch_keys=['raw_prompt_ids'])
+                    gen_batch.meta_info.update({
+                        'rollout_step': self.global_steps,
+                        'rollout_phase': 'train',
+                    })
 
                 is_last_step = self.global_steps >= self.total_training_steps
 
@@ -1043,6 +1110,13 @@ class RayPPOTrainer(object):
                                                   gamma=self.config.algorithm.gamma,
                                                   lam=self.config.algorithm.lam,
                                                   num_repeat=self.config.actor_rollout_ref.rollout.n_trajectories)
+                        metrics.update(
+                            self._log_rollout_batch(
+                                batch,
+                                step=self.global_steps,
+                                phase="train",
+                            )
+                        )
 
                     # update critic
                     if self.use_critic:

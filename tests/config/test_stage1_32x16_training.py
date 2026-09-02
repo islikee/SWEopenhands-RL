@@ -77,7 +77,8 @@ def test_stage1_training_script_matches_base_lora_nokl_experiment_contract():
     assert "actor_rollout_ref.actor.use_kl_loss=False" in script
     assert "algorithm.use_kl_in_reward=False" in script
     assert "actor_rollout_ref.rollout.max_iterations=22" in script
-    assert "actor_rollout_ref.rollout.agent_max_prompt_length=20000" in script
+    assert "+actor_rollout_ref.rollout.agent_max_prompt_length=20000" in script
+    assert "+actor_rollout_ref.rollout.max_starting_message_length=10000" in script
     assert "actor_rollout_ref.rollout.temperature=0.5" in script
     assert "actor_rollout_ref.rollout.sampling_params.temperature=0.5" in script
     assert "actor_rollout_ref.rollout.val_kwargs.n=1" in script
@@ -85,3 +86,6 @@ def test_stage1_training_script_matches_base_lora_nokl_experiment_contract():
     assert "trainer.val_before_train=True" in script
     assert "trainer.test_freq=8" in script
     assert 'trainer.logger=\'["console","wandb"]\'' in script
+    assert 'WANDB_API_KEY:-}" == "<wandb_api_key>"' in script
+    assert "actor_rollout_ref.rollout.log_messages_dir=" in script
+    assert "+trainer.rollout_log_dir=" in script

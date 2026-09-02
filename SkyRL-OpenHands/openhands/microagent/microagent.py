@@ -177,6 +177,9 @@ def load_microagents_from_dir(
             # skip README.md
             if file.name == 'README.md':
                 continue
+            if file.parent.name == 'tasks':
+                logger.debug(f'Skipping legacy task microagent {file}')
+                continue
             try:
                 agent = BaseMicroagent.load(file, microagent_dir)
                 if isinstance(agent, RepoMicroagent):

@@ -1,0 +1,351 @@
+_wandb:
+    value:
+        cli_version: 0.29.0
+        e:
+            5b1suslsw8fwzw7d3mk39qjg0xc7nt2l:
+                args:
+                    - --node-ip-address=192.168.122.2
+                    - --node-manager-port=41263
+                    - --object-store-name=/tmp/ray/session_2026-09-02_11-20-50_627272_142334/sockets/plasma_store
+                    - --raylet-name=/tmp/ray/session_2026-09-02_11-20-50_627272_142334/sockets/raylet
+                    - --redis-address=None
+                    - --metrics-agent-port=55503
+                    - --logging-rotate-bytes=536870912
+                    - --logging-rotate-backup-count=5
+                    - --runtime-env-agent-port=56379
+                    - --gcs-address=192.168.122.2:63820
+                    - --session-name=session_2026-09-02_11-20-50_627272_142334
+                    - --temp-dir=/tmp/ray
+                    - --webui=
+                    - --cluster-id=fa51707e96074302269bf667640ab0daeb289bea9449877fdcb71473
+                    - --startup-token=32
+                    - --worker-launch-time-ms=1788319252191
+                    - --node-id=15580d463e4f073db83cd015c76b2d7a03a0de48e003450b3a4f9174
+                    - --runtime-env-hash=-1681079854
+                codePath: .venv/lib/python3.12/site-packages/ray/_private/workers/default_worker.py
+                codePathLocal: .venv/lib/python3.12/site-packages/ray/_private/workers/default_worker.py
+                cpu_count: 16
+                cpu_count_logical: 32
+                cudaVersion: "12.4"
+                disk:
+                    /:
+                        total: "210246524928"
+                        used: "64168267776"
+                email: jadestocking56@gmail.com
+                executable: /root/SWEopenhands-RL/.venv/bin/python
+                git:
+                    commit: b5808034ba25937348d873cae9d75c186e1e1ff9
+                    remote: https://github.com/islikee/SWEopenhands-RL.git
+                gpu: NVIDIA GeForce RTX 4090
+                gpu_count: 4
+                gpu_nvidia:
+                    - architecture: Ada
+                      cudaCores: 16384
+                      memoryTotal: "51527024640"
+                      name: NVIDIA GeForce RTX 4090
+                      uuid: GPU-ffa544a5-cd20-69e9-2541-f7cc00a4b232
+                    - architecture: Ada
+                      cudaCores: 16384
+                      memoryTotal: "51527024640"
+                      name: NVIDIA GeForce RTX 4090
+                      uuid: GPU-89138e9b-7413-362b-ee2c-b63e5a00d574
+                    - architecture: Ada
+                      cudaCores: 16384
+                      memoryTotal: "51527024640"
+                      name: NVIDIA GeForce RTX 4090
+                      uuid: GPU-e4050948-1f91-033f-e8f4-6273e6d9c959
+                    - architecture: Ada
+                      cudaCores: 16384
+                      memoryTotal: "51527024640"
+                      name: NVIDIA GeForce RTX 4090
+                      uuid: GPU-ec53074b-3e0f-a16d-b8e8-4fcc2a81d38f
+                host: ubuntu22
+                memory:
+                    total: "101205905408"
+                os: Linux-6.2.0-37-generic-x86_64-with-glibc2.35
+                program: /root/SWEopenhands-RL/.venv/lib/python3.12/site-packages/ray/_private/workers/default_worker.py
+                python: CPython 3.12.7
+                root: /root/SWEopenhands-RL
+                startedAt: "2026-09-02T03:22:01.378773Z"
+                writerId: 5b1suslsw8fwzw7d3mk39qjg0xc7nt2l
+        m: []
+        python_version: 3.12.7
+        t:
+            "1":
+                - 1
+                - 11
+                - 30
+                - 41
+                - 49
+                - 51
+                - 71
+                - 95
+                - 105
+            "2":
+                - 1
+                - 11
+                - 30
+                - 41
+                - 49
+                - 51
+                - 71
+                - 95
+                - 105
+            "3":
+                - 2
+                - 13
+                - 16
+            "4": 3.12.7
+            "5": 0.29.0
+            "6": 4.51.1
+            "12": 0.29.0
+            "13": linux-x86_64
+actor_rollout_ref:
+    value:
+        actor:
+            checkpoint:
+                contents:
+                    - model
+                    - optimizer
+                    - extra
+            clip_ratio: 0.2
+            clip_ratio_c: 3
+            clip_ratio_high: 0.2
+            clip_ratio_low: 0.2
+            entropy_coeff: 0
+            fsdp_config:
+                fsdp_size: -1
+                optimizer_offload: true
+                param_offload: true
+                wrap_policy:
+                    min_num_params: 0
+            grad_clip: 1
+            kl_loss_coef: 0.001
+            kl_loss_type: low_var_kl
+            loss_agg_mode: token-mean
+            masking: true
+            optim:
+                lr: 1e-06
+                lr_warmup_steps: -1
+                lr_warmup_steps_ratio: 0
+                min_lr_ratio: null
+                total_training_steps: 8
+                warmup_style: constant
+                weight_decay: 0.01
+            ppo_epochs: 1
+            ppo_max_token_len_per_gpu: 16384
+            ppo_micro_batch_size: null
+            ppo_micro_batch_size_per_gpu: 1
+            ppo_mini_batch_size: 4
+            shuffle: false
+            smoke_require_base_unchanged: false
+            smoke_require_lora_update: false
+            strategy: fsdp
+            ulysses_sequence_parallel_size: 1
+            use_dynamic_bsz: false
+            use_kl_loss: false
+            use_torch_compile: true
+        exchange_size: -1
+        hybrid_engine: true
+        model:
+            enable_gradient_checkpointing: true
+            external_lib: null
+            lora_alpha: 32
+            lora_dropout: 0
+            lora_rank: 16
+            lora_target_modules: null
+            path: /data/skyrl/models/NovaSky-AI/SWE-Gym-OpenHands-7B-Agent
+            training_mode: lora
+            use_remove_padding: false
+        ref:
+            fsdp_config:
+                param_offload: true
+                wrap_policy:
+                    min_num_params: 0
+            log_prob_max_token_len_per_gpu: 16384
+            log_prob_micro_batch_size: null
+            log_prob_micro_batch_size_per_gpu: 1
+            log_prob_use_dynamic_bsz: false
+            ulysses_sequence_parallel_size: 1
+        rollout:
+            agent_max_prompt_length: 20000
+            disable_cuda_graph: true
+            disable_log_stats: true
+            do_sample: true
+            dtype: bfloat16
+            enable_chunked_prefill: true
+            enable_memory_saver: true
+            enforce_eager: true
+            free_cache_engine: true
+            gpu_memory_utilization: 0.5
+            ignore_eos: false
+            load_format: dummy_dtensor
+            log_messages_dir: /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl/traces
+            log_prob_max_token_len_per_gpu: 16384
+            log_prob_micro_batch_size: null
+            log_prob_micro_batch_size_per_gpu: 1
+            log_prob_use_dynamic_bsz: false
+            max_eval_parallel_agents: 4
+            max_iterations: 22
+            max_model_len: null
+            max_num_batched_tokens: 8192
+            max_num_seqs: 1024
+            max_parallel_agents: 4
+            max_prefill_tokens: 18432
+            max_starting_message_length: 10000
+            max_total_tokens: 32768
+            "n": 1
+            n_trajectories: 8
+            name: async
+            prompt_length: 8192
+            qwen3_enable_thinking: true
+            remove_think_tokens: false
+            response_length: 1024
+            sampling_params:
+                max_new_tokens: 1024
+                min_p: 0
+                repetition_penalty: 1
+                temperature: 0.5
+                top_k: -1
+                top_p: 0.95
+            task_type: swegym
+            temperature: 0.5
+            tensor_model_parallel_size: 2
+            top_k: -1
+            top_p: 0.95
+            use_fire_sampling: false
+            val_kwargs:
+                do_sample: false
+                "n": 1
+                temperature: 0
+                top_k: -1
+                top_p: 1
+algorithm:
+    value:
+        adv_estimator: grpo
+        gamma: 1
+        kl_ctrl:
+            horizon: 10000
+            kl_coef: 0.001
+            target_kl: 0.1
+            type: fixed
+        kl_penalty: kl
+        lam: 1
+        use_kl_in_reward: false
+critic:
+    value:
+        checkpoint:
+            contents:
+                - model
+                - optimizer
+                - extra
+        cliprange_value: 0.5
+        forward_max_token_len_per_gpu: 32768
+        forward_micro_batch_size: null
+        forward_micro_batch_size_per_gpu: null
+        grad_clip: 1
+        model:
+            enable_gradient_checkpointing: true
+            external_lib: null
+            fsdp_config:
+                fsdp_size: -1
+                optimizer_offload: false
+                param_offload: false
+                wrap_policy:
+                    min_num_params: 0
+            path: ~/models/deepseek-llm-7b-chat
+            tokenizer_path: /data/skyrl/models/NovaSky-AI/SWE-Gym-OpenHands-7B-Agent
+            use_remove_padding: false
+        optim:
+            lr: 1e-05
+            lr_warmup_steps_ratio: 0
+            min_lr_ratio: null
+            total_training_steps: 8
+            warmup_style: constant
+            weight_decay: 0.01
+        ppo_epochs: 1
+        ppo_max_token_len_per_gpu: 32768
+        ppo_micro_batch_size: null
+        ppo_micro_batch_size_per_gpu: null
+        ppo_mini_batch_size: 4
+        rollout_n: 1
+        shuffle: false
+        strategy: fsdp
+        ulysses_sequence_parallel_size: 1
+        use_dynamic_bsz: false
+custom_reward_function:
+    value:
+        name: compute_score
+        path: null
+data:
+    value:
+        dataloader_num_workers: 0
+        filter_overlong_prompts: false
+        filter_overlong_prompts_workers: 1
+        image_key: images
+        max_prompt_length: 8192
+        max_response_length: 1024
+        prompt_key: prompt
+        return_raw_chat: false
+        return_raw_input_ids: false
+        reward_fn_key: data_source
+        shuffle: false
+        tokenizer: null
+        train_batch_size: 4
+        train_files:
+            - /data/skyrl/datasets/skyrl-v0-80-stage1-32x16/train.parquet
+        truncation: error
+        val_batch_size: null
+        val_files:
+            - /data/skyrl/datasets/skyrl-v0-80-stage1-32x16/validation.parquet
+reward_model:
+    value:
+        enable: false
+        forward_max_token_len_per_gpu: 32768
+        max_length: null
+        micro_batch_size: null
+        micro_batch_size_per_gpu: null
+        model:
+            external_lib: null
+            fsdp_config:
+                fsdp_size: -1
+                param_offload: false
+                wrap_policy:
+                    min_num_params: 0
+            input_tokenizer: /data/skyrl/models/NovaSky-AI/SWE-Gym-OpenHands-7B-Agent
+            path: ~/models/FsfairX-LLaMA3-RM-v0.1
+            use_remove_padding: false
+        num_processes: 128
+        reward_manager: swebench_test_informed
+        score_timeout: 300
+        strategy: fsdp
+        ulysses_sequence_parallel_size: 1
+        use_dynamic_bsz: false
+trainer:
+    value:
+        balance_batch: true
+        critic_warmup: 0
+        default_hdfs_dir: null
+        default_local_dir: /data/skyrl/outputs/checkpoints/stage1_32x16_lora_nokl
+        del_local_ckpt_after_load: false
+        experiment_name: oh7b_stage1_32x16_lora_nokl
+        log_val_generations: 0
+        logger:
+            - console
+            - wandb
+        max_actor_ckpt_to_keep: null
+        max_critic_ckpt_to_keep: null
+        n_gpus_per_node: 4
+        nnodes: 1
+        project_name: skyrl-swegym-stage1
+        resume_from_path: null
+        resume_mode: auto
+        rollout_log_dir: /data/skyrl/outputs/rollouts/oh7b_stage1_32x16_lora_nokl
+        save_freq: -1
+        test_freq: 8
+        total_epochs: 1
+        total_training_steps: 8
+        val_before_train: true
+verifier:
+    value:
+        reward_coef: 1

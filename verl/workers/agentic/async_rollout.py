@@ -98,7 +98,7 @@ class AsyncRollout(BaseRollout):
         
         codeact_agent_group = CodeActAgentGroup(
             batch=prompts,
-            num_trajectories=self.config.n_trajectories,
+            num_trajectories=prompts.meta_info.get("n_trajectories", self.config.n_trajectories),
             infer_engine=self.engine,
             max_prompt_length=self.config.get(
                 "agent_max_prompt_length",
