@@ -71,6 +71,57 @@ def binary_reward_from_resolved(resolved: Any) -> float:
     return 1.0 if _as_bool(resolved) else 0.0
 
 
+def normalize_stage1b_report(report: dict[str, Any] | None) -> dict[str, Any]:
+    """Normalize a complete SWE report for the Stage1B reward contract."""
+    if not isinstance(report, dict):
+        raise ValueError("Stage1B evaluator report must be a dictionary")
+    tests_status = report.get("tests_status")
+    if not isinstance(tests_status, dict):
+        raise ValueError("Stage1B evaluator report is missing tests_status")
+
+    normalized: dict[str, Any] = {"resolved": _as_bool(report.get("resolved", False))}
+    for source_name, prefix in ((FAIL_TO_PASS, "ftp"), (PASS_TO_PASS, "ptp")):
+        suite = tests_status.get(source_name)
+        if not isinstance(suite, dict) or "success" not in suite or "failure" not in suite:
+            raise ValueError(f"Stage1B evaluator report is missing {source_name}")
+        success = suite["success"]
+        failure = suite["failure"]
+        if not isinstance(success, (list, tuple)) or not isinstance(failure, (list, tuple)):
+            raise ValueError(f"Stage1B {source_name} success/failure must be lists")
+        normalized[f"{prefix}_passed"] = len(success)
+        normalized[f"{prefix}_total"] = len(success) + len(failure)
+        normalized[f"{prefix}_failed"] = len(failure)
+
+    if normalized["ftp_total"] <= 0:
+        raise ValueError("Stage1B FAIL_TO_PASS denominator must be positive")
+    if normalized["ptp_failed"] > 0 and normalized["ptp_total"] <= 0:
+        raise ValueError("Stage1B PASS_TO_PASS denominator must be positive when regression fails")
+    return normalized
+
+
+def reward_v2_from_facts(facts: dict[str, Any]) -> float:
+    """Compute the Stage1B dense regression-aware reward."""
+    required = ("resolved", "ftp_passed", "ftp_total", "ptp_passed", "ptp_total", "ptp_failed")
+    missing = [key for key in required if key not in facts]
+    if missing:
+        raise ValueError(f"Stage1B reward facts missing: {', '.join(missing)}")
+
+    if _as_bool(facts["resolved"]):
+        return 1.0
+    ftp_total = int(facts["ftp_total"])
+    if ftp_total <= 0:
+        raise ValueError("Stage1B FAIL_TO_PASS denominator must be positive")
+    target = int(facts["ftp_passed"]) / ftp_total
+    if int(facts["ptp_failed"]) == 0:
+        return float(0.9 * target)
+
+    ptp_total = int(facts["ptp_total"])
+    if ptp_total <= 0:
+        raise ValueError("Stage1B PASS_TO_PASS denominator must be positive when regression fails")
+    preservation = int(facts["ptp_passed"]) / ptp_total
+    return float(target * (0.6 + 0.1 * preservation))
+
+
 def test_informed_reward_from_facts(
     facts: dict[str, Any],
     target_weight: float = 0.8,
