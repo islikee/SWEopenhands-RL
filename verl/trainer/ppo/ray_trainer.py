@@ -600,9 +600,18 @@ class RayPPOTrainer(object):
             gen_batch = batch.pop(batch_keys=batch_keys, non_tensor_batch_keys=non_tensor_keys)
         gen_batch.meta_info.update({'rollout_step': self.global_steps, 'rollout_phase': 'train'})
         expected_trajectories = int(self.config.actor_rollout_ref.rollout.n_trajectories)
-        rollout_world_size = int(getattr(self.rollout_wg, 'world_size', 1))
+        rollout_world_size = max(1, int(getattr(self.rollout_wg, 'world_size', 1)))
         if rollout_world_size > 1:
             gen_batch, _ = pad_dataproto_to_divisor(gen_batch, rollout_world_size)
+        padded_prompt_count = len(gen_batch)
+        if expected_trajectories % padded_prompt_count != 0:
+            raise ValueError(
+                f"Stage1B rollout.n_trajectories ({expected_trajectories}) must be divisible by "
+                f"the padded prompt count ({padded_prompt_count}) for rollout worker group size "
+                f"{rollout_world_size}. Adjust trajectories_per_task/rollout.n_trajectories or "
+                "the rollout parallelism."
+            )
+        gen_batch.meta_info['n_trajectories'] = expected_trajectories // padded_prompt_count
 
         with _timer('stage1b_gen', timing_raw):
             if self.actor_wg is not self.rollout_wg:

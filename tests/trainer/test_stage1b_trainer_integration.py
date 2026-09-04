@@ -53,11 +53,14 @@ class _TwoGpuRollout:
 
     def __init__(self):
         self.prompt_count = None
+        self.per_prompt_trajectories = None
 
     def generate_sequences(self, gen_batch):
         self.prompt_count = len(gen_batch)
+        self.per_prompt_trajectories = gen_batch.meta_info.get("n_trajectories")
         assert len(gen_batch) == self.world_size
-        size = 16
+        assert self.per_prompt_trajectories == 4
+        size = len(gen_batch) * self.per_prompt_trajectories
         return DataProto(
             batch=TensorDict(
                 {
