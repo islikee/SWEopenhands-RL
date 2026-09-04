@@ -41,6 +41,8 @@ def test_stage1_prepare_script_declares_non_overlap_guard_and_output_files():
     assert "validation.parquet" in source
     assert "train_instance_ids.txt" in source
     assert "validation_instance_ids.txt" in source
+    assert "stage1b_candidates.parquet" in source
+    assert "stage1b_candidate_instance_ids.txt" in source
 
 
 def _instance_ids(frame: pd.DataFrame) -> list[str]:
@@ -60,6 +62,22 @@ def test_stage1_prepare_script_writes_non_overlapping_train_and_validation_parqu
     assert set(train_ids).isdisjoint(validation_ids)
     assert train_ids == (output_dir / "train_instance_ids.txt").read_text().splitlines()
     assert validation_ids == (output_dir / "validation_instance_ids.txt").read_text().splitlines()
+
+    candidates = pd.read_parquet(output_dir / "stage1b_candidates.parquet")
+    candidate_ids = _instance_ids(candidates)
+    manifest = yaml.safe_load(MANIFEST_PATH.read_text())
+    universe = set(manifest["stage1_universe"])
+    old_train = set(manifest["train"])
+    validation_ids_set = set(validation_ids)
+    unused = universe - old_train - validation_ids_set
+    expected_candidates = old_train | unused
+
+    assert len(unused) == 32
+    assert len(candidate_ids) == 64
+    assert set(candidate_ids) == expected_candidates
+    assert set(candidate_ids).isdisjoint(validation_ids_set)
+    assert set(candidate_ids) | validation_ids_set == universe
+    assert candidate_ids == (output_dir / "stage1b_candidate_instance_ids.txt").read_text().splitlines()
 
 
 def test_stage1_training_script_matches_base_lora_nokl_experiment_contract():
@@ -85,6 +103,7 @@ def test_stage1_training_script_matches_base_lora_nokl_experiment_contract():
     assert "actor_rollout_ref.rollout.val_kwargs.temperature=0" in script
     assert "trainer.val_before_train=True" in script
     assert "trainer.test_freq=8" in script
+    assert "trainer.save_freq=8" in script
     assert 'trainer.logger=\'["console","wandb"]\'' in script
     assert 'WANDB_API_KEY:-}" == "<wandb_api_key>"' in script
     assert "actor_rollout_ref.rollout.log_messages_dir=" in script

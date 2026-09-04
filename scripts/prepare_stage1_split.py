@@ -55,33 +55,50 @@ def prepare_split(manifest_path: Path, source_path: Path | None, output_path: Pa
     train_ids = list(manifest["train"])
     validation_ids = list(manifest["validation"])
     universe_ids = list(manifest["stage1_universe"])
+    universe = set(universe_ids)
+    old_train = set(train_ids)
+    validation = set(validation_ids)
 
-    if len(universe_ids) != 80 or len(set(universe_ids)) != 80:
+    if len(universe) != 80 or len(universe_ids) != 80:
         raise SystemExit("stage1_universe must contain 80 unique task ids")
-    if len(train_ids) != 32 or len(set(train_ids)) != 32:
+    if len(old_train) != 32 or len(train_ids) != 32:
         raise SystemExit("train split must contain 32 unique task ids")
-    if len(validation_ids) != 16 or len(set(validation_ids)) != 16:
+    if len(validation) != 16 or len(validation_ids) != 16:
         raise SystemExit("validation split must contain 16 unique task ids")
     if not set(train_ids).isdisjoint(validation_ids):
-        overlap = sorted(set(train_ids).intersection(validation_ids))
+        overlap = sorted(old_train.intersection(validation))
         raise SystemExit(f"train/validation task overlap: {', '.join(overlap)}")
-    if not set(train_ids).issubset(universe_ids):
+    if not old_train.issubset(universe):
         raise SystemExit("train split contains ids outside stage1_universe")
-    if not set(validation_ids).issubset(universe_ids):
+    if not validation.issubset(universe):
         raise SystemExit("validation split contains ids outside stage1_universe")
+
+    unused = universe - old_train - validation
+    stage1b_candidates = old_train | unused
+    assert len(universe) == 80
+    assert len(old_train) == 32
+    assert len(validation) == 16
+    assert len(unused) == 32
+    assert len(stage1b_candidates) == 64
+    assert stage1b_candidates.isdisjoint(validation)
+    assert stage1b_candidates | validation == universe
+    candidate_ids = [task_id for task_id in universe_ids if task_id in stage1b_candidates]
 
     source_dir = source_path or Path(manifest["source_dataset"])
     output_dir = output_path or Path(manifest["output_dataset"])
     source = _read_split(source_dir)
     train = _select_rows(source, train_ids, "train")
     validation = _select_rows(source, validation_ids, "validation")
+    candidates = _select_rows(source, candidate_ids, "stage1b_candidates")
 
     output_dir.mkdir(parents=True, exist_ok=True)
     train.to_parquet(output_dir / "train.parquet", index=False)
     validation.to_parquet(output_dir / "validation.parquet", index=False)
+    candidates.to_parquet(output_dir / "stage1b_candidates.parquet", index=False)
     _write_ids(output_dir / "train_instance_ids.txt", train_ids)
     _write_ids(output_dir / "validation_instance_ids.txt", validation_ids)
     _write_ids(output_dir / "stage1_universe_instance_ids.txt", universe_ids)
+    _write_ids(output_dir / "stage1b_candidate_instance_ids.txt", candidate_ids)
     return output_dir
 
 
@@ -94,7 +111,7 @@ def main() -> int:
 
     output_dir = prepare_split(args.manifest, args.source, args.output)
     print(f"Prepared stage1 split: {output_dir}")
-    print("train=32 validation=16 overlap=0")
+    print("train=32 validation=16 candidates=64 overlap=0")
     return 0
 
 
