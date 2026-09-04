@@ -73,6 +73,7 @@ from .result_normalization import fill_empty_trajectory_messages
 from .runtime_backend import openhands_runtime_backend, prepare_sandbox_for_runtime
 from .rollout_logging import write_trajectory_trace
 from verl.workers.reward_manager.swebench_report import trajectory_reward_fields
+from .evaluator_validity import evaluate_patch_with_retry
 
 DOCKER_IMAGE_PREFIX = os.environ.get('EVAL_DOCKER_IMAGE_PREFIX', 'docker.io/xingyaoww/')
 logger.info(f'Using docker image prefix: {DOCKER_IMAGE_PREFIX}')
@@ -748,6 +749,11 @@ class CodeActAgentGroup:
         regression_tests_failed_list = []
         evaluation_error_list = []
         evaluation_timeout_list = []
+        reward_valid_list = []
+        evaluator_attempt_count_list = []
+        evaluator_retry_count_list = []
+        evaluator_retry_succeeded_list = []
+        infra_error_list = []
         outcome_primary_list = []
         failure_flags_list = []
         binary_reward_list = []
@@ -849,6 +855,11 @@ class CodeActAgentGroup:
             binary_reward_list.append(reward_fields['binary_reward'])
             test_informed_reward_list.append(reward_fields['test_informed_reward'])
             selected_training_reward_list.append(reward_fields['selected_training_reward'])
+            reward_valid_list.append(bool(result.get('reward_valid', True)))
+            evaluator_attempt_count_list.append(int(result.get('evaluator_attempt_count', 0)))
+            evaluator_retry_count_list.append(int(result.get('evaluator_retry_count', 0)))
+            evaluator_retry_succeeded_list.append(bool(result.get('evaluator_retry_succeeded', False)))
+            infra_error_list.append(bool(result.get('infra_error', False)))
 
 
         # Encode messages, get assitant mask and position ids
@@ -920,6 +931,11 @@ class CodeActAgentGroup:
             'regression_tests_failed': regression_tests_failed_list,
             'evaluation_error': evaluation_error_list,
             'evaluation_timeout': evaluation_timeout_list,
+            'reward_valid': reward_valid_list,
+            'evaluator_attempt_count': evaluator_attempt_count_list,
+            'evaluator_retry_count': evaluator_retry_count_list,
+            'evaluator_retry_succeeded': evaluator_retry_succeeded_list,
+            'infra_error': infra_error_list,
             'outcome_primary': outcome_primary_list,
             'failure_flags': failure_flags_array,
             'binary_reward': binary_reward_list,
@@ -1262,28 +1278,12 @@ class CodeActAgentGroup:
                             logger.info(
                                 f"[{instance_id}, {trajectory_id}] report: {report}\nResult for [{instance_id}, {trajectory_id}]: resolved: {report['resolved']}"
                             )
-                            self.results[instance_id][trajectory_id]['evaluation_report'] = report
-                            self.results[instance_id][trajectory_id]['resolved'] = report[
-                                'resolved'
-                            ]
-                            self.results[instance_id][trajectory_id].update(
-                                trajectory_reward_fields(
-                                    self.results[instance_id][trajectory_id],
-                                    evaluation_report=report,
-                                )
-                            )
+                            return report
                         except Exception as e:
                             logger.error(
                                 f'[{instance_id}, {trajectory_id}] Error when getting eval report: {e}'
                             )
-                            self.results[instance_id][trajectory_id]['resolved'] = False
-                            self.results[instance_id][trajectory_id]['evaluation_error'] = str(e)
-                            self.results[instance_id][trajectory_id].update(
-                                trajectory_reward_fields(
-                                    self.results[instance_id][trajectory_id],
-                                    evaluation_error=str(e),
-                                )
-                            )
+                            raise
             else:
                 raise Exception(f'[{instance_id}, {trajectory_id}] Error when starting eval:\n{obs.content}')
         else:
@@ -1296,6 +1296,21 @@ class CodeActAgentGroup:
         instance_id = self.batch[batch_id].non_tensor_batch['instance']['instance_id']
         instance = pd.Series(self.batch[batch_id].non_tensor_batch['instance'])
         test_spec = make_test_spec(instance=instance)
+        result = self.results[instance_id][trajectory_id]
+        model_patch = result.get('git_patch', None)
+
+        if not model_patch:
+            result.update({
+                'resolved': False,
+                'reward_valid': True,
+                'evaluator_attempt_count': 0,
+                'evaluator_retry_count': 0,
+                'evaluator_retry_succeeded': False,
+                'infra_error': False,
+                'evaluation_error': None,
+            })
+            result.update(trajectory_reward_fields(result, evaluation_error=None))
+            return
         
         try:
             # Configure sandbox
@@ -1326,27 +1341,45 @@ class CodeActAgentGroup:
             # Connect runtime
             await runtime.connect()
 
-            assert instance_id in self.results and trajectory_id in self.results[instance_id], \
-            f"Instance {instance_id} or trajectory {trajectory_id} not found in results"
-            
-            model_patch = self.results[instance_id][trajectory_id].get('git_patch', None)
-            if not model_patch:
-                raise Exception(f"No git patch found for instance {instance_id}, trajectory {trajectory_id}")
-            
-            
-            await call_sync_from_async(self._apply_patch_and_evaluate, runtime, model_patch, instance_id, trajectory_id, test_spec)
+            report = await call_sync_from_async(
+                evaluate_patch_with_retry,
+                model_patch,
+                lambda patch: self._apply_patch_and_evaluate(
+                    runtime, patch, instance_id, trajectory_id, test_spec
+                ),
+                1,
+                result.get('finish_reason'),
+            )
+            result.update({
+                'reward_valid': report.reward_valid,
+                'evaluator_attempt_count': report.attempt_count,
+                'evaluator_retry_count': report.retry_count,
+                'evaluator_retry_succeeded': report.retry_succeeded,
+                'infra_error': report.infra_error,
+            })
+            if report.evaluation_report is not None:
+                result['evaluation_report'] = report.evaluation_report
+                result['resolved'] = report.evaluation_report.get('resolved', False)
+                result.update(
+                    trajectory_reward_fields(result, evaluation_report=report.evaluation_report)
+                )
+            else:
+                result['resolved'] = False
+                result['evaluation_error'] = report.error
+                result['eval_error'] = report.error
+                result.update(trajectory_reward_fields(result, evaluation_error=report.error))
                 
         except Exception as e:
             logger.error(f"Failed to evaluate traj {trajectory_id} for instance {instance_id}: {str(e)}")
-            self.results[instance_id][trajectory_id]['resolved'] = False
-            self.results[instance_id][trajectory_id]['eval_error'] = str(e)
-            self.results[instance_id][trajectory_id]['evaluation_error'] = str(e)
-            self.results[instance_id][trajectory_id].update(
-                trajectory_reward_fields(
-                    self.results[instance_id][trajectory_id],
-                    evaluation_error=str(e),
-                )
-            )
+            result['resolved'] = False
+            result['eval_error'] = str(e)
+            result['evaluation_error'] = str(e)
+            result.setdefault('reward_valid', False)
+            result.setdefault('evaluator_attempt_count', 0)
+            result.setdefault('evaluator_retry_count', 0)
+            result.setdefault('evaluator_retry_succeeded', False)
+            result.setdefault('infra_error', True)
+            result.update(trajectory_reward_fields(result, evaluation_error=str(e)))
         finally:
             if 'runtime' in locals() and runtime:
                 runtime.event_stream.close()

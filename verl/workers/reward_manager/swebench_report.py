@@ -251,6 +251,12 @@ def trajectory_reward_fields(
     )
     return {
         **facts,
+        "ftp_passed": facts["target_tests_passed"],
+        "ftp_total": facts["target_tests_total"],
+        "ftp_failed": facts["target_tests_failed"],
+        "ptp_passed": facts["regression_tests_passed"],
+        "ptp_total": facts["regression_tests_total"],
+        "ptp_failed": facts["regression_tests_failed"],
         "outcome_primary": outcome_primary,
         "failure_flags": failure_flags,
         "git_patch_present": bool(result.get("git_patch")),

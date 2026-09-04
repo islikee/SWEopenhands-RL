@@ -38,6 +38,10 @@ class Stage1BSWEBenchRewardManager:
                 scores.append(0.0)
                 binary_scores.append(0.0)
                 continue
+            if not fields.get("git_patch", [None] * size)[index]:
+                scores.append(0.0)
+                binary_scores.append(0.0)
+                continue
             facts = {
                 key: _value(fields, key, index)
                 for key in ("resolved", "ftp_passed", "ftp_total", "ptp_passed", "ptp_total", "ptp_failed")
