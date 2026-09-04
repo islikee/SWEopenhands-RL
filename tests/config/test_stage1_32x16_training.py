@@ -122,6 +122,14 @@ def test_stage1b_training_script_defaults_to_four_parallel_agents():
     assert 'actor_rollout_ref.rollout.max_eval_parallel_agents="$MAX_EVAL_PARALLEL_AGENTS"' in script
 
 
+def test_stage1b_nokl_script_disables_actor_entropy_to_avoid_extra_logits_softmax():
+    script = STAGE1B_TRAIN_SCRIPT_PATH.read_text()
+
+    assert "actor_rollout_ref.actor.use_kl_loss=False" in script
+    assert "algorithm.use_kl_in_reward=False" in script
+    assert "actor_rollout_ref.actor.entropy_coeff=0.0" in script
+
+
 def test_stage1b_training_script_detects_gpu_count_unless_explicitly_overridden():
     script = STAGE1B_TRAIN_SCRIPT_PATH.read_text()
 
