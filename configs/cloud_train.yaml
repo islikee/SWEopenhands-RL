@@ -40,7 +40,7 @@ reward_model:
 
 trainer:
   nnodes: ${oc.env:SKYRL_NNODES,1}
-  n_gpus_per_node: ${oc.env:SKYRL_GPUS_PER_NODE,4}
+  n_gpus_per_node: ${oc.env:SKYRL_GPUS_PER_NODE,2}
   logger: ["console", "wandb"]
 
 smoke:

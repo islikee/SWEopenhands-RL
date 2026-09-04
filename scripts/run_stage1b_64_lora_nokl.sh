@@ -14,7 +14,19 @@ if [[ -f .env ]]; then
   set +a
 fi
 
-GPU_COUNT="${SKYRL_GPUS_PER_NODE:-4}"
+detect_visible_gpu_count() {
+  if command -v nvidia-smi >/dev/null; then
+    nvidia-smi -L | grep -c '^GPU ' || true
+  else
+    echo 0
+  fi
+}
+
+GPU_COUNT="${SKYRL_GPUS_PER_NODE:-$(detect_visible_gpu_count)}"
+if [[ "$GPU_COUNT" -lt 1 ]]; then
+  echo "No visible GPUs detected. Set SKYRL_GPUS_PER_NODE explicitly if Ray should use a custom GPU count." >&2
+  exit 1
+fi
 MAX_PARALLEL_AGENTS="${SKYRL_MAX_PARALLEL_AGENTS:-4}"
 MAX_EVAL_PARALLEL_AGENTS="${SKYRL_MAX_EVAL_PARALLEL_AGENTS:-$MAX_PARALLEL_AGENTS}"
 MODEL_PATH="${SKYRL_MODEL_PATH:-/data/skyrl/models/NovaSky-AI/SWE-Gym-OpenHands-7B-Agent}"
@@ -39,6 +51,7 @@ echo "trajectories_per_task=8"
 echo "max_candidate_groups_per_update=8"
 echo "max_iterations=15"
 echo "agent_max_prompt_length=32768"
+echo "gpus_per_node=$GPU_COUNT"
 echo "max_parallel_agents=$MAX_PARALLEL_AGENTS"
 echo "max_eval_parallel_agents=$MAX_EVAL_PARALLEL_AGENTS"
 

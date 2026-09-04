@@ -56,7 +56,7 @@ reward_model:
 
 trainer:
   nnodes: 1
-  n_gpus_per_node: 4
+  n_gpus_per_node: 2
   total_training_steps: 2
   save_freq: -1
   test_freq: -1

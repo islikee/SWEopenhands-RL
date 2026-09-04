@@ -312,6 +312,13 @@ def gpu_count() -> int:
     return len([line for line in result.stdout.splitlines() if line.strip().startswith("GPU ")])
 
 
+def expected_gpu_count(env: dict[str, str] | None = None) -> int:
+    env = env or os.environ
+    if env.get("SKYRL_GPUS_PER_NODE"):
+        return int(env["SKYRL_GPUS_PER_NODE"])
+    return gpu_count()
+
+
 def prepare_dataset(dataset_dir: Path, rows: int, instance_ids: list[str] | None = None) -> None:
     if instance_ids and smoke_dataset_matches(dataset_dir, instance_ids):
         print(f"Dataset already prepared: {dataset_dir}")
@@ -402,7 +409,8 @@ def preflight_run(repo_root: Path, paths: dict[str, Path]) -> None:
     if sys.platform != "linux":
         errors.append("Linux is required for cloud smoke.")
     errors.extend(openhands_runtime_preflight_errors())
-    if gpu_count() < int(os.environ.get("SKYRL_GPUS_PER_NODE", "4")):
+    expected_gpus = expected_gpu_count()
+    if gpu_count() < expected_gpus:
         errors.append("Not enough visible GPUs for SKYRL_GPUS_PER_NODE.")
     for command in ["git", "docker", "uv"]:
         if not command_exists(command):
@@ -421,7 +429,7 @@ def preflight_run(repo_root: Path, paths: dict[str, Path]) -> None:
             f"Smoke dataset path incomplete: {paths['SKYRL_SMOKE_DATA_PATH']} missing {', '.join(status.missing_files)}"
         )
     else:
-        expected_tasks = int(os.environ.get("SKYRL_GPUS_PER_NODE", "4"))
+        expected_tasks = expected_gpus
         if len(status.instance_ids) < expected_tasks:
             errors.append(
                 f"Smoke dataset has {len(status.instance_ids)} instances, expected at least {expected_tasks}"

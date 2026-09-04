@@ -109,6 +109,8 @@ def test_stage1_training_script_matches_base_lora_nokl_experiment_contract():
     assert 'WANDB_API_KEY:-}" == "<wandb_api_key>"' in script
     assert "actor_rollout_ref.rollout.log_messages_dir=" in script
     assert "+trainer.rollout_log_dir=" in script
+    assert 'GPU_COUNT="${SKYRL_GPUS_PER_NODE:-$(detect_visible_gpu_count)}"' in script
+    assert 'GPU_COUNT="${SKYRL_GPUS_PER_NODE:-4}"' not in script
 
 
 def test_stage1b_training_script_defaults_to_four_parallel_agents():
@@ -118,3 +120,12 @@ def test_stage1b_training_script_defaults_to_four_parallel_agents():
     assert 'MAX_EVAL_PARALLEL_AGENTS="${SKYRL_MAX_EVAL_PARALLEL_AGENTS:-$MAX_PARALLEL_AGENTS}"' in script
     assert 'actor_rollout_ref.rollout.max_parallel_agents="$MAX_PARALLEL_AGENTS"' in script
     assert 'actor_rollout_ref.rollout.max_eval_parallel_agents="$MAX_EVAL_PARALLEL_AGENTS"' in script
+
+
+def test_stage1b_training_script_detects_gpu_count_unless_explicitly_overridden():
+    script = STAGE1B_TRAIN_SCRIPT_PATH.read_text()
+
+    assert 'detect_visible_gpu_count()' in script
+    assert 'GPU_COUNT="${SKYRL_GPUS_PER_NODE:-$(detect_visible_gpu_count)}"' in script
+    assert 'trainer.n_gpus_per_node="$GPU_COUNT"' in script
+    assert 'GPU_COUNT="${SKYRL_GPUS_PER_NODE:-4}"' not in script

@@ -25,8 +25,8 @@ def test_cloud_smoke_allocates_at_least_one_agent_slot_per_default_dp_rank():
     cloud = yaml.safe_load(Path("configs/cloud_smoke.yaml").read_text())
     rollout = cloud["actor_rollout_ref"]["rollout"]
 
-    assert rollout["max_parallel_agents"] >= 4
-    assert rollout["max_eval_parallel_agents"] >= 4
+    assert rollout["max_parallel_agents"] >= cloud["trainer"]["n_gpus_per_node"]
+    assert rollout["max_eval_parallel_agents"] >= cloud["trainer"]["n_gpus_per_node"]
 
 
 def test_cloud_smoke_enables_sglang_memory_saver_for_hybrid_fsdp_rollout():
@@ -73,7 +73,8 @@ def test_cloud_smoke_declares_async_rollout_starting_message_limit():
 def test_cloud_smoke_sets_frozen_trainer_batch_and_microbatch_requirements():
     script = Path("scripts/run_cloud_smoke.sh").read_text()
 
-    assert 'GPU_COUNT="${SKYRL_GPUS_PER_NODE:-4}"' in script
+    assert 'GPU_COUNT="${SKYRL_GPUS_PER_NODE:-$(detect_visible_gpu_count)}"' in script
+    assert 'GPU_COUNT="${SKYRL_GPUS_PER_NODE:-4}"' not in script
     assert 'PYTHON_BIN="${PYTHON:-$ROOT_DIR/.venv/bin/python}"' in script
     assert "uv run --isolated" not in script
     assert "SKYRL_OPENHANDS_RUNTIME=docker" in script
@@ -134,6 +135,7 @@ def test_cloud_train_defaults_are_valid_for_frozen_validator():
     assert cloud_train["actor_rollout_ref"]["actor"]["ppo_mini_batch_size"] == (
         "${oc.env:SKYRL_PPO_MINI_BATCH_SIZE,4}"
     )
+    assert cloud_train["trainer"]["n_gpus_per_node"] == "${oc.env:SKYRL_GPUS_PER_NODE,2}"
     assert cloud_train["actor_rollout_ref"]["ref"]["log_prob_micro_batch_size_per_gpu"] == 1
     assert cloud_train["actor_rollout_ref"]["rollout"]["log_prob_micro_batch_size_per_gpu"] == 1
 

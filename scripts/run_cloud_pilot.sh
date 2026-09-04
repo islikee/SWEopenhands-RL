@@ -22,7 +22,19 @@ if [[ -f .env ]]; then
   fi
 fi
 
-GPU_COUNT="${SKYRL_GPUS_PER_NODE:-4}"
+detect_visible_gpu_count() {
+  if command -v nvidia-smi >/dev/null; then
+    nvidia-smi -L | grep -c '^GPU ' || true
+  else
+    echo 0
+  fi
+}
+
+GPU_COUNT="${SKYRL_GPUS_PER_NODE:-$(detect_visible_gpu_count)}"
+if [[ "$GPU_COUNT" -lt 1 ]]; then
+  echo "No visible GPUs detected. Set SKYRL_GPUS_PER_NODE explicitly if Ray should use a custom GPU count." >&2
+  exit 1
+fi
 MAX_PARALLEL_AGENTS="${SKYRL_MAX_PARALLEL_AGENTS:-$GPU_COUNT}"
 NUM_TRAJ="${SKYRL_TRAJECTORIES_PER_TASK:-8}"
 MAX_ITERATIONS="${SKYRL_MAX_ITERATIONS:-22}"
