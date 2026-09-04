@@ -112,3 +112,6 @@ def test_stage1b_reward_manager_excludes_reward_invalid_trajectory():
     assert reward_dict["gt_scores"].sum(dim=1).tolist() == pytest.approx([0.45, 0.0])
     assert reward_dict["all"].sum(dim=1).tolist() == pytest.approx([0.45, 0.0])
     assert metrics["reward_invalid_count"] == 1
+    assert metrics["reward_v2"] == pytest.approx(0.45)
+    assert metrics["all"] == pytest.approx(0.45)
+    assert metrics["reward_all"] == pytest.approx(0.45)

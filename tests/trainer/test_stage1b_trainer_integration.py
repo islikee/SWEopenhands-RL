@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 import torch
 from tensordict import TensorDict
 
@@ -73,11 +74,13 @@ def test_trainer_candidate_batch_replaces_rejected_groups_and_returns_4x8():
         task_id = data.non_tensor_batch["uid"][0]
         if task_id.startswith("flat"):
             values = [0.0] * 8
+            metric_value = -1.0
         else:
             values = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+            metric_value = float(task_id.rsplit("-", 1)[1])
         scores = torch.zeros((8, 3), dtype=torch.float32)
         scores[:, -1] = torch.tensor(values)
-        return {"all": scores}, {"reward_v2": float(np.mean(values))}
+        return {"all": scores}, {"reward_v2": metric_value}
 
     trainer.reward_fn = reward_fn
     batch, metrics = trainer._stage1b_candidate_batch(1, {})
@@ -89,3 +92,4 @@ def test_trainer_candidate_batch_replaces_rejected_groups_and_returns_4x8():
     assert metrics["train/underfilled_informative_batch"] == 0
     assert batch.non_tensor_batch["uid"].tolist().count("flat-0") == 0
     assert batch.batch["loss_mask"].sum().item() == 32 * 3
+    assert batch.meta_info["stage1b_reward_metrics"]["reward_v2"] == pytest.approx(1.5)

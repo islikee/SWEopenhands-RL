@@ -685,6 +685,14 @@ class RayPPOTrainer(object):
 
         accepted_batch = DataProto.concat(list(collection.accepted_groups))
         accepted_batch.non_tensor_batch['accepted_group'] = np.ones(len(accepted_batch), dtype=object)
+        accepted_reward_metrics = defaultdict(list)
+        for accepted_group in collection.accepted_groups:
+            for key, value in accepted_group.meta_info.get('stage1b_reward_metrics', {}).items():
+                if isinstance(value, (int, float, np.integer, np.floating)):
+                    accepted_reward_metrics[key].append(float(value))
+        accepted_batch.meta_info['stage1b_reward_metrics'] = {
+            key: float(np.mean(values)) for key, values in accepted_reward_metrics.items()
+        }
         valid_mask = np.asarray(accepted_batch.non_tensor_batch.get('reward_valid', [True] * len(accepted_batch)), dtype=bool)
         metrics['train/valid_trajectory_count'] = int(valid_mask.sum())
         apply_stage1b_training_masks(accepted_batch)

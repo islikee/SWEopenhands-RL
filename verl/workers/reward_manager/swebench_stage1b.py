@@ -31,6 +31,7 @@ class Stage1BSWEBenchRewardManager:
         valid = fields.get("reward_valid", [True] * size)
         scores: list[float] = []
         binary_scores: list[float] = []
+        valid_metric_scores: list[float] = []
         invalid_count = 0
         for index in range(size):
             if not bool(valid[index]):
@@ -39,8 +40,11 @@ class Stage1BSWEBenchRewardManager:
                 binary_scores.append(0.0)
                 continue
             if not fields.get("git_patch", [None] * size)[index]:
-                scores.append(0.0)
-                binary_scores.append(0.0)
+                score = 0.0
+                binary_score = 0.0
+                scores.append(score)
+                binary_scores.append(binary_score)
+                valid_metric_scores.append(score)
                 continue
             facts = {
                 key: _value(fields, key, index)
@@ -54,23 +58,32 @@ class Stage1BSWEBenchRewardManager:
                     "ptp_failed",
                 )
             }
-            scores.append(reward_v2_from_facts(facts))
-            binary_scores.append(binary_reward_from_resolved(facts["resolved"]))
+            score = reward_v2_from_facts(facts)
+            binary_score = binary_reward_from_resolved(facts["resolved"])
+            scores.append(score)
+            binary_scores.append(binary_score)
+            valid_metric_scores.append(score)
 
         score_tensor = torch.tensor(scores, dtype=torch.float32, device=data.batch["responses"].device)
         data.batch["acc"] = score_tensor
         data.batch["binary_acc"] = torch.tensor(
             binary_scores, dtype=torch.float32, device=data.batch["responses"].device
         )
+        valid_metric_mean = statistics.mean(valid_metric_scores) if valid_metric_scores else 0.0
         reward_metrics: dict[str, Any] = {
             "reward_invalid_count": invalid_count,
-            "reward_v2": float(score_tensor.mean().item()),
-            "all": float(score_tensor.mean().item()),
+            "reward_v2": float(valid_metric_mean),
+            "all": float(valid_metric_mean),
         }
         if "ability" in fields:
             for ability in set(fields["ability"]):
-                ability_scores = [scores[i] for i in range(size) if fields["ability"][i] == ability]
-                reward_metrics[str(ability)] = statistics.mean(ability_scores)
+                ability_scores = [
+                    scores[i]
+                    for i in range(size)
+                    if bool(valid[i]) and fields["ability"][i] == ability
+                ]
+                if ability_scores:
+                    reward_metrics[str(ability)] = statistics.mean(ability_scores)
         return scores, binary_scores, reward_metrics
 
     def __call__(self, data: DataProto, return_dict: bool = False):
@@ -91,7 +104,15 @@ class Stage1BSWEBenchRewardManager:
             "test_informed_scores": verifier_reward.clone(),
             "all": reward_tensor,
         }
-        reward_metrics["reward_all"] = float(reward_tensor.sum(dim=-1).mean().item())
+        valid_mask = torch.as_tensor(
+            list(data.non_tensor_batch.get("reward_valid", [True] * len(scores))),
+            dtype=torch.bool,
+            device=data.batch["responses"].device,
+        )
+        valid_reward_rows = reward_tensor.sum(dim=-1)[valid_mask]
+        reward_metrics["reward_all"] = (
+            float(valid_reward_rows.mean().item()) if valid_reward_rows.numel() else 0.0
+        )
         if return_dict:
             patches = data.non_tensor_batch.get("git_patch", [""] * len(scores))
             return {
