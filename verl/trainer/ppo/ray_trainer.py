@@ -599,11 +599,22 @@ class RayPPOTrainer(object):
             non_tensor_keys = ['instance'] if self.config.actor_rollout_ref.rollout.task_type == 'swegym' else ['raw_prompt_ids']
             gen_batch = batch.pop(batch_keys=batch_keys, non_tensor_batch_keys=non_tensor_keys)
         gen_batch.meta_info.update({'rollout_step': self.global_steps, 'rollout_phase': 'train'})
+        expected_trajectories = int(self.config.actor_rollout_ref.rollout.n_trajectories)
+        rollout_world_size = int(getattr(self.rollout_wg, 'world_size', 1))
+        if rollout_world_size > 1:
+            gen_batch, _ = pad_dataproto_to_divisor(gen_batch, rollout_world_size)
 
         with _timer('stage1b_gen', timing_raw):
             if self.actor_wg is not self.rollout_wg:
                 self.actor_wg.execute_all_async('generate_sequences', gen_batch)
             output = self.rollout_wg.generate_sequences(gen_batch)
+        if len(output) < expected_trajectories:
+            raise RuntimeError(
+                f"Stage1B rollout for {task_id} returned {len(output)} trajectories; "
+                f"expected {expected_trajectories}"
+            )
+        if len(output) > expected_trajectories:
+            output = output[:expected_trajectories]
 
         output.non_tensor_batch['uid'] = np.array([task_id] * len(output), dtype=object)
         reward_tensor_dict, reward_metrics = self.reward_fn(output)

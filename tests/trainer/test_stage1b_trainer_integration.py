@@ -48,6 +48,67 @@ class _Rollout:
         )
 
 
+class _TwoGpuRollout:
+    world_size = 2
+
+    def __init__(self):
+        self.prompt_count = None
+
+    def generate_sequences(self, gen_batch):
+        self.prompt_count = len(gen_batch)
+        assert len(gen_batch) == self.world_size
+        size = 16
+        return DataProto(
+            batch=TensorDict(
+                {
+                    "input_ids": torch.ones((size, 4), dtype=torch.long),
+                    "responses": torch.ones((size, 3), dtype=torch.long),
+                    "attention_mask": torch.ones((size, 7), dtype=torch.long),
+                    "position_ids": torch.arange(7, dtype=torch.long).repeat(size, 1),
+                },
+                batch_size=(size,),
+            ),
+            non_tensor_batch={
+                "reward_valid": np.asarray([True] * size, dtype=object),
+                "resolved": np.asarray([False] * size, dtype=object),
+                "finish_reason": np.asarray([None] * size, dtype=object),
+                "infra_error": np.asarray([False] * size, dtype=object),
+                "git_patch": np.asarray(["patch"] * size, dtype=object),
+            },
+        )
+
+
+def test_stage1b_single_candidate_rollout_is_padded_for_two_gpu_worker_group():
+    trainer = object.__new__(RayPPOTrainer)
+    trainer.stage1b_dataset_indices = {"informative-0": 0}
+    trainer.stage1b_reward_epsilon = 1e-6
+    trainer.train_dataset = _Dataset(["informative-0"])
+    trainer.config = SimpleNamespace(
+        actor_rollout_ref=SimpleNamespace(
+            rollout=SimpleNamespace(task_type="swegym", n_trajectories=8)
+        )
+    )
+    rollout = _TwoGpuRollout()
+    trainer.actor_wg = rollout
+    trainer.rollout_wg = rollout
+    trainer.global_steps = 1
+
+    def reward_fn(data):
+        assert len(data) == 8
+        scores = torch.zeros((8, 3), dtype=torch.float32)
+        scores[:, -1] = torch.linspace(0.0, 0.7, steps=8)
+        return {"all": scores}, {"reward_v2": 0.35}
+
+    trainer.reward_fn = reward_fn
+
+    group = trainer._stage1b_candidate_group("informative-0", {})
+
+    assert rollout.prompt_count == 2
+    assert len(group["payload"]) == 8
+    assert len(group["trajectories"]) == 8
+    assert group["reward_valid"] == [True] * 8
+
+
 def test_trainer_candidate_batch_replaces_rejected_groups_and_returns_4x8():
     trainer = object.__new__(RayPPOTrainer)
     trainer.stage1b_sampler = Stage1BSampler(
@@ -63,7 +124,7 @@ def test_trainer_candidate_batch_replaces_rejected_groups_and_returns_4x8():
     trainer.train_dataset = _Dataset(trainer.stage1b_sampler.candidate_ids)
     trainer.config = SimpleNamespace(
         actor_rollout_ref=SimpleNamespace(
-            rollout=SimpleNamespace(task_type="swegym")
+            rollout=SimpleNamespace(task_type="swegym", n_trajectories=8)
         )
     )
     trainer.actor_wg = _Rollout()
