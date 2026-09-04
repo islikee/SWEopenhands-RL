@@ -675,10 +675,12 @@ class CodeActAgentGroup:
         self.sampling_params = sampling_params
         self.device = device
         
-        # Map of instance ID to agent instance
+        # Map of batch slot to agent instances.  Stage1B may pad a single task
+        # into multiple batch slots with the same instance_id for multi-GPU
+        # rollout, so instance_id is not a unique key here.
         self.agents = {}
         
-        # Map of instance ID to agent results
+        # Map of batch slot to agent results.
         self.results = {}
         
         self.qwen3_enable_thinking = qwen3_enable_thinking
@@ -766,24 +768,14 @@ class CodeActAgentGroup:
         test_informed_reward_list = []
         selected_training_reward_list = []
         
-        # Create a mapping of instance_id -> list of trajectories
-        instance_trajectories = {}
-        for instance_id, trajectories in self.results.items():
-            instance_trajectories[instance_id] = []
-            for trajectory_id, result in trajectories.items():
-                instance_trajectories[instance_id].append(result)
-
         # Create the final results in the same order as the batch
         matched_results = []
         instance_list = []
-        for batch_item in self.batch:
-            instance_id = batch_item.non_tensor_batch['instance']['instance_id']
+        for batch_idx, batch_item in enumerate(self.batch):
             instance = batch_item.non_tensor_batch['instance']
-            if instance_id in instance_trajectories:
-                # Add all trajectories for this instance
-                traj_results = instance_trajectories[instance_id]
-                matched_results.extend(traj_results)
-                instance_list.extend([instance] * len(traj_results))
+            for _, result in sorted(self.results.get(batch_idx, {}).items()):
+                matched_results.append(result)
+                instance_list.append(instance)
         
         assert len(matched_results) == self.num_trajectories * len(self.batch), f"Expected number of results {self.num_trajectories * len(self.batch)}, got {len(matched_results)}"
         
@@ -974,14 +966,15 @@ class CodeActAgentGroup:
         """Clean up resources"""
             
         # Close all agent instances
-        for instance_id in self.agents:
-            for trajectory_id in self.agents[instance_id]:
-                self._cleanup_agent(instance_id, trajectory_id)
+        for batch_idx in self.agents:
+            for trajectory_id in self.agents[batch_idx]:
+                self._cleanup_agent(batch_idx, trajectory_id)
     
-    def _cleanup_agent(self, instance_id, trajectory_id):
+    def _cleanup_agent(self, batch_idx, trajectory_id):
         try:
-            self.agents[instance_id][trajectory_id].close()
+            self.agents[batch_idx][trajectory_id].close()
         except Exception as e:
+            instance_id = self.batch[batch_idx].non_tensor_batch['instance']['instance_id']
             logger.warning(f"Error closing agent {instance_id}, trajectory {trajectory_id}: {str(e)}")
     
     def __del__(self):
@@ -990,13 +983,14 @@ class CodeActAgentGroup:
     
     def _initialize_agents(self) -> None:
         """Initialize agent instances for each task."""
-        for data_item in self.batch:
+        for batch_idx, data_item in enumerate(self.batch):
             instance_id = data_item.non_tensor_batch['instance']['instance_id']
-            self.agents[instance_id] = {}
+            self.agents[batch_idx] = {}
             for n in range(self.num_trajectories):
-                self.agents[instance_id][n] = OnlineCodeActAgent(
+                public_trajectory_id = batch_idx * self.num_trajectories + n
+                self.agents[batch_idx][n] = OnlineCodeActAgent(
                     instance_id=instance_id,
-                    trajectory_id=n,
+                    trajectory_id=public_trajectory_id,
                     max_prompt_length=self.max_prompt_length,
                     tokenizer=self.tokenizer,
                     infer_engine=self.infer_engine,
@@ -1004,14 +998,14 @@ class CodeActAgentGroup:
                     qwen3_enable_thinking=self.qwen3_enable_thinking
                 )
                 # Set the instance data for each agent
-                self.agents[instance_id][n].instance_data = data_item.non_tensor_batch['instance']
-                self.agents[instance_id][n].max_iterations = self.max_iterations
+                self.agents[batch_idx][n].instance_data = data_item.non_tensor_batch['instance']
+                self.agents[batch_idx][n].max_iterations = self.max_iterations
     
     async def _initialize_runtime_for_agent(self, batch_id: int, trajectory_id: int) -> None:
         """Initialize the runtime for a specific agent."""
         instance_id = self.batch[batch_id].non_tensor_batch['instance']['instance_id']
         instance = pd.Series(self.batch[batch_id].non_tensor_batch['instance'])
-        agent = self.agents[instance_id][trajectory_id]
+        agent = self.agents[batch_id][trajectory_id]
         
         try:
             # Configure sandbox
@@ -1087,7 +1081,7 @@ class CodeActAgentGroup:
     async def _run_agent(self, batch_id: int, trajectory_id: int, pos_id: int) -> Dict[str, Any]:
         instance_id = self.batch[batch_id].non_tensor_batch['instance']['instance_id']
         """Run a single agent to completion and return the results."""
-        agent = self.agents[instance_id][trajectory_id]
+        agent = self.agents[batch_id][trajectory_id]
         assert agent is not None
         instance = pd.Series(self.batch[batch_id].non_tensor_batch['instance'])
         runtime = agent.runtime
@@ -1124,7 +1118,7 @@ class CodeActAgentGroup:
                 
             return_val =  {
                 'instance_id': instance_id,
-                'trajectory_id': trajectory_id,
+                'trajectory_id': agent.trajectory_id,
                 'state': state,
                 'git_patch': return_val.get('git_patch', None),
                 'messages': final_messages,
@@ -1155,7 +1149,7 @@ class CodeActAgentGroup:
             
             return_val =  {
                 'instance_id': instance_id,
-                'trajectory_id': trajectory_id,
+                'trajectory_id': agent.trajectory_id,
                 'messages': final_messages,
                 'state': state,
                 'git_patch': None,
@@ -1323,8 +1317,9 @@ class CodeActAgentGroup:
         instance_id = self.batch[batch_id].non_tensor_batch['instance']['instance_id']
         instance = pd.Series(self.batch[batch_id].non_tensor_batch['instance'])
         test_spec = make_test_spec(instance=instance)
-        result = self.results[instance_id][trajectory_id]
+        result = self.results[batch_id][trajectory_id]
         model_patch = result.get('git_patch', None)
+        public_trajectory_id = result.get('trajectory_id', trajectory_id)
 
         if not model_patch:
             result.update({
@@ -1372,7 +1367,7 @@ class CodeActAgentGroup:
                 evaluate_patch_with_retry,
                 model_patch,
                 lambda patch: self._apply_patch_and_evaluate(
-                    runtime, patch, instance_id, trajectory_id, test_spec
+                    runtime, patch, instance_id, public_trajectory_id, test_spec
                 ),
                 1,
                 result.get('finish_reason'),
@@ -1398,7 +1393,7 @@ class CodeActAgentGroup:
                 result.update(trajectory_reward_fields(result, evaluation_error=report.error))
                 
         except Exception as e:
-            logger.error(f"Failed to evaluate traj {trajectory_id} for instance {instance_id}: {str(e)}")
+            logger.error(f"Failed to evaluate traj {public_trajectory_id} for instance {instance_id}: {str(e)}")
             result['resolved'] = False
             result['eval_error'] = str(e)
             result['evaluation_error'] = str(e)
@@ -1458,11 +1453,12 @@ class CodeActAgentGroup:
                 needed_eval_tasks -= 1
                 logger.error(f"Error initializing runtime for {instance_id}, trajectory {trajectory_id}: {str(e)}")
                 # Handle initialization error
-                if instance_id not in self.results:
-                    self.results[instance_id] = {}
-                self.results[instance_id][trajectory_id] = {
+                if batch_idx not in self.results:
+                    self.results[batch_idx] = {}
+                public_trajectory_id = batch_idx * self.num_trajectories + trajectory_id
+                self.results[batch_idx][trajectory_id] = {
                     'instance_id': instance_id,
-                    'trajectory_id': trajectory_id,
+                    'trajectory_id': public_trajectory_id,
                     'messages': [],
                     'state': None,
                     'git_patch': None,
@@ -1499,9 +1495,9 @@ class CodeActAgentGroup:
                 result['wall_time_sec'] = elapsed
                 
                 # Store the result
-                if instance_id not in self.results:
-                    self.results[instance_id] = {}
-                self.results[instance_id][trajectory_id] = result
+                if batch_idx not in self.results:
+                    self.results[batch_idx] = {}
+                self.results[batch_idx][trajectory_id] = result
 
                 await eval_queue.put((batch_idx, trajectory_id))
                 
@@ -1511,11 +1507,12 @@ class CodeActAgentGroup:
                 nonlocal needed_eval_tasks
                 needed_eval_tasks -= 1
                 # Store error result
-                if instance_id not in self.results:
-                    self.results[instance_id] = {}
-                self.results[instance_id][trajectory_id] = {
+                if batch_idx not in self.results:
+                    self.results[batch_idx] = {}
+                public_trajectory_id = batch_idx * self.num_trajectories + trajectory_id
+                self.results[batch_idx][trajectory_id] = {
                     'instance_id': instance_id,
-                    'trajectory_id': trajectory_id,
+                    'trajectory_id': public_trajectory_id,
                     'messages': [],
                     'state': None,
                     'git_patch': None,
@@ -1549,14 +1546,14 @@ class CodeActAgentGroup:
                 logger.info(f"Evaluating agent for instance {instance_id}, trajectory {trajectory_id}")
                 await self._evaluate_agent(batch_idx, trajectory_id)
                 elapsed = time.time() - start_time
-                self.results[instance_id][trajectory_id]['eval_wall_time_sec'] = elapsed
+                self.results[batch_idx][trajectory_id]['eval_wall_time_sec'] = elapsed
                 
                 print(f"Successfully completed evaluating instance {instance_id}, trajectory {trajectory_id} in {elapsed:.2f}s")
             except Exception as e:
                 logger.error(f"Error evaluating agent for {instance_id}, trajectory {trajectory_id}: {str(e)}")
                 # Store error result
-                self.results[instance_id][trajectory_id]['resolved'] = False
-                self.results[instance_id][trajectory_id]['evaluation_error'] = str(e)
+                self.results[batch_idx][trajectory_id]['resolved'] = False
+                self.results[batch_idx][trajectory_id]['evaluation_error'] = str(e)
             finally:
                 eval_queue.task_done()
                 nonlocal needed_eval_tasks
