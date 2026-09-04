@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 import statistics
 from dataclasses import asdict, dataclass
-from typing import Any, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 import torch
 
@@ -15,6 +15,62 @@ class GroupDecision:
     reward_std: float
     all_success: bool
     all_failure: bool
+
+
+@dataclass(frozen=True)
+class Stage1BCollectionResult:
+    """Result of one bounded candidate-collection round."""
+
+    accepted_groups: tuple[Any, ...]
+    attempted_groups: int
+    informative_groups: int
+    zero_variance_groups: int
+    insufficient_valid_groups: int
+    target_groups: int
+
+    @property
+    def underfilled(self) -> bool:
+        return self.informative_groups < self.target_groups
+
+
+def collect_informative_groups(
+    sampler: "Stage1BSampler",
+    get_group: Callable[[str], Mapping[str, Any]],
+    step: int,
+) -> Stage1BCollectionResult:
+    """Collect candidate groups until the sampler target or candidate cap.
+
+    ``get_group`` owns rollout/evaluation and returns ``rewards``,
+    ``reward_valid``, ``trajectories`` and an optional ``payload``.  Keeping
+    this coordinator free of Ray/DataProto details makes the sampling policy
+    deterministic and directly testable.
+    """
+    sampler.begin_update(step)
+    accepted = []
+    while (task_id := sampler.next_candidate()) is not None:
+        group = get_group(task_id)
+        decision = classify_group(
+            group["rewards"],
+            group["reward_valid"],
+            epsilon=group.get("reward_epsilon", 1e-6),
+        )
+        sampler.record_group(
+            task_id,
+            decision,
+            group.get("trajectories", ()),
+            step,
+        )
+        if decision.status == "informative":
+            accepted.append(group.get("payload", group))
+
+    return Stage1BCollectionResult(
+        accepted_groups=tuple(accepted),
+        attempted_groups=sampler.candidate_groups_attempted,
+        informative_groups=sampler.accepted_informative_groups,
+        zero_variance_groups=sampler.zero_variance_groups,
+        insufficient_valid_groups=sampler.insufficient_valid_groups,
+        target_groups=sampler.target_groups,
+    )
 
 
 def effective_train_tokens(loss_mask: torch.Tensor) -> int:

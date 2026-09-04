@@ -42,6 +42,7 @@ def evaluate_patch_with_retry(
     evaluate_once: Callable[[str], dict[str, Any]],
     max_retries: int = 1,
     finish_reason: str | None = None,
+    prepare_retry: Callable[[], None] | None = None,
 ) -> EvaluationOutcome:
     """Evaluate one patch, retrying only classified infrastructure failures."""
     if max_retries < 0:
@@ -79,6 +80,8 @@ def evaluate_patch_with_retry(
                 )
             infra_error = True
             if attempt < max_retries:
+                if prepare_retry is not None:
+                    prepare_retry()
                 continue
             return EvaluationOutcome(
                 reward_valid=False,

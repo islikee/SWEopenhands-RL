@@ -223,6 +223,13 @@ algorithm:
     target_kl: 0.1
 
 trainer:
+  stage1b:
+    enabled: False
+    target_informative_groups: 4
+    trajectories_per_task: 8
+    max_candidate_groups_per_update: 8
+    informative_reward_eps: 1.0e-6
+    seed: 1
   balance_batch: True
   total_epochs: 30
   total_training_steps: null

@@ -44,7 +44,15 @@ class Stage1BSWEBenchRewardManager:
                 continue
             facts = {
                 key: _value(fields, key, index)
-                for key in ("resolved", "ftp_passed", "ftp_total", "ptp_passed", "ptp_total", "ptp_failed")
+                for key in (
+                    "resolved",
+                    "ftp_passed",
+                    "ftp_total",
+                    "ftp_failed",
+                    "ptp_passed",
+                    "ptp_total",
+                    "ptp_failed",
+                )
             }
             scores.append(reward_v2_from_facts(facts))
             binary_scores.append(binary_reward_from_resolved(facts["resolved"]))

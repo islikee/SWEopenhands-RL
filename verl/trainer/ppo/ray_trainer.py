@@ -17,6 +17,7 @@ This trainer supports model-agonistic model initialization with huggingface
 """
 
 import os
+import random
 import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -40,6 +41,11 @@ from verl.single_controller.base import Worker
 from verl.single_controller.ray import RayResourcePool, RayWorkerGroup, RayClassWithInitArgs
 from verl.single_controller.ray.base import create_colocated_worker_cls
 from verl.trainer.ppo import core_algos
+from verl.trainer.ppo.stage1b_sampling import (
+    Stage1BSampler,
+    apply_stage1b_training_masks,
+    collect_informative_groups,
+)
 from verl.trainer.ppo.metric_utils import compute_data_metrics, compute_throughout_metrics, compute_timing_metrics, reduce_metrics, bootstrap_metric, calc_maj_val, process_validation_metrics
 from verl.utils.seqlen_balancing import get_seqlen_balanced_partitions, log_seqlen_unbalance
 from verl.utils.checkpoint.checkpoint_manager import find_latest_ckpt_path
@@ -295,6 +301,9 @@ class RayPPOTrainer(object):
         self.config = config
         self.reward_fn = reward_fn
         self.val_reward_fn = val_reward_fn
+        self.stage1b_enabled = bool(config.trainer.get('stage1b', {}).get('enabled', False))
+        self.stage1b_sampler = None
+        self.stage1b_dataset_indices = {}
 
         self.hybrid_engine = config.actor_rollout_ref.hybrid_engine
         assert self.hybrid_engine, 'Currently, only support hybrid engine'
@@ -439,12 +448,30 @@ class RayPPOTrainer(object):
         if config.actor_rollout_ref.rollout.val_kwargs.do_sample:
             assert config.actor_rollout_ref.rollout.temperature > 0, \
                 "validation gen temperature should be greater than 0 when enabling do_sample"
+
+        if self.stage1b_enabled:
+            assert config.algorithm.adv_estimator == AdvantageEstimator.GRPO, \
+                "Stage1B dynamic sampling requires GRPO"
+            stage1b = config.trainer.get('stage1b', {})
+            assert int(stage1b.get('trajectories_per_task', 8)) == int(config.actor_rollout_ref.rollout.n_trajectories), \
+                "Stage1B trajectories_per_task must match rollout.n_trajectories"
+            assert not config.algorithm.use_kl_in_reward, "Stage1B is a no-KL training path"
             
         if config.actor_rollout_ref.rollout.max_eval_parallel_agents <= 0: 
             print(f"`max_eval_parallel_agents` has not been set. Setting it to `max_parallel_agents` i.e {config.actor_rollout_ref.rollout.max_parallel_agents}")
             config.actor_rollout_ref.rollout.max_eval_parallel_agents = config.actor_rollout_ref.rollout.max_parallel_agents
 
         print("[validate_config] All configuration checks passed successfully!")
+
+    @staticmethod
+    def _dataset_instance_id(row: dict) -> str:
+        instance_id = row.get('instance_id')
+        if instance_id is not None:
+            return str(instance_id)
+        instance = row.get('instance')
+        if isinstance(instance, dict) and instance.get('instance_id') is not None:
+            return str(instance['instance_id'])
+        raise KeyError("dataset row does not contain instance_id or instance['instance_id']")
 
     def _create_dataloader(self):
         
@@ -480,6 +507,31 @@ class RayPPOTrainer(object):
             filter_overlong_prompts=self.config.data.get('filter_overlong_prompts', False),
             num_workers=self.config.data.get('filter_overlong_prompts_workers', None),
         )
+
+        if self.stage1b_enabled:
+            stage1b = self.config.trainer.get('stage1b', {})
+            candidate_ids = [
+                self._dataset_instance_id(self.train_dataset.dataframe[index])
+                for index in range(len(self.train_dataset))
+            ]
+            validation_ids = {
+                self._dataset_instance_id(self.val_dataset.dataframe[index])
+                for index in range(len(self.val_dataset))
+            }
+            assert len(candidate_ids) == 64, f"Stage1B candidate pool must contain 64 tasks, got {len(candidate_ids)}"
+            assert len(validation_ids) == 16, f"Stage1B validation set must contain 16 tasks, got {len(validation_ids)}"
+            assert set(candidate_ids).isdisjoint(validation_ids), "Stage1B candidates overlap validation"
+            self.stage1b_dataset_indices = {
+                task_id: index for index, task_id in enumerate(candidate_ids)
+            }
+            assert len(self.stage1b_dataset_indices) == 64, "Stage1B candidate task IDs must be unique"
+            self.stage1b_sampler = Stage1BSampler(
+                candidate_ids,
+                target_groups=int(stage1b.get('target_informative_groups', 4)),
+                max_candidates=int(stage1b.get('max_candidate_groups_per_update', 8)),
+                seed=int(stage1b.get('seed', self.config.data.get('seed', 1))),
+            )
+            self.stage1b_reward_epsilon = float(stage1b.get('informative_reward_eps', 1e-6))
         # use sampler for better ckpt resume
         if self.config.data.shuffle:
             train_dataloader_generator = torch.Generator()
@@ -532,6 +584,171 @@ class RayPPOTrainer(object):
             self.config.actor_rollout_ref.actor.smoke_require_base_unchanged = bool(
                 smoke_config.get("require_base_unchanged", False)
             )
+
+    def _stage1b_candidate_group(self, task_id: str, timing_raw: dict[str, float]):
+        """Roll out and score one candidate task (always exactly n trajectories)."""
+        index = self.stage1b_dataset_indices[task_id]
+        batch = DataProto.from_single_dict(collate_fn([self.train_dataset[index]]))
+        batch_keys = ['input_ids', 'attention_mask', 'position_ids']
+        if 'multi_modal_inputs' in batch.non_tensor_batch.keys():
+            gen_batch = batch.pop(
+                batch_keys=batch_keys,
+                non_tensor_batch_keys=['raw_prompt_ids', 'multi_modal_data', 'multi_modal_inputs'],
+            )
+        else:
+            non_tensor_keys = ['instance'] if self.config.actor_rollout_ref.rollout.task_type == 'swegym' else ['raw_prompt_ids']
+            gen_batch = batch.pop(batch_keys=batch_keys, non_tensor_batch_keys=non_tensor_keys)
+        gen_batch.meta_info.update({'rollout_step': self.global_steps, 'rollout_phase': 'train'})
+
+        with _timer('stage1b_gen', timing_raw):
+            if self.actor_wg is not self.rollout_wg:
+                self.actor_wg.execute_all_async('generate_sequences', gen_batch)
+            output = self.rollout_wg.generate_sequences(gen_batch)
+
+        output.non_tensor_batch['uid'] = np.array([task_id] * len(output), dtype=object)
+        reward_tensor_dict, reward_metrics = self.reward_fn(output)
+        output.meta_info['stage1b_reward_metrics'] = reward_metrics
+        for key, value in reward_tensor_dict.items():
+            output.batch[key] = value
+        output.batch['token_level_scores'] = reward_tensor_dict['all']
+        output.batch['token_level_rewards'] = reward_tensor_dict['all']
+
+        fields = output.non_tensor_batch
+        rewards = reward_tensor_dict['all'].sum(dim=-1).detach().cpu().tolist()
+        reward_valid = [bool(value) for value in fields.get('reward_valid', [True] * len(output))]
+        trajectories = []
+        for row, reward, valid in zip(range(len(output)), rewards, reward_valid):
+            finish_reason = fields.get('finish_reason', [None] * len(output))[row]
+            trajectories.append({
+                'reward': float(reward) if valid else None,
+                'reward_valid': valid,
+                'resolved': bool(fields.get('resolved', [False] * len(output))[row]),
+                'finish_reason': finish_reason,
+                'infra_error': bool(fields.get('infra_error', [False] * len(output))[row]),
+            })
+        return {
+            'payload': output,
+            'rewards': rewards,
+            'reward_valid': reward_valid,
+            'trajectories': trajectories,
+            'reward_epsilon': self.stage1b_reward_epsilon,
+            'reward_metrics': reward_metrics,
+        }
+
+    def _stage1b_candidate_batch(self, step: int, timing_raw: dict[str, float]):
+        """Build one 4x8 Stage1B update or return ``None`` when underfilled."""
+        assert self.stage1b_sampler is not None
+        round_metrics = defaultdict(float)
+
+        def get_group(task_id: str):
+            group = self._stage1b_candidate_group(task_id, timing_raw)
+            round_metrics['eval/evaluator_retry_count'] += sum(
+                int(value) for value in group['payload'].non_tensor_batch.get('evaluator_retry_count', [])
+            )
+            round_metrics['eval/evaluator_retry_success_count'] += sum(
+                bool(value) for value in group['payload'].non_tensor_batch.get('evaluator_retry_succeeded', [])
+            )
+            round_metrics['eval/infra_error_count'] += sum(
+                bool(value) for value in group['payload'].non_tensor_batch.get('infra_error', [])
+            )
+            round_metrics['eval/reward_invalid_count'] += sum(not value for value in group['reward_valid'])
+            reasons = group['payload'].non_tensor_batch.get('finish_reason', [])
+            round_metrics['rollout/context_limit_count'] += sum(value == 'context_limit' for value in reasons)
+            round_metrics['rollout/max_iteration_count'] += sum(
+                value in {'max_iterations', 'agent_max_turn', 'max_iteration'} for value in reasons
+            )
+            round_metrics['rollout/trajectory_count'] += len(group['trajectories'])
+            return group
+
+        collection = collect_informative_groups(self.stage1b_sampler, get_group, step)
+        metrics = {
+            'train/candidate_group_count': collection.attempted_groups,
+            'train/accepted_group_count': collection.informative_groups,
+            'train/group_zero_variance_count': collection.zero_variance_groups,
+            'train/group_insufficient_valid_count': collection.insufficient_valid_groups,
+            'train/group_reward_std_mean': float(np.mean(self.stage1b_sampler.group_reward_stds))
+            if self.stage1b_sampler.group_reward_stds else 0.0,
+            'train/underfilled_informative_batch': int(collection.underfilled),
+            'train/optimizer_step_performed': 0,
+            'train/valid_trajectory_count': 0,
+        }
+        metrics.update(round_metrics)
+        trajectory_count = metrics['rollout/trajectory_count']
+        metrics['rollout/context_limit_rate'] = (
+            metrics.pop('rollout/context_limit_count') / trajectory_count if trajectory_count else 0.0
+        )
+        metrics['rollout/max_iteration_rate'] = (
+            metrics.pop('rollout/max_iteration_count') / trajectory_count if trajectory_count else 0.0
+        )
+        if collection.underfilled:
+            return None, metrics
+
+        accepted_batch = DataProto.concat(list(collection.accepted_groups))
+        accepted_batch.non_tensor_batch['accepted_group'] = np.ones(len(accepted_batch), dtype=object)
+        valid_mask = np.asarray(accepted_batch.non_tensor_batch.get('reward_valid', [True] * len(accepted_batch)), dtype=bool)
+        metrics['train/valid_trajectory_count'] = int(valid_mask.sum())
+        apply_stage1b_training_masks(accepted_batch)
+        return accepted_batch, metrics
+
+    def _run_stage1b_training_batch(self, batch, metrics, timing_raw, is_last_step):
+        """Run the ordinary PPO driver stages on an already-collected batch."""
+        if self.config.trainer.get('balance_batch', False):
+            self._balance_batch(batch, metrics=metrics)
+        batch.meta_info['global_token_num'] = torch.sum(batch.batch['attention_mask'], dim=-1).tolist()
+
+        with _timer('old_log_prob', timing_raw):
+            batch = batch.union(self.actor_wg.compute_log_prob(batch))
+
+        if self.use_reference_policy:
+            with _timer('ref', timing_raw):
+                batch = batch.union(self.ref_policy_wg.compute_ref_log_prob(batch))
+
+        if self.use_critic:
+            with _timer('values', timing_raw):
+                batch = batch.union(self.critic_wg.compute_values(batch))
+
+        with _timer('adv', timing_raw):
+            for key, value in batch.meta_info.get('stage1b_reward_metrics', {}).items():
+                metrics['train_reward/' + key] = value
+            valid_mask = torch.as_tensor(
+                list(batch.non_tensor_batch.get('reward_valid', [True] * len(batch))),
+                device=batch.batch['responses'].device,
+                dtype=torch.bool,
+            )
+            batch = compute_advantage(
+                batch,
+                adv_estimator=self.config.algorithm.adv_estimator,
+                gamma=self.config.algorithm.gamma,
+                lam=self.config.algorithm.lam,
+                num_repeat=self.config.actor_rollout_ref.rollout.n_trajectories,
+                sample_valid_mask=valid_mask,
+            )
+            metrics.update(self._log_rollout_batch(batch, step=self.global_steps, phase='train'))
+
+        if self.use_critic:
+            with _timer('update_critic', timing_raw):
+                critic_output = self.critic_wg.update_critic(batch)
+            metrics.update(reduce_metrics(critic_output.meta_info['metrics']))
+
+        optimizer_step = 0
+        if self.config.trainer.critic_warmup <= self.global_steps:
+            with _timer('update_actor', timing_raw):
+                actor_output = self.actor_wg.update_actor(batch)
+            metrics.update(reduce_metrics(actor_output.meta_info['metrics']))
+            optimizer_step = 1
+        metrics['train/optimizer_step_performed'] = optimizer_step
+
+        last_val_metrics = None
+        if self.val_reward_fn is not None and self.config.trainer.test_freq > 0 and \
+                (is_last_step or self.global_steps % self.config.trainer.test_freq == 0):
+            with _timer('testing', timing_raw):
+                last_val_metrics = self._validate()
+            metrics.update(last_val_metrics)
+
+        if self.config.trainer.save_freq > 0 and (is_last_step or self.global_steps % self.config.trainer.save_freq == 0):
+            with _timer('save_checkpoint', timing_raw):
+                self._save_checkpoint()
+        return batch, last_val_metrics
 
     def _maybe_log_val_generations(self, inputs, outputs, scores):
         """Log a table of validation samples to the configured logger (wandb or swanlab)"""
@@ -886,6 +1103,11 @@ class RayPPOTrainer(object):
         dataloader_local_path = os.path.join(local_global_step_folder, 'data.pt')
         dataloader_state_dict = self.train_dataloader.state_dict()
         torch.save(dataloader_state_dict, dataloader_local_path)
+        if self.stage1b_enabled:
+            torch.save(
+                self._stage1b_state_dict(),
+                os.path.join(local_global_step_folder, 'stage1b_state.pt'),
+            )
 
         # latest checkpointed iteration tracker (for atomic usage)
         local_latest_checkpointed_iteration = os.path.join(self.config.trainer.default_local_dir,
@@ -945,6 +1167,42 @@ class RayPPOTrainer(object):
         else:
             print(f"Warning: No dataloader state found at {dataloader_local_path}, will start from scratch")
 
+        if self.stage1b_enabled:
+            stage1b_path = os.path.join(global_step_folder, 'stage1b_state.pt')
+            if not os.path.exists(stage1b_path):
+                raise FileNotFoundError(
+                    f"Stage1B checkpoint is missing sampler state: {stage1b_path}"
+                )
+            stage1b_state = torch.load(stage1b_path, weights_only=False)
+            self._load_stage1b_state_dict(stage1b_state)
+
+    def _stage1b_state_dict(self) -> dict:
+        """Serialize sampler, history, and driver RNG state for exact resume."""
+        if not self.stage1b_enabled or self.stage1b_sampler is None:
+            raise RuntimeError('Stage1B state requested while Stage1B is disabled')
+        state = {
+            'version': 1,
+            'sampler': self.stage1b_sampler.state_dict(),
+            'python_rng_state': random.getstate(),
+            'numpy_rng_state': np.random.get_state(),
+            'torch_rng_state': torch.get_rng_state(),
+        }
+        if torch.cuda.is_available():
+            state['cuda_rng_state_all'] = torch.cuda.get_rng_state_all()
+        return state
+
+    def _load_stage1b_state_dict(self, state: dict) -> None:
+        if state.get('version') != 1:
+            raise ValueError(f"unsupported Stage1B checkpoint state: {state.get('version')}")
+        if not self.stage1b_enabled or self.stage1b_sampler is None:
+            raise RuntimeError('Stage1B checkpoint cannot be loaded while Stage1B is disabled')
+        self.stage1b_sampler.load_state_dict(state['sampler'])
+        random.setstate(state['python_rng_state'])
+        np.random.set_state(state['numpy_rng_state'])
+        torch.set_rng_state(state['torch_rng_state'])
+        if 'cuda_rng_state_all' in state and torch.cuda.is_available():
+            torch.cuda.set_rng_state_all(state['cuda_rng_state_all'])
+
     def _balance_batch(self, batch: DataProto, metrics, logging_prefix='global_seqlen'):
         """Reorder the data on single controller such that each dp rank gets similar total tokens"""
         attention_mask = batch.batch['attention_mask']
@@ -1003,6 +1261,50 @@ class RayPPOTrainer(object):
                 timing_raw = {}
 
                 batch: DataProto = DataProto.from_single_dict(batch_dict)
+
+                if self.stage1b_enabled:
+                    is_last_step = self.global_steps >= self.total_training_steps
+                    with _timer('step', timing_raw):
+                        stage1b_batch, stage1b_metrics = self._stage1b_candidate_batch(
+                            self.global_steps, timing_raw
+                        )
+                        metrics.update(stage1b_metrics)
+                        if stage1b_batch is not None:
+                            batch, stage1b_last_val_metrics = self._run_stage1b_training_batch(
+                                stage1b_batch, metrics, timing_raw, is_last_step
+                            )
+                        else:
+                            batch = None
+                            stage1b_last_val_metrics = None
+                            if self.val_reward_fn is not None and self.config.trainer.test_freq > 0 and \
+                                    (is_last_step or self.global_steps % self.config.trainer.test_freq == 0):
+                                with _timer('testing', timing_raw):
+                                    stage1b_last_val_metrics = self._validate()
+                                metrics.update(stage1b_last_val_metrics)
+                            if self.config.trainer.save_freq > 0 and \
+                                    (is_last_step or self.global_steps % self.config.trainer.save_freq == 0):
+                                with _timer('save_checkpoint', timing_raw):
+                                    self._save_checkpoint()
+
+                    if batch is not None:
+                        metrics.update(compute_data_metrics(batch=batch, use_critic=self.use_critic))
+                        n_gpus = self.resource_pool_manager.get_n_gpus()
+                        metrics.update(compute_throughout_metrics(
+                            batch=batch, timing_raw=timing_raw, n_gpus=n_gpus
+                        ))
+                    metrics.update(compute_timing_metrics(batch=batch, timing_raw=timing_raw)) if batch is not None else metrics.update({
+                        f'timing_s/{name}': value for name, value in timing_raw.items()
+                    })
+                    logger.log(data=metrics, step=self.global_steps)
+
+                    if is_last_step:
+                        pprint(f'Final validation metrics: {stage1b_last_val_metrics}')
+                        progress_bar.close()
+                        return
+
+                    progress_bar.update(1)
+                    self.global_steps += 1
+                    continue
 
                 # pop those keys for generation
                 if 'multi_modal_inputs' in batch.non_tensor_batch.keys():

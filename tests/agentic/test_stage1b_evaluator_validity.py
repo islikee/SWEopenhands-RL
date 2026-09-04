@@ -79,3 +79,25 @@ def test_finish_reason_does_not_change_valid_report_outcome():
             finish_reason=finish_reason,
         )
         assert outcome.reward_valid is True
+
+
+def test_infra_retry_prepares_same_evaluator_workspace():
+    calls = []
+    resets = []
+
+    def evaluate_once(patch):
+        calls.append(patch)
+        if len(calls) == 1:
+            raise EvaluatorInfrastructureError("docker daemon unavailable")
+        return {"resolved": False}
+
+    outcome = evaluate_patch_with_retry(
+        "same-patch",
+        evaluate_once,
+        prepare_retry=lambda: resets.append(True),
+    )
+
+    assert calls == ["same-patch", "same-patch"]
+    assert resets == [True]
+    assert outcome.reward_valid is True
+    assert outcome.retry_succeeded is True

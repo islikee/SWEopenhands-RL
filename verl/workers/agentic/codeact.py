@@ -73,7 +73,7 @@ from .result_normalization import fill_empty_trajectory_messages
 from .runtime_backend import openhands_runtime_backend, prepare_sandbox_for_runtime
 from .rollout_logging import write_trajectory_trace
 from verl.workers.reward_manager.swebench_report import trajectory_reward_fields
-from .evaluator_validity import evaluate_patch_with_retry
+from .evaluator_validity import EvaluatorInfrastructureError, evaluate_patch_with_retry
 
 DOCKER_IMAGE_PREFIX = os.environ.get('EVAL_DOCKER_IMAGE_PREFIX', 'docker.io/xingyaoww/')
 logger.info(f'Using docker image prefix: {DOCKER_IMAGE_PREFIX}')
@@ -744,9 +744,15 @@ class CodeActAgentGroup:
         target_tests_total_list = []
         target_tests_passed_list = []
         target_tests_failed_list = []
+        ftp_passed_list = []
+        ftp_total_list = []
+        ftp_failed_list = []
         regression_tests_total_list = []
         regression_tests_passed_list = []
         regression_tests_failed_list = []
+        ptp_passed_list = []
+        ptp_total_list = []
+        ptp_failed_list = []
         evaluation_error_list = []
         evaluation_timeout_list = []
         reward_valid_list = []
@@ -845,9 +851,15 @@ class CodeActAgentGroup:
             target_tests_total_list.append(reward_fields['target_tests_total'])
             target_tests_passed_list.append(reward_fields['target_tests_passed'])
             target_tests_failed_list.append(reward_fields['target_tests_failed'])
+            ftp_passed_list.append(reward_fields['ftp_passed'])
+            ftp_total_list.append(reward_fields['ftp_total'])
+            ftp_failed_list.append(reward_fields['ftp_failed'])
             regression_tests_total_list.append(reward_fields['regression_tests_total'])
             regression_tests_passed_list.append(reward_fields['regression_tests_passed'])
             regression_tests_failed_list.append(reward_fields['regression_tests_failed'])
+            ptp_passed_list.append(reward_fields['ptp_passed'])
+            ptp_total_list.append(reward_fields['ptp_total'])
+            ptp_failed_list.append(reward_fields['ptp_failed'])
             evaluation_error_list.append(reward_fields['evaluation_error'])
             evaluation_timeout_list.append(reward_fields['evaluation_timeout'])
             outcome_primary_list.append(reward_fields['outcome_primary'])
@@ -926,9 +938,15 @@ class CodeActAgentGroup:
             'target_tests_total': target_tests_total_list,
             'target_tests_passed': target_tests_passed_list,
             'target_tests_failed': target_tests_failed_list,
+            'ftp_passed': ftp_passed_list,
+            'ftp_total': ftp_total_list,
+            'ftp_failed': ftp_failed_list,
             'regression_tests_total': regression_tests_total_list,
             'regression_tests_passed': regression_tests_passed_list,
             'regression_tests_failed': regression_tests_failed_list,
+            'ptp_passed': ptp_passed_list,
+            'ptp_total': ptp_total_list,
+            'ptp_failed': ptp_failed_list,
             'evaluation_error': evaluation_error_list,
             'evaluation_timeout': evaluation_timeout_list,
             'reward_valid': reward_valid_list,
@@ -1290,6 +1308,15 @@ class CodeActAgentGroup:
             raise Exception(
                 f'[{instance_id}] Unexpected output when applying patch:\n{apply_patch_output}'
             )
+
+    @staticmethod
+    def _reset_evaluator_workspace(runtime) -> None:
+        """Return the disposable evaluator workspace to its unpatched base."""
+        action = CmdRunAction(command='cd /testbed && git reset --hard HEAD && git clean -fd')
+        action.set_hard_timeout(600)
+        observation = runtime.run_action(action)
+        if not isinstance(observation, CmdOutputObservation) or observation.exit_code != 0:
+            raise EvaluatorInfrastructureError('failed to reset evaluator workspace for retry')
     
     async def _evaluate_agent(self, batch_id: int, trajectory_id: int) -> None:
         """Initialize the runtime for a specific agent."""
@@ -1349,6 +1376,7 @@ class CodeActAgentGroup:
                 ),
                 1,
                 result.get('finish_reason'),
+                lambda: self._reset_evaluator_workspace(runtime),
             )
             result.update({
                 'reward_valid': report.reward_valid,
