@@ -39,6 +39,7 @@ from verl.utils.torch_functional import logprobs_from_logits, masked_mean
 from verl.utils.ulysses import ulysses_pad_and_slice_inputs, gather_outpus_and_unpad
 from verl.utils.seqlen_balancing import rearrange_micro_batches, get_reverse_idx
 import verl.utils.torch_functional as verl_F
+from verl.workers.actor.gradient_metrics import clip_grad_norm_with_metrics, grad_norm
 
 from flash_attn.bert_padding import pad_input, unpad_input, rearrange, index_first_axis
 
@@ -205,19 +206,24 @@ class DataParallelPPOActor(BasePPOActor):
         assert self.config.grad_clip is not None
 
         if isinstance(self.actor_module, FSDP):
-            grad_norm = self.actor_module.clip_grad_norm_(max_norm=self.config.grad_clip)
+            pre_clip = self.actor_module.clip_grad_norm_(max_norm=self.config.grad_clip)
+            post_clip = grad_norm(self.actor_module.parameters()).to(pre_clip.device)
         else:
-            grad_norm = torch.nn.utils.clip_grad_norm_(self.actor_module.parameters(), max_norm=self.config.grad_clip)
+            pre_value, post_value = clip_grad_norm_with_metrics(
+                self.actor_module.parameters(), max_norm=self.config.grad_clip
+            )
+            pre_clip = torch.tensor(pre_value, device=next(self.actor_module.parameters()).device)
+            post_clip = torch.tensor(post_value, device=pre_clip.device)
 
         # if grad_norm is not finite, skip the update
-        if not torch.isfinite(grad_norm):
-            print(f"WARN: grad_norm is not finite: {grad_norm}")
+        if not torch.isfinite(pre_clip):
+            print(f"WARN: grad_norm is not finite: {pre_clip}")
             self.actor_optimizer.zero_grad()
         else:
             step_lrs = [group["lr"] for group in self.actor_optimizer.param_groups]
             self.actor_optimizer.step()
             print(f"optimizer.step completed lr={step_lrs}")
-        return grad_norm
+        return pre_clip, post_clip
 
     def compute_log_prob(self, data: DataProto) -> torch.Tensor:
         """Compute the log probability of the responses given input_ids, attention_mask and position_ids
@@ -307,6 +313,11 @@ class DataParallelPPOActor(BasePPOActor):
             dataloader = batch.split(self.config.ppo_mini_batch_size)
 
         metrics = {}
+        if 'loss_mask' in batch:
+            append_to_dict(
+                metrics,
+                {'train/effective_train_tokens': float(batch['loss_mask'].bool().sum().detach().item())},
+            )
         require_lora_update = bool(self.config.get("smoke_require_lora_update", False))
         require_base_unchanged = bool(self.config.get("smoke_require_base_unchanged", False))
         smoke_saw_global_lora_grad = False
@@ -491,7 +502,7 @@ class DataParallelPPOActor(BasePPOActor):
                         f"squared_sum={base_before['squared_sum']}"
                     )
 
-                grad_norm = self._optimizer_step()
+                grad_norm_pre_clip, grad_norm_post_clip = self._optimizer_step()
                 if require_lora_update and lora_before is not None:
                     lora_after = find_parameter_fingerprint(self.actor_module, lora_before["name"])
                     lora_changed = fingerprint_changed(lora_before, lora_after)
@@ -545,7 +556,12 @@ class DataParallelPPOActor(BasePPOActor):
                         raise RuntimeError("SMOKE ONLY: frozen base parameter changed after optimizer.step")
                     smoke_metrics["actor/frozen_base_parameter_changed"] = 0.0
                     smoke_metrics["actor/frozen_base_parameter_abs_sum_diff"] = global_base_abs_sum_diff
-                data = {'actor/grad_norm': grad_norm.detach().item(), **smoke_metrics}
+                data = {
+                    'actor/grad_norm': grad_norm_pre_clip.detach().item(),
+                    'actor/grad_norm_pre_clip': grad_norm_pre_clip.detach().item(),
+                    'actor/grad_norm_post_clip': grad_norm_post_clip.detach().item(),
+                    **smoke_metrics,
+                }
             append_to_dict(metrics, data)
         if require_lora_update:
             print(

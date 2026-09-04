@@ -56,7 +56,10 @@ def compute_data_metrics(batch: DataProto, use_critic: bool = True) -> Dict[str,
     max_response_length = batch.batch['responses'].shape[-1]
 
     prompt_mask = batch.batch['attention_mask'][:, :-max_response_length].bool()
-    response_mask = batch.batch['attention_mask'][:, -max_response_length:].bool()
+    response_mask = batch.batch.get(
+        'response_mask', batch.batch['attention_mask'][:, -max_response_length:].bool()
+    ).bool()
+    loss_mask = batch.batch.get('loss_mask', response_mask).bool()
 
     max_prompt_length = prompt_mask.size(-1)
 
@@ -95,6 +98,10 @@ def compute_data_metrics(batch: DataProto, use_critic: bool = True) -> Dict[str,
             torch.max(valid_adv).detach().item(),
         'critic/advantages/min':
             torch.min(valid_adv).detach().item(),
+        'advantages/std':
+            torch.std(valid_adv, unbiased=False).detach().item(),
+        'train/effective_train_tokens':
+            float(loss_mask.sum().detach().item()),
         # returns
         'critic/returns/mean':
             torch.mean(valid_returns).detach().item(),

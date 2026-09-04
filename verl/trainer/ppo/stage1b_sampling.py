@@ -5,6 +5,8 @@ import statistics
 from dataclasses import asdict, dataclass
 from typing import Any, Sequence
 
+import torch
+
 
 @dataclass(frozen=True)
 class GroupDecision:
@@ -13,6 +15,33 @@ class GroupDecision:
     reward_std: float
     all_success: bool
     all_failure: bool
+
+
+def effective_train_tokens(loss_mask: torch.Tensor) -> int:
+    return int(loss_mask.to(dtype=torch.bool).sum().item())
+
+
+def apply_stage1b_training_masks(data):
+    """Apply acceptance and evaluator-validity masks to a training DataProto."""
+    batch_size = data.batch["responses"].shape[0]
+    response_length = data.batch["responses"].shape[1]
+    device = data.batch["responses"].device
+    valid = torch.as_tensor(
+        list(data.non_tensor_batch.get("reward_valid", [True] * batch_size)),
+        device=device,
+        dtype=torch.bool,
+    )
+    accepted = torch.as_tensor(
+        list(data.non_tensor_batch.get("accepted_group", [True] * batch_size)),
+        device=device,
+        dtype=torch.bool,
+    )
+    row_mask = valid & accepted
+    response_mask = data.batch["attention_mask"][:, -response_length:].bool()
+    data.batch["response_mask"] = response_mask & row_mask.unsqueeze(-1)
+    existing_loss_mask = data.batch.get("loss_mask", response_mask)
+    data.batch["loss_mask"] = existing_loss_mask.bool() & row_mask.unsqueeze(-1)
+    return data
 
 
 def classify_group(

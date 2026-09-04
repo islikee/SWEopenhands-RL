@@ -107,7 +107,8 @@ def compute_gae_advantage_return(token_level_rewards: torch.Tensor, values: torc
 def compute_grpo_outcome_advantage(token_level_rewards: torch.Tensor,
                                    response_mask: torch.Tensor,
                                    index: np.ndarray,
-                                   epsilon: float = 1e-6):
+                                   epsilon: float = 1e-6,
+                                   sample_valid_mask: torch.Tensor | None = None):
     """
     Compute advantage for GRPO, operating only on Outcome reward
     (with only one scalar reward for each response).
@@ -131,8 +132,15 @@ def compute_grpo_outcome_advantage(token_level_rewards: torch.Tensor,
 
     with torch.no_grad():
         bsz = scores.shape[0]
+        if sample_valid_mask is None:
+            sample_valid_mask = torch.ones(bsz, dtype=torch.bool, device=scores.device)
+        else:
+            sample_valid_mask = sample_valid_mask.to(device=scores.device, dtype=torch.bool)
+            if sample_valid_mask.shape != (bsz,):
+                raise ValueError(f"sample_valid_mask must have shape {(bsz,)}, got {sample_valid_mask.shape}")
         for i in range(bsz):
-            id2score[index[i]].append(scores[i])
+            if sample_valid_mask[i]:
+                id2score[index[i]].append(scores[i])
         for idx in id2score:
             if len(id2score[idx]) == 1:
                 id2mean[idx] = torch.tensor(0.0)
@@ -143,8 +151,11 @@ def compute_grpo_outcome_advantage(token_level_rewards: torch.Tensor,
             else:
                 raise ValueError(f"no score in prompt index: {idx}")
         for i in range(bsz):
-            scores[i] = (scores[i] - id2mean[index[i]]) / (id2std[index[i]] + epsilon)
-        scores = scores.unsqueeze(-1) * response_mask
+            if sample_valid_mask[i]:
+                scores[i] = (scores[i] - id2mean[index[i]]) / (id2std[index[i]] + epsilon)
+            else:
+                scores[i] = 0.0
+        scores = scores.unsqueeze(-1) * response_mask * sample_valid_mask.unsqueeze(-1)
 
     return scores, scores
 
