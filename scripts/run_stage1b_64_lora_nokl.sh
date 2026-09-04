@@ -15,7 +15,8 @@ if [[ -f .env ]]; then
 fi
 
 GPU_COUNT="${SKYRL_GPUS_PER_NODE:-4}"
-MAX_PARALLEL_AGENTS="${SKYRL_MAX_PARALLEL_AGENTS:-$GPU_COUNT}"
+MAX_PARALLEL_AGENTS="${SKYRL_MAX_PARALLEL_AGENTS:-4}"
+MAX_EVAL_PARALLEL_AGENTS="${SKYRL_MAX_EVAL_PARALLEL_AGENTS:-$MAX_PARALLEL_AGENTS}"
 MODEL_PATH="${SKYRL_MODEL_PATH:-/data/skyrl/models/NovaSky-AI/SWE-Gym-OpenHands-7B-Agent}"
 DATA_PATH="${SKYRL_STAGE1_DATA_PATH:-$DATASET_DIR/skyrl-v0-80-stage1-32x16}"
 RUN_NAME="${WANDB_NAME:-oh7b_stage1b_64_lora_nokl}"
@@ -38,6 +39,8 @@ echo "trajectories_per_task=8"
 echo "max_candidate_groups_per_update=8"
 echo "max_iterations=15"
 echo "agent_max_prompt_length=32768"
+echo "max_parallel_agents=$MAX_PARALLEL_AGENTS"
+echo "max_eval_parallel_agents=$MAX_EVAL_PARALLEL_AGENTS"
 
 PYTHONUNBUFFERED=1 "$PYTHON_BIN" \
   -m verl.trainer.main_ppo \
@@ -73,7 +76,7 @@ PYTHONUNBUFFERED=1 "$PYTHON_BIN" \
   actor_rollout_ref.rollout.max_iterations=15 \
   +actor_rollout_ref.rollout.agent_max_prompt_length=32768 \
   actor_rollout_ref.rollout.max_parallel_agents="$MAX_PARALLEL_AGENTS" \
-  actor_rollout_ref.rollout.max_eval_parallel_agents="$MAX_PARALLEL_AGENTS" \
+  actor_rollout_ref.rollout.max_eval_parallel_agents="$MAX_EVAL_PARALLEL_AGENTS" \
   +actor_rollout_ref.rollout.max_starting_message_length=16384 \
   actor_rollout_ref.rollout.tensor_model_parallel_size=2 \
   actor_rollout_ref.rollout.enable_memory_saver=True \

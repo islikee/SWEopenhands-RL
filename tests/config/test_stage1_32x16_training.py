@@ -7,6 +7,7 @@ import yaml
 
 MANIFEST_PATH = Path("configs/stage1_32x16_tasks.yaml")
 TRAIN_SCRIPT_PATH = Path("scripts/run_stage1_32x16_lora.sh")
+STAGE1B_TRAIN_SCRIPT_PATH = Path("scripts/run_stage1b_64_lora_nokl.sh")
 PREPARE_SCRIPT_PATH = Path("scripts/prepare_stage1_split.py")
 
 _SPEC = importlib.util.spec_from_file_location("prepare_stage1_split", PREPARE_SCRIPT_PATH)
@@ -108,3 +109,12 @@ def test_stage1_training_script_matches_base_lora_nokl_experiment_contract():
     assert 'WANDB_API_KEY:-}" == "<wandb_api_key>"' in script
     assert "actor_rollout_ref.rollout.log_messages_dir=" in script
     assert "+trainer.rollout_log_dir=" in script
+
+
+def test_stage1b_training_script_defaults_to_four_parallel_agents():
+    script = STAGE1B_TRAIN_SCRIPT_PATH.read_text()
+
+    assert 'MAX_PARALLEL_AGENTS="${SKYRL_MAX_PARALLEL_AGENTS:-4}"' in script
+    assert 'MAX_EVAL_PARALLEL_AGENTS="${SKYRL_MAX_EVAL_PARALLEL_AGENTS:-$MAX_PARALLEL_AGENTS}"' in script
+    assert 'actor_rollout_ref.rollout.max_parallel_agents="$MAX_PARALLEL_AGENTS"' in script
+    assert 'actor_rollout_ref.rollout.max_eval_parallel_agents="$MAX_EVAL_PARALLEL_AGENTS"' in script
