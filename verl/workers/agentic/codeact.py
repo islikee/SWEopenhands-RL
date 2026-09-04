@@ -1165,7 +1165,7 @@ class CodeActAgentGroup:
             }
         finally:
             # cleanup agent resources
-            self._cleanup_agent(instance_id, trajectory_id)
+            self._cleanup_agent(batch_id, trajectory_id)
 
         return return_val
     
@@ -1418,7 +1418,7 @@ class CodeActAgentGroup:
         # Create two queues: one for initialization and one for running
         init_queue = asyncio.Queue()
         run_queue = asyncio.Queue(maxsize=self.max_parallel_agents)
-        eval_queue = asyncio.Queue(maxsize=self.max_parallel_agents)
+        eval_queue = asyncio.Queue(maxsize=self.max_eval_parallel_agents)
         
         # Fill the initialization queue
         for trajectory_id in range(self.num_trajectories):
