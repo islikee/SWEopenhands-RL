@@ -295,7 +295,7 @@ def complete_runtime(
         # The previous command is still running
         # We need to kill previous command
         logger.info('The previous command is still running, trying to kill it...')
-        action = CmdRunAction(command='C-c')
+        action = CmdRunAction(command='C-c', is_input=True)
         obs = runtime.run_action(action)
         logger.info(obs, extra={'msg_type': 'OBSERVATION'})
 

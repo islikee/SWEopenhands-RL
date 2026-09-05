@@ -766,17 +766,35 @@ class RayPPOTrainer(object):
             optimizer_step = 1
         metrics['train/optimizer_step_performed'] = optimizer_step
 
+        last_val_metrics = self._stage1b_save_checkpoint_then_validate(
+            metrics,
+            timing_raw,
+            is_last_step,
+        )
+        return batch, last_val_metrics
+
+    def _stage1b_save_checkpoint_then_validate(self, metrics, timing_raw, is_last_step):
+        should_save = (
+            self.config.trainer.save_freq > 0
+            and (is_last_step or self.global_steps % self.config.trainer.save_freq == 0)
+        )
+        should_validate = (
+            self.val_reward_fn is not None
+            and self.config.trainer.test_freq > 0
+            and (is_last_step or self.global_steps % self.config.trainer.test_freq == 0)
+        )
+
+        if should_save:
+            with _timer('save_checkpoint', timing_raw):
+                self._save_checkpoint()
+
         last_val_metrics = None
-        if self.val_reward_fn is not None and self.config.trainer.test_freq > 0 and \
-                (is_last_step or self.global_steps % self.config.trainer.test_freq == 0):
+        if should_validate:
             with _timer('testing', timing_raw):
                 last_val_metrics = self._validate()
             metrics.update(last_val_metrics)
 
-        if self.config.trainer.save_freq > 0 and (is_last_step or self.global_steps % self.config.trainer.save_freq == 0):
-            with _timer('save_checkpoint', timing_raw):
-                self._save_checkpoint()
-        return batch, last_val_metrics
+        return last_val_metrics
 
     def _maybe_log_val_generations(self, inputs, outputs, scores):
         """Log a table of validation samples to the configured logger (wandb or swanlab)"""
@@ -1303,16 +1321,11 @@ class RayPPOTrainer(object):
                             )
                         else:
                             batch = None
-                            stage1b_last_val_metrics = None
-                            if self.val_reward_fn is not None and self.config.trainer.test_freq > 0 and \
-                                    (is_last_step or self.global_steps % self.config.trainer.test_freq == 0):
-                                with _timer('testing', timing_raw):
-                                    stage1b_last_val_metrics = self._validate()
-                                metrics.update(stage1b_last_val_metrics)
-                            if self.config.trainer.save_freq > 0 and \
-                                    (is_last_step or self.global_steps % self.config.trainer.save_freq == 0):
-                                with _timer('save_checkpoint', timing_raw):
-                                    self._save_checkpoint()
+                            stage1b_last_val_metrics = self._stage1b_save_checkpoint_then_validate(
+                                metrics,
+                                timing_raw,
+                                is_last_step,
+                            )
 
                     if batch is not None:
                         metrics.update(compute_data_metrics(batch=batch, use_critic=self.use_critic))

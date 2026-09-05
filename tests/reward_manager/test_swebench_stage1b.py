@@ -115,3 +115,31 @@ def test_stage1b_reward_manager_excludes_reward_invalid_trajectory():
     assert metrics["reward_v2"] == pytest.approx(0.45)
     assert metrics["all"] == pytest.approx(0.45)
     assert metrics["reward_all"] == pytest.approx(0.45)
+
+
+def test_stage1b_reward_manager_marks_zero_target_denominator_invalid():
+    data = _data(
+        {
+            "reward_valid": [True, True],
+            "resolved": [False, False],
+            "ftp_passed": [1, 0],
+            "ftp_total": [2, 0],
+            "ftp_failed": [1, 0],
+            "ptp_passed": [2, 0],
+            "ptp_total": [2, 0],
+            "ptp_failed": [0, 0],
+            "evaluation_error": [None, "evaluator did not produce target tests"],
+            "git_patch": ["patch-a", "patch-b"],
+        }
+    )
+
+    reward_dict, metrics = Stage1BSWEBenchRewardManager(
+        tokenizer=None, num_examine=0, config=_config()
+    )(data)
+
+    assert reward_dict["gt_scores"].sum(dim=1).tolist() == pytest.approx([0.45, 0.0])
+    assert reward_dict["all"].sum(dim=1).tolist() == pytest.approx([0.45, 0.0])
+    assert metrics["reward_invalid_count"] == 1
+    assert metrics["reward_v2"] == pytest.approx(0.45)
+    assert metrics["all"] == pytest.approx(0.45)
+    assert metrics["reward_all"] == pytest.approx(0.45)

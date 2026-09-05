@@ -1,0 +1,219 @@
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    subdir: ${hydra.job.num}
+  launcher:
+    _target_: hydra._internal.core_plugins.basic_launcher.BasicLauncher
+  sweeper:
+    _target_: hydra._internal.core_plugins.basic_sweeper.BasicSweeper
+    max_batch_size: null
+    params: null
+  help:
+    app_name: ${hydra.job.name}
+    header: '${hydra.help.app_name} is powered by Hydra.
+
+      '
+    footer: 'Powered by Hydra (https://hydra.cc)
+
+      Use --hydra-help to view Hydra specific help
+
+      '
+    template: '${hydra.help.header}
+
+      == Configuration groups ==
+
+      Compose your configuration from those groups (group=option)
+
+
+      $APP_CONFIG_GROUPS
+
+
+      == Config ==
+
+      Override anything in the config (foo.bar=value)
+
+
+      $CONFIG
+
+
+      ${hydra.help.footer}
+
+      '
+  hydra_help:
+    template: 'Hydra (${hydra.runtime.version})
+
+      See https://hydra.cc for more info.
+
+
+      == Flags ==
+
+      $FLAGS_HELP
+
+
+      == Configuration groups ==
+
+      Compose your configuration from those groups (For example, append hydra/job_logging=disabled
+      to command line)
+
+
+      $HYDRA_CONFIG_GROUPS
+
+
+      Use ''--cfg hydra'' to Show the Hydra config.
+
+      '
+    hydra_help: ???
+  hydra_logging:
+    version: 1
+    formatters:
+      simple:
+        format: '[%(asctime)s][HYDRA] %(message)s'
+    handlers:
+      console:
+        class: logging.StreamHandler
+        formatter: simple
+        stream: ext://sys.stdout
+    root:
+      level: INFO
+      handlers:
+      - console
+    loggers:
+      logging_example:
+        level: DEBUG
+    disable_existing_loggers: false
+  job_logging:
+    version: 1
+    formatters:
+      simple:
+        format: '[%(asctime)s][%(name)s][%(levelname)s] - %(message)s'
+    handlers:
+      console:
+        class: logging.StreamHandler
+        formatter: simple
+        stream: ext://sys.stdout
+      file:
+        class: logging.FileHandler
+        formatter: simple
+        filename: ${hydra.runtime.output_dir}/${hydra.job.name}.log
+    root:
+      level: INFO
+      handlers:
+      - console
+      - file
+    disable_existing_loggers: false
+  env: {}
+  mode: RUN
+  searchpath: []
+  callbacks: {}
+  output_subdir: .hydra
+  overrides:
+    hydra:
+    - hydra.mode=RUN
+    task:
+    - algorithm.adv_estimator=grpo
+    - algorithm.use_kl_in_reward=False
+    - data.train_files=["/data/skyrl/datasets/skyrl-v0-80-stage1-32x16/stage1b_candidates.parquet"]
+    - data.val_files=["/data/skyrl/datasets/skyrl-v0-80-stage1-32x16/validation.parquet"]
+    - data.prompt_key=prompt
+    - data.train_batch_size=4
+    - data.max_prompt_length=8192
+    - data.max_response_length=1024
+    - data.dataloader_num_workers=0
+    - data.shuffle=False
+    - actor_rollout_ref.model.path=/data/skyrl/models/NovaSky-AI/SWE-Gym-OpenHands-7B-Agent
+    - actor_rollout_ref.model.training_mode=lora
+    - actor_rollout_ref.model.lora_rank=16
+    - actor_rollout_ref.model.lora_alpha=32
+    - actor_rollout_ref.model.lora_dropout=0.0
+    - actor_rollout_ref.actor.ppo_mini_batch_size=4
+    - actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=1
+    - actor_rollout_ref.actor.ppo_epochs=1
+    - actor_rollout_ref.actor.optim.lr=1e-6
+    - actor_rollout_ref.actor.use_kl_loss=False
+    - actor_rollout_ref.actor.masking=True
+    - actor_rollout_ref.actor.fsdp_config.param_offload=True
+    - actor_rollout_ref.actor.fsdp_config.optimizer_offload=True
+    - actor_rollout_ref.ref.fsdp_config.param_offload=True
+    - actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=1
+    - actor_rollout_ref.rollout.name=async
+    - actor_rollout_ref.rollout.log_messages_dir=/data/skyrl/outputs/rollouts/oh7b_stage1b_64_lora_nokl_20260904_160559/traces
+    - actor_rollout_ref.rollout.task_type=swegym
+    - actor_rollout_ref.rollout.n_trajectories=8
+    - actor_rollout_ref.rollout.max_iterations=15
+    - +actor_rollout_ref.rollout.agent_max_prompt_length=32768
+    - actor_rollout_ref.rollout.max_parallel_agents=4
+    - actor_rollout_ref.rollout.max_eval_parallel_agents=4
+    - +actor_rollout_ref.rollout.max_starting_message_length=16384
+    - actor_rollout_ref.rollout.tensor_model_parallel_size=2
+    - actor_rollout_ref.rollout.enable_memory_saver=True
+    - actor_rollout_ref.rollout.max_total_tokens=49152
+    - actor_rollout_ref.rollout.max_prefill_tokens=32768
+    - actor_rollout_ref.rollout.disable_cuda_graph=True
+    - actor_rollout_ref.rollout.temperature=0.5
+    - actor_rollout_ref.rollout.sampling_params.temperature=0.5
+    - actor_rollout_ref.rollout.sampling_params.top_p=0.95
+    - actor_rollout_ref.rollout.top_p=0.95
+    - actor_rollout_ref.rollout.val_kwargs.n=1
+    - actor_rollout_ref.rollout.val_kwargs.temperature=0
+    - actor_rollout_ref.rollout.val_kwargs.do_sample=False
+    - actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=1
+    - reward_model.reward_manager=swebench_stage1b
+    - trainer.stage1b.enabled=True
+    - trainer.stage1b.target_informative_groups=4
+    - trainer.stage1b.trajectories_per_task=8
+    - trainer.stage1b.max_candidate_groups_per_update=8
+    - trainer.stage1b.informative_reward_eps=1e-6
+    - trainer.total_epochs=1
+    - trainer.total_training_steps=8
+    - trainer.val_before_train=True
+    - trainer.test_freq=8
+    - trainer.nnodes=1
+    - trainer.n_gpus_per_node=4
+    - trainer.save_freq=8
+    - trainer.logger=["console","wandb"]
+    - +trainer.rollout_log_dir=/data/skyrl/outputs/rollouts/oh7b_stage1b_64_lora_nokl_20260904_160559
+    - trainer.project_name=skyrl-swegym-stage1b
+    - trainer.experiment_name=oh7b_stage1b_64_lora_nokl_20260904_160559
+    - trainer.default_local_dir=/data/skyrl/outputs/checkpoints/oh7b_stage1b_64_lora_nokl_20260904_160559
+  job:
+    name: main_ppo
+    chdir: null
+    override_dirname: +actor_rollout_ref.rollout.agent_max_prompt_length=32768,+actor_rollout_ref.rollout.max_starting_message_length=16384,+trainer.rollout_log_dir=/data/skyrl/outputs/rollouts/oh7b_stage1b_64_lora_nokl_20260904_160559,actor_rollout_ref.actor.fsdp_config.optimizer_offload=True,actor_rollout_ref.actor.fsdp_config.param_offload=True,actor_rollout_ref.actor.masking=True,actor_rollout_ref.actor.optim.lr=1e-6,actor_rollout_ref.actor.ppo_epochs=1,actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=1,actor_rollout_ref.actor.ppo_mini_batch_size=4,actor_rollout_ref.actor.use_kl_loss=False,actor_rollout_ref.model.lora_alpha=32,actor_rollout_ref.model.lora_dropout=0.0,actor_rollout_ref.model.lora_rank=16,actor_rollout_ref.model.path=/data/skyrl/models/NovaSky-AI/SWE-Gym-OpenHands-7B-Agent,actor_rollout_ref.model.training_mode=lora,actor_rollout_ref.ref.fsdp_config.param_offload=True,actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=1,actor_rollout_ref.rollout.disable_cuda_graph=True,actor_rollout_ref.rollout.enable_memory_saver=True,actor_rollout_ref.rollout.log_messages_dir=/data/skyrl/outputs/rollouts/oh7b_stage1b_64_lora_nokl_20260904_160559/traces,actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=1,actor_rollout_ref.rollout.max_eval_parallel_agents=4,actor_rollout_ref.rollout.max_iterations=15,actor_rollout_ref.rollout.max_parallel_agents=4,actor_rollout_ref.rollout.max_prefill_tokens=32768,actor_rollout_ref.rollout.max_total_tokens=49152,actor_rollout_ref.rollout.n_trajectories=8,actor_rollout_ref.rollout.name=async,actor_rollout_ref.rollout.sampling_params.temperature=0.5,actor_rollout_ref.rollout.sampling_params.top_p=0.95,actor_rollout_ref.rollout.task_type=swegym,actor_rollout_ref.rollout.temperature=0.5,actor_rollout_ref.rollout.tensor_model_parallel_size=2,actor_rollout_ref.rollout.top_p=0.95,actor_rollout_ref.rollout.val_kwargs.do_sample=False,actor_rollout_ref.rollout.val_kwargs.n=1,actor_rollout_ref.rollout.val_kwargs.temperature=0,algorithm.adv_estimator=grpo,algorithm.use_kl_in_reward=False,data.dataloader_num_workers=0,data.max_prompt_length=8192,data.max_response_length=1024,data.prompt_key=prompt,data.shuffle=False,data.train_batch_size=4,data.train_files=["/data/skyrl/datasets/skyrl-v0-80-stage1-32x16/stage1b_candidates.parquet"],data.val_files=["/data/skyrl/datasets/skyrl-v0-80-stage1-32x16/validation.parquet"],reward_model.reward_manager=swebench_stage1b,trainer.default_local_dir=/data/skyrl/outputs/checkpoints/oh7b_stage1b_64_lora_nokl_20260904_160559,trainer.experiment_name=oh7b_stage1b_64_lora_nokl_20260904_160559,trainer.logger=["console","wandb"],trainer.n_gpus_per_node=4,trainer.nnodes=1,trainer.project_name=skyrl-swegym-stage1b,trainer.save_freq=8,trainer.stage1b.enabled=True,trainer.stage1b.informative_reward_eps=1e-6,trainer.stage1b.max_candidate_groups_per_update=8,trainer.stage1b.target_informative_groups=4,trainer.stage1b.trajectories_per_task=8,trainer.test_freq=8,trainer.total_epochs=1,trainer.total_training_steps=8,trainer.val_before_train=True
+    id: ???
+    num: ???
+    config_name: ppo_trainer
+    env_set: {}
+    env_copy: []
+    config:
+      override_dirname:
+        kv_sep: '='
+        item_sep: ','
+        exclude_keys: []
+  runtime:
+    version: 1.3.2
+    version_base: '1.3'
+    cwd: /root/SWEopenhands-RL
+    config_sources:
+    - path: hydra.conf
+      schema: pkg
+      provider: hydra
+    - path: /root/SWEopenhands-RL/verl/trainer/config
+      schema: file
+      provider: main
+    - path: ''
+      schema: structured
+      provider: schema
+    output_dir: /root/SWEopenhands-RL/outputs/2026-09-04/16-06-07
+    choices:
+      hydra/env: default
+      hydra/callbacks: null
+      hydra/job_logging: default
+      hydra/hydra_logging: default
+      hydra/hydra_help: default
+      hydra/help: default
+      hydra/sweeper: basic
+      hydra/launcher: basic
+      hydra/output: default
+  verbose: false

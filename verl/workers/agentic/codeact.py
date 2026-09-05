@@ -68,7 +68,7 @@ from swegym.harness.run_evaluation import (
 from swegym.harness.grading import get_eval_report
 from openhands.events.action import CmdRunAction
 from openhands.events.observation import CmdOutputObservation
-from .utils import process_git_patch
+from .utils import get_instruction, process_git_patch
 from .result_normalization import fill_empty_trajectory_messages
 from .runtime_backend import openhands_runtime_backend, prepare_sandbox_for_runtime
 from .rollout_logging import write_trajectory_trace
@@ -789,7 +789,16 @@ class CodeActAgentGroup:
         
         # Keep failed trajectory outcomes independent when filling tokenizer input.
         for instance_id, results in results_by_instance.items():
-            fill_empty_trajectory_messages([result for _, result in results])
+            first_result_index = results[0][0]
+            instance = instance_list[first_result_index]
+            fallback_messages = [
+                {"role": "user", "content": get_instruction(pd.Series(instance))},
+                {"role": "assistant", "content": ""},
+            ]
+            fill_empty_trajectory_messages(
+                [result for _, result in results],
+                fallback_messages=fallback_messages,
+            )
         
         # Get batch of messages
         all_messages = []

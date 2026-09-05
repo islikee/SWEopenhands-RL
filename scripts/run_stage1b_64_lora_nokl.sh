@@ -55,6 +55,7 @@ echo "entropy_coeff=0.0"
 echo "gpus_per_node=$GPU_COUNT"
 echo "max_parallel_agents=$MAX_PARALLEL_AGENTS"
 echo "max_eval_parallel_agents=$MAX_EVAL_PARALLEL_AGENTS"
+echo "checkpoint_save_freq=1"
 
 PYTHONUNBUFFERED=1 "$PYTHON_BIN" \
   -m verl.trainer.main_ppo \
@@ -118,7 +119,7 @@ PYTHONUNBUFFERED=1 "$PYTHON_BIN" \
   trainer.test_freq=8 \
   trainer.nnodes=1 \
   trainer.n_gpus_per_node="$GPU_COUNT" \
-  trainer.save_freq=8 \
+  trainer.save_freq=1 \
   trainer.logger='["console","wandb"]' \
   +trainer.rollout_log_dir="$ROLLOUT_LOG_DIR" \
   trainer.project_name="${WANDB_PROJECT:-skyrl-swegym-stage1b}" \

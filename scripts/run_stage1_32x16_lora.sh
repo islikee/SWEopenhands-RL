@@ -79,6 +79,7 @@ echo "agent_max_prompt_length=20000"
 echo "validation_n=1"
 echo "validation_temperature=0"
 echo "validation_steps=0,8"
+echo "checkpoint_save_freq=1"
 echo "rollout_log_dir=$ROLLOUT_LOG_DIR"
 echo "trace_log_dir=$TRACE_LOG_DIR"
 
@@ -139,7 +140,7 @@ PYTHONUNBUFFERED=1 "$PYTHON_BIN" \
   trainer.test_freq=8 \
   trainer.nnodes=1 \
   trainer.n_gpus_per_node="$GPU_COUNT" \
-  trainer.save_freq=8 \
+  trainer.save_freq=1 \
   trainer.logger='["console","wandb"]' \
   +trainer.rollout_log_dir="$ROLLOUT_LOG_DIR" \
   trainer.project_name="${WANDB_PROJECT:-skyrl-swegym-stage1}" \

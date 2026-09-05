@@ -3,6 +3,7 @@ from __future__ import annotations
 import statistics
 from typing import Any
 
+import numpy as np
 import torch
 
 from verl import DataProto
@@ -28,7 +29,7 @@ class Stage1BSWEBenchRewardManager:
     def verify(self, data: DataProto):
         fields = data.non_tensor_batch
         size = len(data.batch["responses"])
-        valid = fields.get("reward_valid", [True] * size)
+        valid = [bool(value) for value in fields.get("reward_valid", [True] * size)]
         scores: list[float] = []
         binary_scores: list[float] = []
         valid_metric_scores: list[float] = []
@@ -58,12 +59,21 @@ class Stage1BSWEBenchRewardManager:
                     "ptp_failed",
                 )
             }
+            if int(facts["ftp_total"]) <= 0 or (
+                int(facts["ptp_failed"]) > 0 and int(facts["ptp_total"]) <= 0
+            ):
+                valid[index] = False
+                invalid_count += 1
+                scores.append(0.0)
+                binary_scores.append(0.0)
+                continue
             score = reward_v2_from_facts(facts)
             binary_score = binary_reward_from_resolved(facts["resolved"])
             scores.append(score)
             binary_scores.append(binary_score)
             valid_metric_scores.append(score)
 
+        data.non_tensor_batch["reward_valid"] = np.asarray(valid, dtype=object)
         score_tensor = torch.tensor(scores, dtype=torch.float32, device=data.batch["responses"].device)
         data.batch["acc"] = score_tensor
         data.batch["binary_acc"] = torch.tensor(
